@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação - Prestadora</title>
+    <link rel="stylesheet" href="../static/app.css">
+
+</head>
+<body style="background: #959595;">
+    <div class="container main-container">
+        <div class="normal-container col-layout">
+            <div class="navbar row-layout user-data">
+                <div>
+                    <a href="#" id="upload-emp">Enviar Documentação</a>
+                    <a href="#" id="status-emp">Status Documentação</a>
+                </div>
+
+                <div class="user-data">
+                    <input type="search" id="content">
+
+                    {{prestadora.nome}}&nbsp;
+
+                    <a href="/logout_prestadora">Sair</a>
+                </div>
+            </div>
+
+            <div class="container-normal row-layout" id="content-emp" style="margin-left: 0; margin-right: 0;">
+                
+            </div>
+        </div>
+    </div>
+    <!-- Importa a lib JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    
+    <script>
+        document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        });
+
+        $("#upload-emp").click(() => {
+            fetch("/upload_file_view").then((data) => {
+                data.text().then(text => {
+                        $("#content-emp").html(text)
+                    })
+                })
+            }
+        )
+        
+        $("#content").on("input", () => {
+            let content = $("#content").val();
+            let url = `/status_files/${content}`
+            
+            fetch(url).then((data) => {
+                data.text().then(text => {
+                    setTimeout(() => {
+                        $("#content-emp").html(text)
+                    }, 100)
+                })
+            })
+        })
+
+        $("#status-emp").click(() => {
+            fetch("/status_files").then((data) => {
+                data.text().then(text => {
+                        $("#content-emp").html(text)
+                    })
+                })
+            }
+        )
+
+    </script>
+</body>
+</html>

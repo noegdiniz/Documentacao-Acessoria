@@ -1,0 +1,103 @@
+<div class="container" style="height: auto;">
+    <div class="flex-center">
+        <div class="key-box row-layout">
+            <div class="row-layout" id="form_dados">
+                <input type="text" id="nome" name="nome" placeholder="Nome da empresa...">
+                <input type="text" id="key" name="key" placeholder="Chave - 6 char">
+                <input type="hidden" id="_id" name="_id">
+            </div>
+            
+            <div class="row-layout">
+                <button class="button" id="gen" name="gen">
+                    gerar chave
+                </button>
+                <button class="button" id="salvar" name="salvar">
+                    salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container empresas-box">
+    <div class="key-box row-layout data-names">
+        <div class="row-layout">
+            <input type="text" value="NOME:" disabled>
+            <input type="text" value="CHAVE:" disabled>
+        </div>
+        
+        <div class="row-layout">
+        </div>
+    </div>
+
+    <div id="emp-box">
+
+    </div>
+</div>
+
+<script>
+//Carrega a lista de empresas
+fetch("/list_empresas").then(data => {
+        data.text().then(text => {
+        setTimeout(() => {$("#emp-box").html(text)}, 100);
+                
+        })
+    })
+
+    $("#content").on("input", () => {
+        const url = "/list_empresas/" + $("#content").val();
+
+        fetch(url).then(data => {
+            data.text().then(text => {
+            setTimeout(() => {$("#emp-box").html(text)}, 100);
+        
+        })
+    })
+    })
+
+$("#gen").click(() => {
+    fetch("/gen_key").then(data => {
+        data.text().then(text => {
+            $("#key").val(text)
+        })
+    })
+})
+
+$("#salvar").click(() => {
+    let nome = $("#nome").val()
+    let chave = $("#key").val()
+
+    if (!nome || !chave) {
+        showCustomAlert("Por favor, preencha todos os campos.");
+        return;
+    }
+
+    let url = "/create_empresa" + "/" + nome + "/" + chave + "/" + $("#_id").val();
+    
+    fetch(url).then(data => {
+        data.text().then(text => {
+            if (text.includes("ok"))
+            {
+                showCustomAlert("Cadastro/Alteração efetuado com sucesso.");
+                
+                //Remove o marcador de alteração
+                $("#form_dados").removeClass("ball");
+
+            } else {
+                showCustomAlert("Erro ao realizar cadastro: " + text);
+            }
+        })
+    }).then(() => {
+        fetch("/list_empresas").then(data => {
+                data.text().then(text => {
+                setTimeout(() => {$("#emp-box").html(text)}, 100);
+                
+                //Reseta os campos depois de salvar
+                $("#_id").val("");
+                $("#key").val("");
+                $("#nome").val("");
+            })
+        })
+    })
+})
+
+</script>

@@ -1,0 +1,98 @@
+<div class="col-layout">
+    <div class="row-layout">
+        <div class="flex-center key-box">
+            <div class="key-box row-layout">
+                {%if permissao.can_create_categorias%}
+                <form id="form_dados" name="form_dados">
+                    <div class="row-layout">
+                        
+                        <input type="text" id="nome" name="nome" placeholder="descrição da categoria">
+
+                        <input type="hidden" id="_id" name="_id">
+                    </div>
+                </form>
+
+                <div class="row-layout">
+                    <button class="button" id="salvar" name="salvar">
+                        salvar
+                    </button>
+                </div>
+                {%endif%}
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="key-box empresas-box">
+        <div class="key-box row-layout data-names">
+            <div class="row-layout">
+                <input type="text" id="nome" value="DESCRIÇÂO" disabled>
+            </div>
+    
+            <div class="row-layout">
+            </div>
+        </div>
+
+        <div id="categoria-list-content">
+        </div>
+    </div>
+</div>
+
+<script>
+    //Carrega a lista de empresas
+fetch("/list_categorias").then(data => {
+        data.text().then(text => {
+        setTimeout(() => {$("#categoria-list-content").html(text)}, 100);
+                
+        })
+    })
+
+    $("#content").on("input", () => {
+        const url = "/list_categorias/" + $("#content").val();
+
+        fetch(url).then(data => {
+            data.text().then(text => {
+            setTimeout(() => {$("#categoria-list-content").html(text)}, 100);
+        
+        })
+    })
+    })
+
+    $("#salvar").click(() => {
+    let nome = $("#nome").val();
+
+    if(!nome) {
+        showCustomAlert("Favor preecher todos os campos!")
+    } else {
+        let formData = $("#form_dados").serialize();
+        formData["_id"] = $("#_id").val();
+        
+        $.ajax({
+            type: "POST",
+            url: "create_categoria", // Replace with your server endpoint
+            data: formData,
+            success: function(response) {
+                    // Display the result in the 'result' div
+                    let val = $("#content").val();
+                    let url = `/list_categorias/${val}`
+                    
+                    fetch(url).then(data => {
+                        data.text().then(text => {
+                            setTimeout(() => {$("#categoria-list-content").html(text)}, 100)
+                        })
+                    })
+                    
+                    showCustomAlert("Criado com sucesso!")
+
+                    //Remove marcador de alteração
+                    $("#form_dados").removeClass("ball");
+                },
+                        
+                error: function(error) {
+                    showCustomAlert("Erro ao criar contrato: " + error)
+                }
+            });  
+    }
+    })
+
+</script>

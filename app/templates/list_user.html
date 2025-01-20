@@ -1,0 +1,81 @@
+{%for user in users%}
+<div class="col-layout">
+    <div class="key-box row-layout">
+
+        <div class="row-layout">
+            <input type="text" id="nome" value="{{user.nome}}" disabled>
+            <input type="text" id="email" value="{{user.email}}" disabled>
+
+            {%if permissao.can_edit_users%}
+            <select name="perfil" id="perfil{{user._id}}" required placeholder="" style="width: auto;">
+                {%for perfil in perfis%}
+                    <option value="{{perfil._id}}">{{perfil.nome}}</option>
+                {%endfor%}
+            </select>
+            {%else%}
+
+            <select name="perfil" id="perfil{{user._id}}" required placeholder="" style="width: auto;" disabled>
+                {%for perfil in perfis%}
+                    <option value="{{perfil._id}}">{{perfil.nome}}</option>
+                {%endfor%}
+            </select>
+            {%endif%}
+
+        </div>
+        <div class="row-layout">
+            {%if permissao.can_delete_users%}
+            <button class="button" id="excluir-{{user._id}}" name="excluir">
+                excluir
+            </button>
+            {%endif%}
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $("#perfil{{user._id}}").val("{{user.perfil_id}}");
+
+    $("#perfil{{user._id}}").change(() => {
+        let perfil = $("#perfil{{user._id}}").val();
+
+        let url = `/update_user/{{user._id}}/${perfil}`
+
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if(text.includes("ok")) {
+                    showCustomAlert("Perfil do usuario atualizado.")
+                } else {
+                    showCustomAlert(text)
+                }
+            })
+        })
+    })
+
+    $("#excluir-{{user._id}}").click(() => {
+        let url = "/delete_user/" + "{{user._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if (text.includes("ok"))
+                {
+                    showCustomAlert("Usuario excluido com sucesso.");                
+                } else {
+                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                }
+            })
+
+        }).then(() => {
+            let val = $("#content").val();
+            let url = `/list_users/${val}`
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                
+                setTimeout(() => {$("#user-list-content").html(text)}, 100)
+                })
+            })
+        })
+    })
+</script>
+{%endfor%}

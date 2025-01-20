@@ -1,0 +1,190 @@
+<div style="height: auto;">
+    {%for emp in docs_emp%}
+    {%for doc in emp[1]%}
+
+    <div class="flex-center">
+        <div class="key-box row-layout">
+            <div class="row-layout flex-center">
+                <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
+                <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
+                <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
+
+                {%if doc.status == "AGUARDANDO"%}
+                <input type="text" id="obs{{doc._id}}" name="obs" class="key-input">
+                {%else%}
+                <input type="text" id="obs" name="obs" value="{{doc.obs}}" class="key-input" disabled>
+                {%endif%}
+                
+
+                <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
+
+                <input type="text" id="anexo-{{doc._id}}" name="anexo" value="/anexo/{{doc._id}}" class="key-input" disabled>
+                
+                <div id="pdfPopup-{{doc._id}}" class="popup">
+                    <iframe id="pdfFrame-{{doc._id}}" width="100%" height="100%" frameborder="0" style="overflow: auto; max-height: 550px;max-width: 350px;">
+                    </iframe>
+
+                    {%if permissao.can_aprove_docs%}
+                        {%if doc.status == "AGUARDANDO"%}
+                        <div class="row-layout" id="buttoms-sts">
+                            <button id="statusa{{doc._id}}" name="statusa{{doc._id}}" class="button" style="background-color: darkgreen; color: white;font-size:small;">
+                                APROVAR
+                            </button>
+        
+                            <button id="statusn{{doc._id}}" name="statusn{{doc._id}}" class="button" style="background-color: darkred; color: white;font-size: small;">
+                                NAO APROVAR
+                            </button>
+                        </div>
+                        {%endif%}
+                    {%endif%}
+                    
+                </div>
+                
+                <div id="status{{doc._id}}">
+                    {% if doc.status == "APROVADO" %}
+                    <input style="background-color: darkgreen; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
+                    {% elif doc.status == "AGUARDANDO" %}
+                    <input style="background-color: darkgray; color: white;" type="text" id="status{{doc._id}}" name="status" value="{{ doc.status }}" class="key-input" disabled>
+                    {% elif doc.status == "NAO APROVADO" %}
+                    <input style="background-color: darkred; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
+                    {% endif %}
+                </div>
+                
+                {%if permissao.can_delete_docs%}
+                <button id="delete{{doc._id}}" name="delete{{doc._id}}" class="button">
+                    DELETAR
+                </button>
+                {%endif%}
+                
+                </div>
+        </div>
+    </div>
+
+    <script>
+        $("#anexo-{{doc._id}}").mouseover(() => {
+            const pdfUrl = '/anexo/{{doc._id}}';
+            
+            // Set the iframe source to display the PDF
+            $("#pdfFrame-{{doc._id}}").attr('src', pdfUrl);
+
+            const pos = $("#anexo-{{doc._id}}").position()
+
+            $("#pdfPopup-{{doc._id}}").css({
+                top: pos.top + $("#anexo-{{doc._id}}").outerHeight() + 5, // Adjust the vertical position
+                left: pos.left - $("#anexo-{{doc._id}}").width()
+            }).show()
+        })
+        
+        $("#anexo-{{doc._id}}").mouseleave(() => {
+            $("#pdfPopup-{{doc._id}}").hide()
+
+            $("#pdfPopup-{{doc._id}}").mouseenter(() => {
+                $("#pdfPopup-{{doc._id}}").mouseleave(() => {
+                    $("#pdfPopup-{{doc._id}}").hide()
+                })
+
+                $("#pdfPopup-{{doc._id}}").show()
+            })
+        })
+        
+
+        $("#statusa{{doc._id}}").click(() => {
+            let obs = $("#obs{{doc._id}}").val();
+            let url = ""
+
+            if (obs) {
+                url = `/update_status/{{doc._id}}/APROVADO/${obs}`
+            } else {
+                url = "/update_status/{{doc._id}}/APROVADO"
+            }
+            
+            if(confirm("Tem certeza de que deseja atualizar o status para: APROVADO?")) {
+                fetch(url).then(data => {
+                    data.text().then(text => {
+                        if (text.includes("ok")) {
+                            showCustomAlert("Status do documento atualizado com sucesso!");
+                            $("#status{{doc._id}}").html('<input style="background-color: darkgreen; color: white;" type="text" id="status" name="status" value="APROVADO" class="key-input" disabled>')
+                            $("#obs{{doc._id}}").prop("disabled", true);
+                        } else {
+                            show(`Erro ao atualizar status: ${text}`)
+                        }
+                    })
+                })
+            }
+
+        }
+        )
+
+        $("#statusn{{doc._id}}").click(() => {
+            let obs = $("#obs{{doc._id}}").val();
+
+            if(obs) {
+                const url = `/update_status/{{doc._id}}/NAO APROVADO/${obs}`
+    
+                if(confirm("Tem certeza de que deseja atualizar o status para: NAO APROVADO?")) {
+                    fetch(url).then(data => {
+                        data.text().then(text => {
+                            if (text.includes("ok")) {
+                                showCustomAlert("Status do documento atualizado com sucesso!");
+                                $("#status{{doc._id}}").html('<input style="background-color: darkred; color: white;" type="text" id="status" name="status" value="NAO APROVADO" class="key-input" disabled>')
+                                $("#obs{{doc._id}}").prop("disabled", true);
+    
+                            } else {
+                                show(`Erro ao atualizar status: ${text}`)
+                            }
+                        })
+                    })
+                }
+
+            } else {
+                showCustomAlert("Favor preecher o campo observação!");
+                $("#obs{{doc._id}}").css("background-color", "darkred");
+            }
+
+        }
+
+        )
+
+        $("#obs{{doc._id}}").click(() => {
+            $("#obs{{doc._id}}").css("background-color", "white");
+        })
+    
+        $("#delete{{doc._id}}").click(() => {
+        let url = "/exclui_documento/" + "{{doc._id}}";
+        
+        fetch(url).then(data => {
+                data.text().then(text => {
+                    if (text.includes("ok"))
+                    {
+                        showCustomAlert("Cadastro excluido com sucesso.");                
+                    } else {
+                        showCustomAlert("Erro ao realizar exclusão: " + text);
+                    }
+                })
+            }).then(() => {
+                let content = encodeURIComponent($("#content").val());
+                let url = "";
+
+                let sel = $("#selected").val();
+
+                if(sel) {
+                    if (!content) {
+                        url = `/filter_docs/${sel}`;
+                    } else {
+                        url = `/filter_docs/${sel}/${content}`;
+                    }
+                    
+                    fetch(url).then(data => {
+                        data.text().then(text => {
+                            setTimeout(() => {
+                                $("#box-docs").html(text);
+                            }, 100)
+                        });
+                    });
+                }
+            })
+        })
+    </script>
+    {%endfor%}
+    {%endfor%}
+</div>

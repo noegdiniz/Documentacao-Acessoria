@@ -1,0 +1,126 @@
+<div class="flex-center col-layout">
+    <div class="key-box row-layout">
+        <div class="flex-center key-box">
+            <div class="key-box row-layout">
+                {%if permissao.can_create_dados%}
+                <form id="form_dados" name="form_dados" class="key-box">
+                    <div class="row-layout">
+
+                        <select name="categoria" id="categoria" required placeholder="">
+                            {%for categoria in categorias%}
+                            <option value="{{categoria._id}}">{{categoria.nome}}</option>
+                            {%endfor%}
+                        </select>
+                        
+                        <select name="contrato" id="contrato" required placeholder="">
+                            {%for contrato in contratos%}
+                            <option value="{{contrato._id}}">{{contrato.nome}}</option>
+                            {%endfor%}
+                        </select>
+                        
+                        <select name="perfil" id="perfil" required placeholder="">
+                            {%for perfil in perfis%}
+                            <option value="{{perfil._id}}">{{perfil.nome}}</option>
+                            {%endfor%}
+                        </select>
+                        
+                        <input type="text" id="prazo" name="prazo" placeholder="prazo do documento">
+                        <input type="text" id="drive" name="drive" placeholder="pasta do drive">
+                        
+                        <input type="hidden" id="_id" name="_id">
+                    </div>
+                </form>
+
+                <div class="row-layout">
+                    <button class="button" id="salvar" name="salvar">
+                        salvar
+                    </button>
+                </div>
+                {%endif%}
+            </div>
+        </div>
+    </div>
+
+    <div class="key-box empresas-box">
+        <div class="key-box row-layout data-names">
+            <div class="row-layout">
+                <input type="text" value="CATEGORIA:" disabled>
+                <input type="text" value="CONTRATO:" disabled>
+                <input type="text" value="PERFIL:" disabled>
+                <input type="text" value="PRAZO:" disabled>
+                <input type="text" value="PASTA DRIVE:" disabled>
+            </div>
+    
+            <div class="row-layout">
+            </div>
+        </div>
+
+        <div id="cubo-list-content">
+
+        </div>
+    </div>
+</div>
+
+<script>
+//Carrega a lista de CUBOS
+fetch("/list_cubo").then(data => {
+        data.text().then(text => {
+        setTimeout(() => {$("#cubo-list-content").html(text)}, 100);
+        
+        })
+    })
+
+    $("#content").on("input", () => {
+        const url = "/list_cubo/" + $("#content").val();
+
+        fetch(url).then(data => {
+            data.text().then(text => {
+            setTimeout(() => {$("#cubo-list-content").html(text)}, 100);
+        
+        })
+    })
+    })
+
+
+    $("#salvar").click(() => {
+    let categoria = $("#categoria").val();
+    let contrato = $("#contrato").val();
+    let prazo = $("#prazo").val();
+    let perfil = $("#perfil").val();
+    
+    if(!categoria || !contrato || !prazo || !perfil) {
+        showCustomAlert("Favor preecher todos os campos!")
+    } else {
+        let formData = $("#form_dados").serialize();
+        formData["_id"] = $("#_id").val();
+        
+        $.ajax({
+            type: "POST",
+            url: "create_cubo", // Replace with your server endpoint
+            data: formData,
+            success: function(response) {
+                    // Display the result in the 'result' div
+                    let val = $("#content").val();
+                    let url = `/list_cubo/${val}`
+                    
+                    fetch(url).then(data => {
+                        data.text().then(text => {
+                            setTimeout(() => {$("#cubo-list-content").html(text)}, 100)
+                        })
+                    })
+
+                    showCustomAlert("Criado com sucesso!")
+
+                    //Remove marcador de alteração
+                    $("#form_dados").removeClass("ball");
+                },
+                        
+                error: function(error) {
+                    showCustomAlert("Erro ao criar cubo: " + error)
+                }
+            });  
+    }
+    })
+
+
+</script>

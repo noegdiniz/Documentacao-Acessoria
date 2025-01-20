@@ -1,0 +1,46 @@
+{%for log in logs%}
+<div class="col-layout">
+    <div class="key-box row-layout">
+        <div class="row-layout">
+            <input type="text" id="nome" value="{{log.user_name}}" disabled>
+            <input type="text" id="nome" value="{{log.action}}" disabled>
+            <input type="text" id="nome" value="{{log.menu}}" disabled>
+            <input type="text" id="nome" value="{{log.user_perfil}}" disabled>
+            <input type="text" id="nome" value="{{log.date}}" disabled>
+            <input type="text" id="nome" value="{{log.info}}" disabled>
+        </div>
+
+        <div class="row-layout">
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $("#excluir-{{log._id}}").click(() => {
+        let url = "/delete_log/" + "{{log._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if (text.includes("ok"))
+                {
+                    showCustomAlert("Cadastro excluido com sucesso.");                
+                } else {
+                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                }
+            })
+        }).then(() => {
+            let val = $("#content").val();
+            let url = `/list_logs/${val}`
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                
+                setTimeout(() => {$("#logs-box").html(text)}, 100)
+                })
+            })
+        })
+    })
+</script>
+{%endfor%}

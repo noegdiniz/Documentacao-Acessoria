@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Acessoria: Upload</title>
+    <link rel="stylesheet" href="../static/app.css">
+    
+</head>
+<body>
+    <div class="main-container">
+
+        <div class="normal-container upload-container col-layout">
+            <div class="input-title badge">
+                LOGIN PRESTADORA
+            </div>
+
+            <div class="container form-container">
+                <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" style="flex-direction: column;align-items:normal;">
+                    <input type="text" id="nome" name="nome" required placeholder="Nome da prestadora">
+                    <input type="text" id="chave" name="chave" required placeholder="Chave da prestadora">
+                </form>
+                
+                <div class="flex-center" style="width: 100%;">
+                    <button id="make-upload" class="button">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Importa a lib JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="../static/scripts.js"></script>
+    
+    <script>
+         $("#make-upload").click( () => {
+
+            // Perform client-side validation
+            let nome = $("#nome").val();
+            let chave = $("#chave").val();
+
+            if (!nome || !chave) {
+                showCustomAlert("Nome da empresa ou chave invalida.");
+                return;
+            }
+
+            // If validation passes, proceed with form submission
+            let formData = new FormData();
+            formData.append("nome", nome);
+            formData.append("chave", chave);
+
+            // Submit the form using AJAX
+            $.ajax({
+                type: "POST",
+                url: "auth_prestadora", // Replace with your server endpoint
+                data: formData,
+                processData: false, // Prevent jQuery from processing the data
+                contentType: false, // Prevent jQuery from setting the content type
+                
+                success: function(response) {
+                    // Display the result in the 'result' div
+                    if (response.includes("ok")) {
+                        showCustomAlert("Login com sucesso.");
+                        
+                        setTimeout(() => window.location.href = "/index_prestadora", 600)
+                    }
+                },
+                
+                error: function(error) {
+                    showCustomAlert("Erro ao realizar login: Nome ou chave invalida.");
+                }
+            });
+        })
+
+    </script>
+</body>
+</html>

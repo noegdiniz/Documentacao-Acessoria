@@ -1,0 +1,58 @@
+{%for empresa in empresas%}
+<div class="flex-center col-layout">
+    <div class="key-box row-layout">
+        <div class="row-layout">
+            <input type="text" name="nome" value="{{empresa.nome}}" placeholder="Nome da empresa..." disabled>
+            <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" disabled>
+        </div>
+
+        <div class="row-layout">
+            {%if permissao.can_edit_empresas%}
+            <button class="button" id="alterar-{{empresa._id}}" name="alterar">
+                alterar
+            </button>
+            {%endif%}
+
+            {%if permissao.can_delete_empresas%}
+            <button class="button" id="excluir-{{empresa._id}}" name="excluir">
+                excluir
+            </button>
+            {%endif%}
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#alterar-{{empresa._id}}").click(() => {
+        $("#nome").val("{{empresa.nome}}");
+        $("#key").val("{{empresa.chave}}");
+
+        //Adiciona sinal visual da alteração no menu
+        $("#form_dados").addClass("ball");
+        
+        //Muda o id da empresa para realizar a alteração no item certo
+        $("#_id").val("{{empresa._id}}");
+    })
+
+    $("#excluir-{{empresa._id}}").click(() => {
+        let url = "/exclui_empresa/" + "{{empresa._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if (text.includes("ok"))
+                {
+                    showCustomAlert("Cadastro excluido com sucesso.");                
+                } else {
+                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                }
+            })
+        }).then(() => {
+            fetch("/list_empresas").then(data => {
+                data.text().then(text => {
+                    setTimeout(() => {$("#emp-box").html(text)}, 100)
+                })
+            })
+        })
+    })
+</script>
+{%endfor%}

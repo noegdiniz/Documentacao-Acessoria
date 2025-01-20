@@ -1,0 +1,69 @@
+{%for cubo in cubos%}
+<div class="flex-center col-layout">
+    <div class="key-box row-layout">
+        <div class="row-layout">
+            <input type="text" value="{{cubo.categoria_nome}}" disabled>
+            <input type="text" value="{{cubo.contrato_nome}}" disabled>
+            <input type="text" value="{{cubo.perfil_nome}}" disabled>
+            <input type="text" value="{{cubo.prazo}}" disabled>
+            <input type="text" value="{{cubo.pasta_drive}}" disabled>
+        </div>
+
+        <div class="row-layout">
+            {%if permissao.can_edit_dados%}
+            <button class="button" id="alterar-{{cubo._id}}" name="alterar">
+                alterar
+            </button>
+            {%endif%}
+
+            {%if permissao.can_delete_dados%}
+            <button class="button" id="excluir-{{cubo._id}}" name="excluir">
+                excluir
+            </button>
+            {%endif%}
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#alterar-{{cubo._id}}").click(() => {
+        $("#categoria").val("{{cubo.categoria_id}}");
+        $("#contrato").val("{{cubo.contrato_id}}");
+        $("#prazo").val("{{cubo.prazo}}");
+        $("#perfil").val("{{cubo.perfil_id}}");
+        $("#drive").val("{{cubo.pasta_drive}}");
+
+        //Adiciona sinal visual da alteração no menu
+        $("#form_dados").addClass("ball");
+        
+        //Muda o id da cubo para realizar a alteração no item certo
+        $("#_id").val("{{cubo._id}}");
+    })
+
+    $("#excluir-{{cubo._id}}").click(() => {
+        let url = "/delete_cubo/" + "{{cubo._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if (text.includes("ok"))
+                {
+                    showCustomAlert("Cadastro excluido com sucesso.");                
+                } else {
+                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                }
+            })
+        }).then(() => {
+            let val = $("#content").val();
+            let url = `/list_cubo/${val}`
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                
+                setTimeout(() => {$("#cubo-list-content").html(text)}, 100)
+                })
+            })
+        })
+    })
+</script>
+{%endfor%}

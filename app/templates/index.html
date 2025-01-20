@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação</title>
+    <link rel="stylesheet" href="../static/app.css">
+
+</head>
+<body style="background: #959595;">
+    <div class="container main-container">
+        <div class="normal-container col-layout">
+            <div class="navbar row-layout user-data">
+                <div>
+                    {%if permissao.can_view_docs%}
+                    <a href="#" id="docs-page">Documentação</a>
+                    {%endif%}
+
+                    {%if permissao.can_view_empresas%}
+                    <a href="#" id="prestadoras-page">Prestadoras</a>
+                    {%endif%}
+
+                    <a href="#" id="cubo-page">Dados</a>
+
+                    <a href="#" id="logs-page">Logs</a>
+                </div>
+
+                <div class="user-data">
+                    <input type="search" id="content">
+
+                    {{user.nome}} - {{user.perfil}}&nbsp;
+
+                    <img src="{{user.file}}" alt="" class="user-img">
+
+                    <a href="/logout">Sair</a>
+                </div>
+            </div>
+
+            <div id="content-adm">
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Importa a lib JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="../static/scripts.js"></script>
+
+    <script>
+        document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', function() {
+            console.log("teste")
+            this.value = this.value.toUpperCase();
+        });
+        });
+
+        $('a').on('click', function(event) {
+            // Your custom code here
+            $('a').css('background-color', '');
+            
+            $(this).css('background-color', '#053a72');
+
+        });
+
+        $("#docs-page").click(() => {
+            fetch("/adm_documentos").then((data) => {
+                data.text().then((text) => {
+                    $("#content-adm").html(text)
+                })
+                })
+            }
+        )
+
+        $("#cubo-page").click(() => {
+            fetch("/adm_cubo").then((data) => {
+                data.text().then((text) => {
+                    $("#content-adm").html(text)
+                })
+                })
+            }
+        )
+
+        $("#logs-page").click(() => {
+            fetch("/adm_logs").then((data) => {
+                data.text().then((text) => {
+                    $("#content-adm").html(text)
+                })
+                })
+            }
+        )
+
+        $("#prestadoras-page").click(() => {
+            fetch("/adm_empresas").then((data) => {
+                data.text().then((text) => {
+                    $("#content-adm").html(text)
+                })
+                })
+            }
+        )
+
+    </script>
+</body>
+</html>

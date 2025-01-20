@@ -1,0 +1,465 @@
+:root {
+    --primary-color: #0056b3; /* Corporate Blue */
+    --secondary-color: #f5f5f5; /* Light Grey for backgrounds */
+    --accent-color: #ffc107; /* Highlight/Accent color */
+    --hover-color: #053a72;
+    --font-color: #333; /* Dark Grey for text */
+    --font-family: 'Arial', sans-serif;
+    --border-radius: 4px;
+    --padding: 5px;
+    --margin: 7px;
+
+    --padding-lbutton: 10px
+}
+
+* {
+    border-radius: 5px;
+}
+
+/* BODY AND LAYOUT BAR STYLES */
+html {
+    width: 100%;
+    height: -webkit-fill-available;
+}
+
+body {
+    height: auto;
+    height: 98.02%;
+}
+
+body {
+    font-family: var(--font-family);
+    color: var(--font-color);
+    background-color: var(--secondary-color);
+    margin: 0;
+    padding: 0;
+}
+
+.main-container {
+    height: -webkit-fill-available;
+    width: -webkit-fill-available;
+}
+
+.container {
+    margin: var(--margin);
+    padding: var(--padding);
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+    height: -webkit-fill-available;
+    width: -webkit-fill-available;
+}
+
+.normal-container {
+    margin: var(--margin);
+    padding: var(--padding);
+    background: white;
+    border-radius: var(--border-radius);
+
+    height: -webkit-fill-available;
+    width: -webkit-fill-available;
+}
+
+.upload-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-container {
+    width: 26rem;
+    height: 90%;
+    
+}
+
+.list-container {
+    height: -webkit-fill-available;
+    margin: var(--margin);
+}
+
+.area-empresas {
+    width: 50%;
+}
+
+.area-documentos{
+    width: 50%;
+}
+
+.card {
+    padding: var(--padding);
+    margin: var(--margin);
+
+    width: 50%;
+}
+
+/* LAYOUT ORIENTATIONS */
+
+.col-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+.row-layout {
+    display: flex;
+    flex-direction: row;
+}
+
+/* NAV BAR STYLES */
+
+.navbar {
+    background-color: var(--primary-color);
+    padding: var(--padding);
+    color: white;
+
+    justify-content: space-between;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    margin: 0 var(--padding);
+    font-weight: bold;
+
+    padding: var(--padding) var(--padding);
+    border-radius: var(--border-radius);
+
+}
+
+.navbar a:hover {
+    background-color: var(--hover-color);
+}
+
+/* BUTTONS */
+
+.button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: var(--padding) var(--padding);
+    margin: var(--padding);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+
+    text-decoration: none;
+}
+
+.l-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: var(--padding-lbutton);
+    cursor: pointer;
+    font-size: 1rem;
+    width: 100%;
+    margin-bottom: var(--margin);
+}
+
+.button:hover {
+    background-color: var(--hover-color);
+}
+
+.l-button:hover {
+    background-color: var(--hover-color);
+}
+
+.button-accent {
+    background-color: var(--accent-color);
+    color: #333;
+}
+
+/* Forms and Inputs */
+
+form {
+    display: flex;
+
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+select {
+    width: 11.4rem;
+}
+
+input[type="text"], input[type="email"], input[type="search"], input[type="file"],input[type="datetime-local"], select, textarea {
+    
+    padding: var(--padding);
+    margin: var(--margin);
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+
+    text-transform: uppercase;
+    
+}
+
+
+input[type="submit"] {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: var(--padding);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+.key-input {
+    width: min-content;
+    max-width: 6rem;
+}
+
+.key-box {
+    width: -webkit-fill-available;
+    justify-content: space-between;
+    border: 1px solid #efefef;
+}
+
+.empresas-box {
+    width: -webkit-fill-available;
+    max-height: 75vh;
+    height: 75vh;
+    overflow-y: auto;
+}
+
+.empresas-box-docs {
+    width: -webkit-fill-available;
+    overflow-y: auto;
+}
+
+input[type="submit"]:hover {
+    background-color: var(--hover-color);
+}
+
+/*  Modals (for File Upload or Detailed Views) */
+
+.modal {
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black with opacity */
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 8px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Modal Trigger Button */
+.modal-trigger {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* File Upload Area */
+
+.upload-area {
+    border: 2px dashed var(--primary-color);
+    padding: var(--margin);
+    text-align: center;
+    border-radius: var(--border-radius);
+    background-color: var(--secondary-color);
+}
+
+.upload-area:hover {
+    background-color: var(--accent-color);
+    cursor: pointer;
+}
+
+/* Notification Badges */
+
+.badge {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+}
+
+/* Typography */
+
+h1, h2, h3 {
+    color: var(--primary-color);
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+}
+
+#empresas {
+    border-right: 1px solid var(--font-color);
+    width: 100%;
+}
+
+.docs-list-mes {
+    display: none;
+    padding-left: 2rem;
+}
+
+.docs-list-ano {
+    display: none;
+    padding-left: 2rem;
+}
+
+.home-container{
+    width: 50%;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-div {
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+    font-size: 2.5rem;
+    font-weight: bolder;
+}
+
+.home-separator {
+    border-right: 1px solid black;
+    border-radius: 0;
+}
+
+.logo {
+    height: 5rem;
+}
+
+.user-img {
+    border-radius: 50%;
+    height: 1.9rem;
+}
+
+.user-data {
+    display: flex;
+    align-items: center;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.input-title {
+    background-color: var(--hover-color);
+    color: white;
+
+    border-radius: 5px;
+    font-size: larger;
+    font-weight: bold;
+}
+
+#content-adm {
+    height: -webkit-fill-available;
+}
+
+#myModal {
+    display: none;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    height: 550px;
+    width: 350px;
+
+    border: 1px solid #ccc;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#update_status > input {
+    position: absolute;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.perfil-input {
+    width: 7rem;
+}
+
+.perfil-input-b {
+    width: 6.3rem;
+}
+
+.data-names {
+    background-color: #bbdcf9;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th, td {
+    padding: px;
+    text-align: left;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2; /* Light gray for even rows */
+}
+
+table tr:nth-child(odd) {
+    background-color: white; /* White for odd rows */
+}
+
+span {
+    margin-left: var(--margin);
+    margin-right: var(--margin);
+    
+    padding-left: var(--padding);
+    padding-right: var(--padding);
+}
+
+.ball::after {
+    content: '';
+    top: 0;
+    left: 0;
+    width: 15px;
+    height: 15px;
+    background-color: green;
+    border-radius: 50%;
+    align-self: center;
+  }

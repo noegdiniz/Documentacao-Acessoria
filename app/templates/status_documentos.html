@@ -1,0 +1,69 @@
+<div class="container" style="height: auto;">
+    {%for emp in docs_emp%}
+    {%for doc in emp[1]%}
+    <div class="flex-center">
+        <div class="key-box row-layout">
+            <div class="row-layout flex-center">
+                titulo:
+                <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
+                contrato:
+                <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
+                categoria:
+                <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
+                obs:
+                <input type="text" id="obs" name="obs" value="{{doc.obs}}" class="key-input" disabled>
+                data:
+                <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
+                anexo:
+                <input type="text" id="anexo-{{doc._id}}" name="anexo" value="/anexo/{{doc._id}}" class="key-input" disabled>
+                
+                <div id="pdfPopup-{{doc._id}}" class="popup">
+                    <iframe id="pdfFrame-{{doc._id}}" width="100%" height="100%" frameborder="0" style="overflow: auto; max-height: 550px;max-width: 350px;">
+                    </iframe>
+                </div>
+                
+                status:
+                {% if doc.status == "APROVADO" %}
+                <input style="background-color: darkgreen; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
+                {% elif doc.status == "AGUARDANDO" %}
+                    <input style="background-color: darkgray; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
+                {% elif doc.status == "NAO APROVADO" %}
+                    <input style="background-color: darkred; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
+                {% endif %}
+                
+                </div>
+        </div>
+    </div>
+    <script>
+        $("#anexo-{{doc._id}}").mouseenter(() => {
+            const pdfUrl = '/anexo/{{doc._id}}';
+            
+            // Set the iframe source to display the PDF
+            $("#pdfFrame-{{doc._id}}").attr('src', pdfUrl);
+            
+
+            const pos = $("#anexo-{{doc._id}}").position()
+
+            $("#pdfPopup-{{doc._id}}").css({
+                top: pos.top + $("#anexo-{{doc._id}}").outerHeight() + 5, // Adjust the vertical position
+                left: pos.left
+            }).show()
+            
+        })
+    
+        $("#anexo-{{doc._id}}").mouseleave(() => {
+            $("#pdfPopup-{{doc._id}}").hide()
+
+            $("#pdfPopup-{{doc._id}}").mouseenter(() => {
+                $("#pdfPopup-{{doc._id}}").mouseleave(() => {
+                    $("#pdfPopup-{{doc._id}}").hide()
+                })
+                
+                $("#pdfPopup-{{doc._id}}").show()
+            })
+        })
+
+    </script>
+    {%endfor%}
+    {%endfor%}
+</div>

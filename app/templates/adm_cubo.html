@@ -1,0 +1,91 @@
+<div>
+    <div class="normal-container">
+        <div class="navbar row-layout">
+            <div>
+                {%if permissao.can_view_dados%}
+                <a href="#" id="cubo-page-data">Dados</a>
+                {%endif%}
+
+                {%if permissao.can_view_contratos%}
+                <a href="#" id="contratos-page">Contratos</a>
+                {%endif%}
+
+                {%if permissao.can_view_categorias%}
+                <a href="#" id="categorias-page">Categorias</a>
+                {%endif%}
+
+                {%if permissao.can_view_perfis%}
+                <a href="#" id="perfil-page">Perfis</a>
+                {%endif%}
+
+                {%if permissao.can_view_users%}
+                <a href="#" id="usuarios-page">Usuarios</a>
+                {%endif%}
+                
+            </div>
+        </div>
+        
+        <div id="content-cubo">
+
+        </div>
+    </div>
+    <script>
+        $("#cubo-page-data").click(() => {
+            let = url = "/cubo_menu"
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    $("#content-cubo").html(text)
+                })
+            })
+        })
+
+        $("#contratos-page").click(() => {
+            let = url = "/contrato_menu"
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    $("#content-cubo").html(text)
+                })
+            })
+        })
+
+        $("#categorias-page").click(() => {
+            let = url = "/categorias_menu"
+            
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    $("#content-cubo").html(text)
+                })
+            })
+        })
+
+        $("#perfil-page").click(() => {
+            let = url = "/perfil_menu"
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    $("#content-cubo").html(text)
+                })
+            })
+        })
+
+        $("#usuarios-page").click(() => {
+            let = url = "/users_menu"
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    $("#content-cubo").html(text)
+                })
+            })
+        })
+
+        $('a').on('click', function(event) {
+            // Your custom code here
+            $('a').css('background-color', '');
+            
+            $(this).css('background-color', '#053a72');
+            
+        });
+    </script>
+</div>

@@ -1,0 +1,28 @@
+{%for doc_emp in docs%}
+    <button class="l-button" id="empresa-{{doc_emp[1][0].empresa_id}}" >
+        <img src="../static/imgs/folder.png" alt="" style="width: 80px;">
+        <!-- Nome da empresa -->
+        {{doc_emp[0]}}
+    </button>
+
+    <script>
+        $("#empresa-{{doc_emp[1][0].empresa_id}}").click(() => {
+            let content = encodeURIComponent($("#content").val());
+            let url = "";
+
+            $("#selected").val("{{doc_emp[1][0].empresa_id}}");
+
+            if (!content) {
+                url = "/filter_docs/{{doc_emp[1][0].empresa_id}}";
+            } else {
+                url = "/filter_docs/{{doc_emp[1][0].empresa_id}}/"+ content;
+            }
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    $("#box-docs").html(text);
+                });
+            });
+        });
+    </script>
+{%endfor%}

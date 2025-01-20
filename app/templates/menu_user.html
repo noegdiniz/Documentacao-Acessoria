@@ -1,0 +1,27 @@
+<div class="col-layout">
+    <div class="key-box empresas-box" id="user-list-content">
+
+    </div>
+</div>
+
+<script>
+    //Carrega a lista de empresas
+fetch("/list_users").then(data => {
+        data.text().then(text => {
+        setTimeout(() => {$("#user-list-content").html(text)}, 100);
+                
+        })
+    })
+    
+    $("#content").on("input", () => {
+        const url = "/list_users/" + $("#content").val();
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+            setTimeout(() => {$("#user-list-content").html(text)}, 100);
+        
+            })
+        })
+    })
+
+</script>

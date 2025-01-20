@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação Acessoria: Upload</title>
+    <link rel="stylesheet" href="../static/app.css">
+    
+</head>
+<body>
+    <div class="main-container">
+
+        <div class="normal-container upload-container col-layout">
+            <div class="input-title badge">
+                DOCUMENTAÇÂO ACESSORIA
+            </div>
+            
+            <div class="container form-container">
+                <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" style="align-items: normal;flex-direction: column;">
+                    <input type="text" id="titulo" name="titulo" required placeholder="Descrição">
+                    
+                    
+                    <span>
+                        CONTRATO:
+                    </span>
+                    <!-- perfil: RH / COM / DMAST -->
+                    <select name="contrato" id="contrato" required placeholder="" style="width: auto;">
+                        {%for contrato in contratos%}
+                        <option value="{{contrato._id}}">{{contrato.nome}}</option>
+                        {%endfor%}
+                    </select>
+                    
+                    <span>
+                        TIPO DE DOCUMENTO:
+                    </span>
+                    <select name="categoria" id="categoria" required placeholder="" style="width: auto;">
+                        {%for categoria in categorias%}
+                        <option value="{{categoria._id}}">{{categoria.nome}}</option>
+                        {%endfor%}
+                    </select>
+                    
+                    <input type="datetime-local" id="data" name="data" required>
+                    <input type="file" id="anexo" name="anexo" accept=".pdf" required>
+                </form>
+                
+                <div class="flex-center" style="width: 100%;">
+                    <button id="make-upload" class="button">
+                        Enviar Documento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Importa a lib JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="../static/scripts.js"></script>
+    
+    <script>
+         $("#make-upload").click( () => {
+
+            // Perform client-side validation
+            let titulo = $("#titulo").val();
+            let contrato = $("#contrato").val();
+            let categoria = $("#categoria").val();
+            let data = $("#data").val();
+            let fileInput = $("#anexo")[0].files[0]; // Get the file
+
+            if (!titulo || !contrato || !categoria || !data || !fileInput) {
+                showCustomAlert("Por favor, preencha todos os campos.");
+                return;
+            }
+            
+            // If validation passes, proceed with form submission
+            let formData = new FormData();
+            formData.append("titulo", titulo);
+            formData.append("contrato", contrato);
+            formData.append("categoria", categoria);
+            formData.append("data", data);
+            formData.append("anexo", fileInput);
+
+            // Submit the form using AJAX
+            $.ajax({
+                type: "POST",
+                url: "upload_file_action", // Replace with your server endpoint
+                data: formData,
+                processData: false, // Prevent jQuery from processing the data
+                contentType: false, // Prevent jQuery from setting the content type
+                
+                success: function(response) {
+                    // Display the result in the 'result' div
+                    showCustomAlert("Documentação enviada com sucesso.");
+                },
+                
+                error: function(error) {
+                    showCustomAlert("Erro ao enviar documentação.");
+                }
+            });
+        })
+
+    </script>
+</body>
+</html>

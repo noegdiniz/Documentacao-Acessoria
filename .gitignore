@@ -1,0 +1,36 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.env
+*.env.*
+*.sqlite
+*.sqlite3
+
+# Virtualenv
+venv/
+ENV/
+env/
+.venv/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Pytest
+.pytest_cache/
+.cache/
+
+# Migrations
+migrations/versions/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
