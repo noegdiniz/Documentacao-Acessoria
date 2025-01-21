@@ -7,6 +7,12 @@ __pycache__/
 *.env.*
 *.sqlite
 *.sqlite3
+*.json
+*.log
+*.bak
+*.bak.*
+*.old
+*.old.*
 
 # Virtualenv
 venv/
