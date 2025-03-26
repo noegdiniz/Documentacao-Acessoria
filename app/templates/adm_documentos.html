@@ -18,6 +18,7 @@
                     <input type="text" value="DATA:" class="key-input" disabled>
                     <input type="text" value="ANEXO:" class="key-input" disabled>
                     <input type="text" value="STATUS:" class="key-input" disabled>
+                    <input type="text" value="EXPIRADO:" class="key-input" disabled>
                 </div>
             </div>
         </div>
@@ -38,7 +39,9 @@
     })
 
     
-    $("#content").on("input", () => {
+    $("#content").on("keypress", (e) => {
+        if (e.which === 13) { // 13 is the keycode for Enter
+        
         const url = "/filter_prestadoras/" + $("#content").val();
         
         fetch(url).then((data) => {
@@ -68,5 +71,6 @@
 
         })
     })
-    })
+    }
+})
 </script>

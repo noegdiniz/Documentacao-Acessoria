@@ -28,7 +28,8 @@
         })
     
     
-    $("#content").on("input", () => {
+        $("#content").on("keypress", (e) => {
+            if (e.which == 13) {
             const url = "/list_logs/" + $("#content").val();
             
             fetch(url).then(data => {
@@ -37,6 +38,7 @@
             
             })
         })
-    })
+    }
+})
 
 </script>

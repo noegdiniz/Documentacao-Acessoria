@@ -315,7 +315,7 @@ def list_docs_filter(empresa_id, content):
     #Puxa o objeto de permissão
     perfil_id = UserController.get(session["id"]).perfil_id
     permissao = PerfilController.get(perfil_id)
-
+    
     return render_template("list_docs_filter.html", docs_emp=docs, permissao=permissao)
 
 #Deleta um documento (Somente admin)

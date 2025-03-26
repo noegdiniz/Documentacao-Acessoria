@@ -28,7 +28,9 @@ class Documento(db.Model):
     
     #ID DA CATEGORIA ATRELADA AO DOCUMENTO
     categoria_id =  db.Column(db.String, nullable=False)
-    
+
+    #CONTROLA SE O DOCUMENTO ESTA OU NAO EXPIRADO COM BASE NO PRAZO DO CUBO
+    expirado = db.Column(db.Boolean, nullable=False, default=False)
 
 class User(db.Model):
     #ID do usuario usa o mesmo da conta do gmail na hora do login

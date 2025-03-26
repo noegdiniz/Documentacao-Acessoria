@@ -30,7 +30,7 @@
                             <button id="statusa{{doc._id}}" name="statusa{{doc._id}}" class="button" style="background-color: darkgreen; color: white;font-size:small;">
                                 APROVAR
                             </button>
-        
+                            
                             <button id="statusn{{doc._id}}" name="statusn{{doc._id}}" class="button" style="background-color: darkred; color: white;font-size: small;">
                                 NAO APROVAR
                             </button>
@@ -49,14 +49,20 @@
                     <input style="background-color: darkred; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
                     {% endif %}
                 </div>
+
+                {% if doc.expirado %}
+                    <input type="text" id="expirado" name="expirado" value="SIM" class="key-input" disabled style="background-color: red; color: white;">
+                {%else%}
+                    <input type="text" id="expirado" name="expirado" value="NAO" class="key-input" disabled style="background-color: green;color: white;">
+                {%endif%}
                 
                 {%if permissao.can_delete_docs%}
                 <button id="delete{{doc._id}}" name="delete{{doc._id}}" class="button">
                     DELETAR
                 </button>
                 {%endif%}
-                
-                </div>
+            
+            </div>
         </div>
     </div>
 

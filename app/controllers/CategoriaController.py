@@ -56,7 +56,7 @@ class CategoriaController:
         
     @staticmethod
     def delete(id):
-        categoria = Categoria.get(id)
+        categoria = CategoriaController.get(id)
         if categoria:
             #Salva o Log da ação
             LogController.create(session["nome"],

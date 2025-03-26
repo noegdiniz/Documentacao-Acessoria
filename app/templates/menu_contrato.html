@@ -54,7 +54,8 @@ fetch("/list_contratos").then(data => {
         })
     })
 
-    $("#content").on("input", () => {
+    $("#content").on("keypress", (e) => {
+        if(e.which == 13) {
         const url = "/list_contratos/" + $("#content").val();
 
         fetch(url).then(data => {
@@ -63,7 +64,8 @@ fetch("/list_contratos").then(data => {
         
         })
     })
-    })
+    }
+})
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();

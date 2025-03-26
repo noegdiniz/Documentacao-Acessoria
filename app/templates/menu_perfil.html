@@ -36,7 +36,8 @@ fetch("/list_perfil").then(data => {
         })
     })
 
-    $("#content").on("input", () => {
+    $("#content").on("keypress", (e) => {
+        if(e.which == 13) {
         const url = "/list_perfil/" + $("#content").val();
 
         fetch(url).then(data => {
@@ -45,7 +46,8 @@ fetch("/list_perfil").then(data => {
                 
             })
         })
-    })
+    }
+})
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();

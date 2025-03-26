@@ -13,7 +13,8 @@ fetch("/list_users").then(data => {
         })
     })
     
-    $("#content").on("input", () => {
+    $("#content").on("keypress", (e) => {
+        if(e.which == 13) {
         const url = "/list_users/" + $("#content").val();
         
         fetch(url).then(data => {
@@ -22,6 +23,7 @@ fetch("/list_users").then(data => {
         
             })
         })
-    })
+    }
+})
 
 </script>

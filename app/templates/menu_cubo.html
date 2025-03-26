@@ -70,7 +70,8 @@ fetch("/list_cubo").then(data => {
         })
     })
 
-    $("#content").on("input", () => {
+    $("#content").on("keypress", (e) => {
+        if(e.which == 13) {
         const url = "/list_cubo/" + $("#content").val();
 
         fetch(url).then(data => {
@@ -79,7 +80,8 @@ fetch("/list_cubo").then(data => {
         
         })
     })
-    })
+    }
+})
 
 
     $("#salvar").click(() => {

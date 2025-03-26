@@ -47,7 +47,8 @@ fetch("/list_categorias").then(data => {
         })
     })
 
-    $("#content").on("input", () => {
+    $("#content").on("keypress", (e) => {
+        if(e.which == 13) {
         const url = "/list_categorias/" + $("#content").val();
 
         fetch(url).then(data => {
@@ -56,7 +57,8 @@ fetch("/list_categorias").then(data => {
         
         })
     })
-    })
+    }
+})
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
