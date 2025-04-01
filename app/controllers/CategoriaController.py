@@ -1,3 +1,4 @@
+from app.controllers.FilterController import FilterController
 from app.models.tables import Categoria
 from app.ext.db import db
 from app.controllers.LogController import LogController
@@ -41,16 +42,7 @@ class CategoriaController:
     
     @staticmethod
     def get_all(filter):
-        filtered_data = []
-        
-        categorias = Categoria.query.all()
-        
-        if filter:
-            for item in categorias:
-                if filter in str(item.nome):
-                    filtered_data.append(item)
-        else:
-            return categorias
+        filtered_data = FilterController.filter(filter, Categoria)
 
         return filtered_data
         

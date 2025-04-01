@@ -17,8 +17,7 @@
             } else {
                 url = "/filter_docs/{{doc_emp[1][0].empresa_id}}/"+ content;
             }
-
-            console.log("TESTE")
+            
             fetch(url).then(data => {
                 data.text().then(text => {
                     $("#box-docs").html(text);

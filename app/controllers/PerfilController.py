@@ -1,6 +1,8 @@
 from app.models.tables import Perfil
 from app.ext.db import db
 from app.controllers.LogController import LogController
+from app.controllers.FilterController import FilterController
+
 from flask import session
 
 class PerfilController:
@@ -151,17 +153,8 @@ class PerfilController:
         return perfil
     
     @staticmethod
-    def get_all(filter):
-        filtered_data = []
-        
-        perfis = Perfil.query.all()
-        
-        if filter:
-            for item in perfis:
-                if filter in str(item.nome):
-                    filtered_data.append(item)
-        else:
-            return perfis
+    def get_all(filter):    
+        filtered_data = FilterController.filter(filter, Perfil)
         
         return filtered_data
     

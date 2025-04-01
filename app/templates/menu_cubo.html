@@ -18,7 +18,7 @@
                             {%endfor%}
                         </select>
                         
-                        <select name="perfil" id="perfil" required placeholder="">
+                        <select name="perfil" id="perfil" required placeholder="" multiple>
                             {%for perfil in perfis%}
                             <option value="{{perfil._id}}">{{perfil.nome}}</option>
                             {%endfor%}
@@ -30,6 +30,7 @@
                         <input type="hidden" id="_id" name="_id">
                     </div>
                 </form>
+                
 
                 <div class="row-layout">
                     <button class="button" id="salvar" name="salvar">
@@ -62,6 +63,8 @@
 </div>
 
 <script>
+
+
 //Carrega a lista de CUBOS
 fetch("/list_cubo").then(data => {
         data.text().then(text => {
@@ -88,12 +91,15 @@ fetch("/list_cubo").then(data => {
     let categoria = $("#categoria").val();
     let contrato = $("#contrato").val();
     let prazo = $("#prazo").val();
-    let perfil = $("#perfil").val();
+    let perfis = $("#perfil").val();
     
-    if(!categoria || !contrato || !prazo || !perfil) {
+    if(!categoria || !contrato || !prazo || !perfis) {
         showCustomAlert("Favor preecher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
+        formData = formData + "&perfis=" + JSON.stringify(perfis);
+        
+        console.log(formData);
         formData["_id"] = $("#_id").val();
         
         $.ajax({
@@ -126,3 +132,15 @@ fetch("/list_cubo").then(data => {
 
 
 </script>
+
+<style>
+    .file-tag {
+        display: inline-block;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 5px 10px;
+        margin: 5px;
+        font-size: 12px;
+    }
+</style>

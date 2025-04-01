@@ -99,5 +99,24 @@
         )
 
     </script>
+
+    <script>
+        $(document).ready(() => {
+            let url = "/upload_gdrive/";
+            
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    if (text.includes("ok"))
+                    {
+                        showCustomAlert("Upload realizado com sucesso.");                
+                    } else {
+                        showCustomAlert("Erro ao realizar upload: " + text);
+                    }
+                })
+            }).then(() => {
+                console.log("Upload realizado com sucesso.");
+            })
+        })
+    </script>
 </body>
 </html>

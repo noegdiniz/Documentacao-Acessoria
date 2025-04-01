@@ -1,3 +1,4 @@
+from app.controllers.FilterController import FilterController
 from app.models.tables import Contrato
 from app.controllers.LogController import LogController
 from app.controllers.EmpresaController import EmpresaController
@@ -46,22 +47,7 @@ class ContratoController:
     
     @staticmethod
     def get_all(filter):
-        filtered_data = []
-        
-        # Get the list of column names dynamically
-        mapper = inspect(Contrato)
-        columns = [column.key for column in mapper.attrs]
-
-        contratos = Contrato.query.all()
-        
-        if filter:
-            for emp in contratos:
-                for column in columns:
-                    if filter in str(getattr(emp, column)):
-                        filtered_data.append(emp)
-                        break
-        else:
-            return contratos
+        filtered_data = FilterController.filter(filter, Contrato)
         return filtered_data
     
     @staticmethod

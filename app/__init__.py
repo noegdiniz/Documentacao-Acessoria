@@ -10,7 +10,7 @@ def create_app():
 
     db.configure(app)
     migrate.configure(app)
-    mail.configure(app)
     bps.configure(app)
+    mail.configure(app)
 
     return app

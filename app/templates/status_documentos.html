@@ -1,69 +1,267 @@
-<div class="container" style="height: auto;">
-    {%for emp in docs_emp%}
-    {%for doc in emp[1]%}
+<div class="container empresas-box-docs " style="height: auto;min-width: 62rem;">
+    <div class="flex-center data-names">
+        <div class="key-box row-layout">
+            <div class="row-layout flex-center">
+                <input type="text" value="TITULO:" class="key-input" disabled>
+                <input type="text" value="CONTRATO:" class="key-input" disabled>
+                <input type="text" value="CATEGORIA:" class="key-input" disabled>
+                <input type="text" value="DATA:" class="key-input" disabled>
+                <input type="text" value="PASTA:" class="key-input" disabled>
+                <input type="text" value="STATUS:" class="key-input" disabled>
+                <input type="text" value="UPLOAD:" class="key-input" disabled>
+            </div>
+
+            <div id="page-status">
+                <input type="text" id="upload" name="upload" value="TODOS OS DOCUMENTOS" class="key-input" disabled="" style="background-color: white;">
+            </div>
+        </div>
+    </div>
+    
+    <div id="box-docs">
+        
+        <div style="height: auto;">
+            {%for emp in docs_emp%}
+            {%for doc in emp[1]%}
+        
     <div class="flex-center">
         <div class="key-box row-layout">
             <div class="row-layout flex-center">
-                titulo:
                 <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
-                contrato:
                 <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
-                categoria:
                 <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
-                obs:
-                <input type="text" id="obs" name="obs" value="{{doc.obs}}" class="key-input" disabled>
-                data:
+                
                 <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
-                anexo:
-                <input type="text" id="anexo-{{doc._id}}" name="anexo" value="/anexo/{{doc._id}}" class="key-input" disabled>
+
+                <input type="text" id="pasta" name="pasta" value="{{doc.pasta}}" class="key-input" disabled>
                 
-                <div id="pdfPopup-{{doc._id}}" class="popup">
-                    <iframe id="pdfFrame-{{doc._id}}" width="100%" height="100%" frameborder="0" style="overflow: auto; max-height: 550px;max-width: 350px;">
-                    </iframe>
+                <div id="status{{doc._id}}" class="status-btn">
+                    {%if doc.status == "CORRIGIDO" %}
+                    <input style="background-color: darkblue; color: white;cursor: default;" type="text" id="status" name="status" value="CORRIGIDO - AGUARDANDO ANALISE" class="key-input" readonly>
+                    {% elif doc.status == "APROVADO" %}
+                    <input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                    {% elif doc.status == "AGUARDANDO" %}
+                    <input style="background-color: darkgray; color: white; cursor: default;" type="text" id="status{{doc._id}}" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                    {% elif doc.status == "NAO APROVADO" %}
+                    <input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                    {% endif %}
                 </div>
                 
-                status:
-                {% if doc.status == "APROVADO" %}
-                <input style="background-color: darkgreen; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
-                {% elif doc.status == "AGUARDANDO" %}
-                    <input style="background-color: darkgray; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
-                {% elif doc.status == "NAO APROVADO" %}
-                    <input style="background-color: darkred; color: white;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" disabled>
-                {% endif %}
-                
-                </div>
+                {%if doc.status == "NAO APROVADO" %}
+                <button id="corrigir{{doc._id}}" name="corrigir" class="button">
+                    CORRIGIR
+                </button>
+                {%endif%}
+
+                <button id="historico{{doc._id}}" name="historico{{doc._id}}" class="button">
+                    HISTORICO
+                </button>
+            </div>
         </div>
     </div>
-    <script>
-        $("#anexo-{{doc._id}}").mouseenter(() => {
-            const pdfUrl = '/anexo/{{doc._id}}';
             
-            // Set the iframe source to display the PDF
-            $("#pdfFrame-{{doc._id}}").attr('src', pdfUrl);
+    <!-- Modal Structure -->
+        <div id="approvalModal{{doc._id}}" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="close-btn-container">
+                    <span class="close-btn" id="closeModal{{doc._id}}">&times;</span>
+                </div>
+                <h2>Aprovações  - {{doc.titulo}}</h2>
+                    <div class="flex-center data-names">
+                        <div class="key-box row-layout">
+                                <div class="row-layout flex-center">
+                                    <input type="text" value="PERFIL:" class="key-input" disabled>
+                                    <input type="text" value="STATUS:" class="key-input" disabled>
+                                    <input type="text" value="ULTIMA ATUALIZAÇÃO:" class="key-input" style="min-width: 10rem;" disabled>
+                                    <input type="text" value="OBSERVAÇÃO:" class="key-input" style="min-width: 16rem;" disabled>
+                                </div>
+                            </div>
+                        </div>
             
+                        {% for aprovacao in doc.aprovacoes %}
+                            <div class="key-box row-layout">
+                                <div class="row-layout flex-center">
+                                    <input type="text" id="perfil" name="perfil" value="{{aprovacao.perfil_nome}}" class="key-input" disabled>
+                                    
+                                    <div id="status-apr{{aprovacao._id}}" class="status-btn">
+                                        {%if aprovacao.status == "AGUARDANDO"%}
+                                        <input style="background-color: darkgray; color: white; cursor: default;" type="text" id="status" name="status" value="{{aprovacao.status}}" class="key-input" disabled>
+                                        {% elif aprovacao.status == "APROVADO" %}
+                                        <input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="{{aprovacao.status}}" class="key-input" disabled>
+                                        {% elif aprovacao.status == "NAO APROVADO" %}
+                                        <input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="{{aprovacao.status}}" class="key-input" disabled>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <input type="text" id="data" name="data" value="{{aprovacao.data}}" style="min-width: 10rem;" class="key-input" disabled>
+                                    
 
-            const pos = $("#anexo-{{doc._id}}").position()
+                                    <input type="text" id="obs{{aprovacao._id}}" name="obs" value="{{aprovacao.obs}}" style="min-width: 16rem;" class="key-input" disabled>
+                                    
+                                </div>
+                                <script>
+                                    $("#obs{{aprovacao._id}}").click(() => {
+                                        $("#obs{{aprovacao._id}}").css("background-color", "white");
+                                    })
+                                </script>
+                            </div>
+                        {% endfor %}
+                        <div>
+                            {% for anexo in doc.anexos%}
+                            <!-- Show anexos in pdf view on page scroll -->
+                            <div class="key-box row-layout">
+                                <a href="{{anexo.link}}">{{anexo.filename}}</a>
+                            </div>
+                            {%endfor%}
+                        </div>
+                </div>
+            </div>
+            <!-- Modal Structure for Multiple File Upload -->
+            <div id="uploadModal{{doc._id}}" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="close-btn-container">
+                        <span class="close-btn" id="closeUploadModal{{doc._id}}">&times;</span>
+                    </div>
+                    <h2>Corrigir Documento - {{doc.titulo}}</h2>
+                    <form id="uploadForm{{doc._id}}" enctype="multipart/form-data">
+                        <div class="file-upload-container">
+                            <input type="file" id="fileInput{{doc._id}}" name="files" multiple>
+                            <div id="fileTags{{doc._id}}" class="file-tags"></div>
+                        </div>
+                        <button type="submit" class="button">Enviar Arquivos</button>
+                    </form>
+                </div>
+            </div>
 
-            $("#pdfPopup-{{doc._id}}").css({
-                top: pos.top + $("#anexo-{{doc._id}}").outerHeight() + 5, // Adjust the vertical position
-                left: pos.left
-            }).show()
-            
-        })
-    
-        $("#anexo-{{doc._id}}").mouseleave(() => {
-            $("#pdfPopup-{{doc._id}}").hide()
+            <script>
+                // Open the upload modal when CORRIGIR button is clicked
+                $("#corrigir{{doc._id}}").click(() => {
+                    const modal = document.getElementById("uploadModal{{doc._id}}");
+                    modal.style.display = "flex";
+                });
 
-            $("#pdfPopup-{{doc._id}}").mouseenter(() => {
-                $("#pdfPopup-{{doc._id}}").mouseleave(() => {
-                    $("#pdfPopup-{{doc._id}}").hide()
+                // Close the upload modal when X button is clicked
+                document.getElementById("closeUploadModal{{doc._id}}").addEventListener("click", () => {
+                    document.getElementById("uploadModal{{doc._id}}").style.display = "none";
+                });
+
+                // Close the upload modal when clicking outside the modal content
+                window.addEventListener("click", (event) => {
+                    const modal = document.getElementById("uploadModal{{doc._id}}");
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+                });
+
+                // Handle file input and display file tags
+                $("#fileInput{{doc._id}}").on("change", function () {
+                    const files = this.files;
+                    const fileTagsContainer = $("#fileTags{{doc._id}}");
+                    fileTagsContainer.empty(); // Clear previous tags
+
+                    Array.from(files).forEach((file) => {
+                        const tag = $("<span>").addClass("file-tag").text(file.name);
+                        fileTagsContainer.append(tag);
+                    });
+                });
+
+                // Handle form submission for file upload
+                $("#uploadForm{{doc._id}}").on("submit", function (e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+
+                    fetch("/upload_files/{{doc._id}}", {
+                        method: "POST",
+                        body: formData,
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.success) {
+                                showCustomAlert("Arquivos enviados com sucesso!");
+                                document.getElementById("uploadModal{{doc._id}}").style.display = "none";
+                            } else {
+                                showCustomAlert("Erro ao enviar arquivos: " + data.message);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Erro:", error);
+                            showCustomAlert("Erro ao enviar arquivos.");
+                        });
+                });
+            </script>
+        
+        <script>
+        
+                $("#status{{doc._id}}").on('click','.key-input',() => {
+                    const modal = document.getElementById("approvalModal{{doc._id}}");
+        
+                    modal.style.display = "flex";
+                });
+
+                $("#historico{{doc._id}}").click(() => {
+                    let url = f`/filter_docs/{{doc.empresa_id}}/hist,{{doc.titulo}}`;
+                    fetch(url).then(data => {
+                        data.text().then(text => {
+                            $("#box-docs").html(text)
+
+                            $("#page-status").html(
+                                '<input type="text" id="upload" name="upload" value="HISTORICO - {{doc.titulo}}" class="key-input" disabled="" style="background-color: white;">'
+                            )
+                        })
+                    })
                 })
+        
+                // Close modal when X button is clicked
+                document.getElementById("closeModal{{doc._id}}").addEventListener("click", () => {
+                    document.getElementById("approvalModal{{doc._id}}").style.display = "none";
+                });
+        
+                // Close modal when clicking outside the modal content
+                window.addEventListener("click", (event) => {
+                    const modal = document.getElementById("approvalModal{{doc._id}}");
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                        }
+                    });
+        
+                $("#delete{{doc._id}}").click(() => {
+                let url = "/exclui_documento/" + "{{doc._id}}";
                 
-                $("#pdfPopup-{{doc._id}}").show()
-            })
-        })
-
-    </script>
-    {%endfor%}
-    {%endfor%}
+                fetch(url).then(data => {
+                        data.text().then(text => {
+                            if (text.includes("ok"))
+                            {
+                                showCustomAlert("Cadastro excluido com sucesso.");                
+                            } else {
+                                showCustomAlert("Erro ao realizar exclusão: " + text);
+                            }
+                        })
+                    }).then(() => {
+                        let content = encodeURIComponent($("#content").val());
+                        let url = "";
+        
+                        let sel = $("#selected").val();
+        
+                        if(sel) {
+                            if (!content) {
+                                url = `/filter_docs/${sel}`;
+                            } else {
+                                url = `/filter_docs/${sel}/${content}`;
+                            }
+                            
+                            fetch(url).then(data => {
+                                data.text().then(text => {
+                                    setTimeout(() => {
+                                        $("#box-docs").html(text);
+                                    }, 100)
+                                });
+                            });
+                        }
+                    })
+                })
+            </script>
+            {%endfor%}
+            {%endfor%}
+        </div>
+    </div>
 </div>

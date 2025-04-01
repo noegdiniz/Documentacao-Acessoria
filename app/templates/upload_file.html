@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentação Acessoria: Upload</title>
     <link rel="stylesheet" href="../static/app.css">
-    
 </head>
 <body>
     <div class="main-container">
-
         <div class="normal-container upload-container col-layout">
             <div class="input-title badge">
                 DOCUMENTAÇÂO ACESSORIA
@@ -19,11 +17,9 @@
                 <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" style="align-items: normal;flex-direction: column;">
                     <input type="text" id="titulo" name="titulo" required placeholder="Descrição">
                     
-                    
                     <span>
                         CONTRATO:
                     </span>
-                    <!-- perfil: RH / COM / DMAST -->
                     <select name="contrato" id="contrato" required placeholder="" style="width: auto;">
                         {%for contrato in contratos%}
                         <option value="{{contrato._id}}">{{contrato.nome}}</option>
@@ -40,7 +36,14 @@
                     </select>
                     
                     <input type="datetime-local" id="data" name="data" required>
-                    <input type="file" id="anexo" name="anexo" accept=".pdf" required>
+                    
+                    <span>
+                        SELECIONE UM OU VARIOS ARQUIVOS:
+                    </span>
+                    <!-- Container to display selected files as tags -->
+                    <div id="file-tags-container" ></div>
+                    
+                    <input type="file" id="anexo" name="anexo" accept=".pdf" multiple required>
                 </form>
                 
                 <div class="flex-center" style="width: 100%;">
@@ -56,16 +59,30 @@
     <script src="../static/scripts.js"></script>
     
     <script>
-         $("#make-upload").click( () => {
+        // Function to display selected files as tags
+        function updateFileTags(files) {
+            const container = $("#file-tags-container");
+            container.empty(); // Clear previous tags
+            Array.from(files).forEach(file => {
+                const tag = $("<span>").text(file.name).addClass("file-tag");
+                container.append(tag);
+            });
+        }
 
+        $("#anexo").on("change", function() {
+            const files = this.files;
+            updateFileTags(files);
+        });
+
+        $("#make-upload").click(() => {
             // Perform client-side validation
             let titulo = $("#titulo").val();
             let contrato = $("#contrato").val();
             let categoria = $("#categoria").val();
             let data = $("#data").val();
-            let fileInput = $("#anexo")[0].files[0]; // Get the file
+            let files = $("#anexo")[0].files; // Get the files
 
-            if (!titulo || !contrato || !categoria || !data || !fileInput) {
+            if (!titulo || !contrato || !categoria || !data || files.length === 0) {
                 showCustomAlert("Por favor, preencha todos os campos.");
                 return;
             }
@@ -76,7 +93,9 @@
             formData.append("contrato", contrato);
             formData.append("categoria", categoria);
             formData.append("data", data);
-            formData.append("anexo", fileInput);
+            Array.from(files).forEach(file => {
+                formData.append("anexo", file);
+            });
 
             // Submit the form using AJAX
             $.ajax({
@@ -87,7 +106,6 @@
                 contentType: false, // Prevent jQuery from setting the content type
                 
                 success: function(response) {
-                    // Display the result in the 'result' div
                     showCustomAlert("Documentação enviada com sucesso.");
                 },
                 
@@ -95,8 +113,18 @@
                     showCustomAlert("Erro ao enviar documentação.");
                 }
             });
-        })
-
+        });
     </script>
+    <style>
+        .file-tag {
+            display: inline-block;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin: 5px;
+            font-size: 12px;
+        }
+    </style>
 </body>
 </html>

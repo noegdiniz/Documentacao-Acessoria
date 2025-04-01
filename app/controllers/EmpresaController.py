@@ -1,6 +1,8 @@
 from app.models.tables import Empresa
 from app.ext.db import db
 from app.controllers.LogController import LogController
+from app.controllers.FilterController import FilterController
+
 from flask import session
 
 from sqlalchemy import inspect
@@ -17,7 +19,7 @@ class EmpresaController():
                              session["perfil"],
                              "EMPRESA",
                              "CRIAR",
-                             f"NOME: {empresa.nome} / CHAVE: {empresa.chave}")
+                             f"NOME: {empresa.nome} | CHAVE: {empresa.chave}")
     
     @staticmethod
     def update(nome, chave, _id):
@@ -34,7 +36,7 @@ class EmpresaController():
                              session["perfil"],
                              "EMPRESA",
                              "ALTERAR",
-                             f"NOME: {old_empresa_nome} / CHAVE: {old_empresa_chave} -> NOME: {empresa.nome} / CHAVE: {empresa.chave}")
+                             f"NOME: {old_empresa_nome} | CHAVE: {old_empresa_chave} -> NOME: {empresa.nome} | CHAVE: {empresa.chave}")
     
     @staticmethod
     def get(chave=None, _id=None):
@@ -47,23 +49,7 @@ class EmpresaController():
     
     @staticmethod
     def get_all(content):
-        filtered_emps = []
-        
-        # Get the list of column names dynamically
-        mapper = inspect(Empresa)
-        columns = [column.key for column in mapper.attrs]
-
-        empresas = Empresa.query.all()
-
-        if content:
-            for emp in empresas:
-                for column in columns:
-                    if content in str(getattr(emp, column)):
-                        filtered_emps.append(emp)
-                        break
-        else:
-            return empresas
-        
+        filtered_emps = FilterController.filter(content, Empresa)
         return filtered_emps
     
     @staticmethod

@@ -3,6 +3,7 @@ from app.models.tables import User
 from app.ext.db import db
 from app.controllers.LogController import LogController
 from app.controllers.PerfilController import PerfilController
+from app.controllers.FilterController import FilterController
 from flask import session
 
 class UserController:
@@ -28,17 +29,8 @@ class UserController:
 
     @staticmethod
     def get_all(filter):
-        filtered_data = []
+        filtered_data = FilterController.filter(filter, User)
         
-        users = User.query.all()
-
-        if filter:
-            for item in users:
-                if filter in str(item.nome) or filter in str(item.perfil) or filter in str(item.email):
-                    filtered_data.append(item)
-        else:
-            return users
-
         return filtered_data
 
     @staticmethod

@@ -4,7 +4,7 @@
         <div class="row-layout">
             <input type="text" value="{{cubo.categoria_nome}}" disabled>
             <input type="text" value="{{cubo.contrato_nome}}" disabled>
-            <input type="text" value="{{cubo.perfil_nome}}" disabled>
+            <input type="text" value="{{cubo.perfil_nomes}}" disabled>
             <input type="text" value="{{cubo.prazo}}" disabled>
             <input type="text" value="{{cubo.pasta_drive}}" disabled>
         </div>
@@ -31,7 +31,6 @@
         $("#categoria").val("{{cubo.categoria_id}}");
         $("#contrato").val("{{cubo.contrato_id}}");
         $("#prazo").val("{{cubo.prazo}}");
-        $("#perfil").val("{{cubo.perfil_id}}");
         $("#drive").val("{{cubo.pasta_drive}}");
 
         //Adiciona sinal visual da alteração no menu

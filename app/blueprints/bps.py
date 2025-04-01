@@ -16,6 +16,8 @@ import requests
 import json
 import zlib
 
+from app.models.tables import CUBO, Anexo
+
 bp_app = Blueprint("bp", __name__)
 
 ##
@@ -68,6 +70,13 @@ def get_user_info():
 
     # Parse the tokens!
     client.parse_request_body_response(json.dumps(token_response.json()))
+    client.access_token
+    # Store tokens in session for later use
+    session['google_tokens'] = {
+        'access_token': client.access_token,
+        'refresh_token': client.refresh_token,
+        'expires_in': client.expires_in
+    }
 
     # Now that we have tokens (yay) let's find and hit URL
     # from Google that gives you user's profile information,
@@ -224,14 +233,16 @@ def auth_prestadora():
 @bp_app.route('/anexo/<id>')
 def serve_anexo(id):
     # Query the Documento by _id
-    documento = DocsController.get(id)
+    anexo = Anexo.query.filter_by(_id=id).first()
     
-    if documento is None:
+    
+    if anexo is None:
         # If no document is found, return a 404 error
         abort(404, description="Documento não encontrado")
     try:
         # Decompress the PDF before serving
-        decompressed_data = zlib.decompress(documento.anexo)
+        decompressed_data = zlib.decompress(anexo.data)
+
     except zlib.error:
         abort(500, description="Erro ao descompactar o documento")
 
@@ -240,7 +251,7 @@ def serve_anexo(id):
     temp_file = BytesIO(decompressed_data)
 
     # If 'download=1' is in the query params, force the download
-    return send_file(temp_file, download_name=f"{documento.titulo}.pdf")
+    return send_file(temp_file, download_name=f"{anexo.filename}.pdf")
     
 
 #Pagina de login da prestadora
@@ -308,8 +319,13 @@ def list_docs_filter(empresa_id, content):
     ##Faz o decode do argumento para filtrar
     content = urllib.parse.unquote(content) if content else None
 
-    docs = DocsController.filter(empresa_id, content)
-
+    # Checa se precisa retornar o historico do documento
+    if "hist" in content:
+        titulo = content.aplit(",")[1]
+        docs = DocsController.get_history_docs(titulo)
+    else:
+        docs = DocsController.filter(empresa_id, content)
+    
     docs = docs.items()
 
     #Puxa o objeto de permissão
@@ -318,6 +334,17 @@ def list_docs_filter(empresa_id, content):
     
     return render_template("list_docs_filter.html", docs_emp=docs, permissao=permissao)
 
+# Atualiza o documento e cria uma nova versao, recria os anexos
+@bp_app.route("/update_documento/<id>", methods=["POST"])
+def update_documento(doc_id):
+    try:
+        files = request.files
+        DocsController.corrige_documento(doc_id, files)
+        
+        return "ok"
+    except Exception as e:
+        return f"erro {e}"
+        
 #Deleta um documento (Somente admin)
 @bp_app.route("/exclui_documento/<id>")
 def delete_documento(id):
@@ -345,7 +372,6 @@ def cubo_menu():
                            perfis=perfis,
                            permissao=permissao)
 
-
 ##Cria template de documentação
 @bp_app.route("/create_cubo", methods = ["POST"])
 def create_cubo():
@@ -353,8 +379,7 @@ def create_cubo():
     
     form["categoria_nome"] = CategoriaController.get(form["categoria"]).nome
     form["contrato_nome"] = ContratoController.get(form["contrato"]).nome
-    form["perfil_nome"] = PerfilController.get(form["perfil"]).nome
-
+    
     try:
         if form["_id"]:
             CuboController.update(form)
@@ -614,17 +639,21 @@ def adm_empresas():
 ## Pagina Adm de documentações (sub-pagina)
 @bp_app.route("/adm_documentos")
 def adm_documentos():
-    return render_template("adm_documentos.html")
+    permissao = PerfilController.get(UserController.get(session["id"]).perfil_id)
+    uploaded = DocsController.is_all_uploaded()
+
+    return render_template("adm_documentos.html", permissao=permissao, uploaded=uploaded)
 
 ###                                                    ###
 ## ENDPOINTS PARA ATUALIZAÇÃO DE STATUS DE DOCUMENTAÇÃO ##
 ###                                                    ###
 
-##Atualiza status da documentação
+##Atualiza status das aprovaçoes da documentação
 @bp_app.route("/update_status/<_id>/<string:status>/", defaults={'obs': ""})
 @bp_app.route("/update_status/<_id>/<string:status>/<obs>")
 def update_status(_id,status,obs):
     try:
+    
         DocsController.update_status(_id, obs, status)
         return "ok"
     
@@ -633,3 +662,15 @@ def update_status(_id,status,obs):
 
 def configure(app):
     app.register_blueprint(bp_app)
+
+## Limpa os anexos depois de fazer o upload para o Google drive
+@bp_app.route("/upload_gdrive/")
+def upload_gdrive():
+    try:
+        DocsController.upload_drive()
+        #DocsController.limpa_anexos()
+
+        return "ok"
+    except Exception as e:
+        return(f"erro:{e}")
+    
