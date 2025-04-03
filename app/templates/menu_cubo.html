@@ -6,15 +6,13 @@
                 <form id="form_dados" name="form_dados" class="key-box">
                     <div class="row-layout">
 
-                        <select name="categoria" id="categoria" required placeholder="">
-                            {%for categoria in categorias%}
-                            <option value="{{categoria._id}}">{{categoria.nome}}</option>
-                            {%endfor%}
-                        </select>
-                        
-                        <select name="contrato" id="contrato" required placeholder="">
-                            {%for contrato in contratos%}
-                            <option value="{{contrato._id}}">{{contrato.nome}}</option>
+                        <select name="categoria" id="categoria" required placeholder="" multiple>
+                            {%for t_processo in tipos_processos%}
+                            <optgroup label="{{t_processo.nome}}">
+                                {%for categoria in t_processo.categorias%}
+                                    <option value="{{categoria._id}}">-> {{categoria.nome}}</option>
+                                {%endfor%}
+                            </optgroup>
                             {%endfor%}
                         </select>
                         
@@ -24,7 +22,6 @@
                             {%endfor%}
                         </select>
                         
-                        <input type="text" id="prazo" name="prazo" placeholder="prazo do documento">
                         <input type="text" id="drive" name="drive" placeholder="pasta do drive">
                         
                         <input type="hidden" id="_id" name="_id">
@@ -48,7 +45,6 @@
                 <input type="text" value="CATEGORIA:" disabled>
                 <input type="text" value="CONTRATO:" disabled>
                 <input type="text" value="PERFIL:" disabled>
-                <input type="text" value="PRAZO:" disabled>
                 <input type="text" value="PASTA DRIVE:" disabled>
             </div>
     
@@ -89,15 +85,14 @@ fetch("/list_cubo").then(data => {
 
     $("#salvar").click(() => {
     let categoria = $("#categoria").val();
-    let contrato = $("#contrato").val();
-    let prazo = $("#prazo").val();
-    let perfis = $("#perfil").val();
+    let perfil = $("#perfil").val();
+    let drive = $("#drive").val();
     
-    if(!categoria || !contrato || !prazo || !perfis) {
+    if(!categoria || !contrato || !drive || !perfil) {
         showCustomAlert("Favor preecher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
-        formData = formData + "&perfis=" + JSON.stringify(perfis);
+        formData = formData + "&categorias=" + JSON.stringify(categoria);
         
         console.log(formData);
         formData["_id"] = $("#_id").val();

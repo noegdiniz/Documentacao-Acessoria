@@ -6,7 +6,7 @@
             <div class="row-layout">
                 
                 <!-- DADOS -->
-                <div id="perms-dados" class="col-layout">
+                <div id="perms" class="col-layout">
                     <input class="perfil-input-b" type="text" name="nome" value="{{perfil.nome}}" disabled>
                     
                     <input type="hidden" name="nome" value="{{perfil.nome}}">
@@ -73,11 +73,66 @@
                             {%endif%}
                         </select>
                     </div>
+                </div>
+                
+
+                <div id="perms-tipo-processo" class="col-layout">
+                    <input class="perfil-input-b" type="text" id="tipo-processo" name="tipo-processo" value="tipo processo" disabled>
+                    <div class="col-layout">
+                        
+                        <select class="perfil-input" name="edit-tipo-processo" id="tipo-processo" required placeholder="">
+                            {%if perfil.can_edit_tipo_processo%}
+
+                                <option value="1" selected>SIM</option>
+                                <option value="0">NÂO</option>
+                            {%else%}
+                                <option value="1">SIM</option>
+                                <option value="0" selected>NÂO</option>
+                            {%endif%}
+                        </select>
+                    </div>
     
+                    <div class="col-layout">
+                        
+                        <select class="perfil-input" name="delete-tipo-processo" id="tipo-processo" required placeholder="">
+                            {%if perfil.can_delete_tipo_processo%}
+
+                                <option value="1" selected>SIM</option>
+                                <option value="0">NÂO</option>
+                            {%else%}
+                                <option value="1">SIM</option>
+                                <option value="0" selected>NÂO</option>
+                            {%endif%}
+                        </select>
+                    </div>
+                    
+                    <div class="col-layout">
+        
+                        <select class="perfil-input" name="view-tipo-processo" id="tipo-processo" required placeholder="">
+                            {%if perfil.can_view_tipo_processo%}
+
+                                <option value="1" selected>SIM</option>
+                                <option value="0">NÂO</option>
+                            {%else%}
+                                <option value="1">SIM</option>
+                                <option value="0" selected>NÂO</option>
+                            {%endif%}
+                        </select>
+                    </div>
     
-    
-    
-    
+                    <div class="col-layout">
+                
+                        <select class="perfil-input" name="criar-tipo-processo" id="tipo-processo" required placeholder="">
+                            {%if perfil.can_create_tipo_processo%}
+
+                                <option value="1" selected>SIM</option>
+                                <option value="0">NÂO</option>
+                            {%else%}
+                                <option value="1">SIM</option>
+                                <option value="0" selected>NÂO</option>
+                            {%endif%}
+                        </select>
+                    </div>
                 </div>
     
                 <!-- CONTRATO -->

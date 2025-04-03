@@ -126,7 +126,7 @@ class DocsController:
             doc.pasta = cubo.pasta_drive
             doc.perfil_nomes = cubo.perfil_nomes
             doc.aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
-
+        
         return filtered_emps
         
     @staticmethod
@@ -266,7 +266,7 @@ class DocsController:
     @staticmethod
     def corrige_documento(doc_id, files):
         doc = Documento.query.filter_by(_id=doc_id).first()
-        
+
         # Cria uma nova versão do documento
         new_doc = Documento(
             titulo=doc.titulo,

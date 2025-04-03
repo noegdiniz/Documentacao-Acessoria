@@ -7,6 +7,20 @@
                     <div class="row-layout">
                         
                         <input type="text" id="nome" name="nome" placeholder="descrição da categoria">
+                        
+                        <select name="tipo_processo" id="tipo_processo">
+                            {%for tipo_processo in tipos_processos%}
+                                <option value="{{tipo_processo._id}}">{{tipo_processo.nome}}</option>
+                            {%endfor%}
+                        </select>
+
+                        
+                        <input type="text" id="docs_precisos_input" name="docs_precisos_input" id="docs_precisos_input" placeholder="digite o nome do documento necessário e precione enter">
+                        <input type="hidden" id="docs_precisos" name="docs_precisos">
+
+                        <div id="tags" style="display: flex;">
+                            
+                        </div>
 
                         <input type="hidden" id="_id" name="_id">
                     </div>
@@ -27,6 +41,8 @@
         <div class="key-box row-layout data-names">
             <div class="row-layout">
                 <input type="text" id="nome" value="DESCRIÇÂO" disabled>
+                <input type="text" id="nome" value="TIPO DE PROCESSO" disabled>
+                <input type="text" id="nome" value="DOCUMENTOS NECESSARIOS" disabled>
             </div>
     
             <div class="row-layout">
@@ -39,13 +55,50 @@
 </div>
 
 <script>
+    var tags = []
+
     //Carrega a lista de empresas
-fetch("/list_categorias").then(data => {
-        data.text().then(text => {
-        setTimeout(() => {$("#categoria-list-content").html(text)}, 100);
-                
+    fetch("/list_categorias").then(data => {
+            data.text().then(text => {
+            setTimeout(() => {$("#categoria-list-content").html(text)}, 100);
+                    
+            })
         })
+    
+    
+    function removeTag(index) {
+        tags.splice(index, 1);
+
+        let i = 0;
+
+        $("#tags").html("");
+        tags.forEach(tag => {
+            if (tag.trim() !== "") {
+                   $("#tags").append(`<div class="tag-item" onclick="removeTag(${i})">${tag}</div>`);
+            }
+            i += 1;
+        });
+    }
+    
+    $("#docs_precisos_input").on("keypress", (e) => {
+        if(e.which == 13) {
+            let nome = $("#docs_precisos_input").val();
+            tags.push(nome.toUpperCase())
+            $("#docs_precisos_input").val("");
+            
+            let i = 0;
+
+            $("#tags").html("");
+            tags.forEach(tag => {
+                if (tag.trim() !== "") {
+                    $("#tags").append(`<div class="tag-item" onclick="removeTag(${i})">${tag}</div>`);
+                }
+                i += 1;
+            })
+        }
     })
+
+    
 
     $("#content").on("keypress", (e) => {
         if(e.which == 13) {
@@ -62,8 +115,11 @@ fetch("/list_categorias").then(data => {
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
-
-    if(!nome) {
+    let tipo_processo = $("#tipo_processo").val();
+    
+    $("#docs_precisos").val(tags.join(','));
+    
+    if(!nome || !tipo_processo || !tags.length) {
         showCustomAlert("Favor preecher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();

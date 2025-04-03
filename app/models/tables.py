@@ -15,6 +15,7 @@ class Anexo(db.Model):
     data = db.Column(db.LargeBinary, nullable=False) #Arquivo do anexo
     link = db.Column(db.String, nullable=False) #Link do anexo no drive
 
+# Empresa subcontratada
 class Subcont(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String, nullable=False)
@@ -22,10 +23,29 @@ class Subcont(db.Model):
     contrato_id = db.Column(db.Integer, nullable=False) #ID do contrato do subcontratado
     empresa_id = db.Column(db.Integer, nullable=False) #ID da empresa do subcontratado
 
+# Tipo de Processo
 class TipoProcesso(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String, nullable=False) #Nome do tipo de processo
-    
+
+# Tipo de Documentação
+class Categoria(db.Model):
+    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nome = db.Column(db.String, nullable=False)
+
+    tipo_de_processo_id = db.Column(db.Integer, nullable=False)
+    tipo_de_processo_nome = db.Column(db.String, nullable=False)
+
+    # Documento pedidos para cada categoria (usado para o checklist de documentos) ex: folha de pagamento, etc...
+    documentos_pedidos = db.Column(db.String, nullable=False) # Lista de documentos necessarios separados por virgula
+
+# Contrato
+class Contrato(db.Model):
+    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nome = db.Column(db.String, nullable=False)
+    empresa_id = db.Column(db.Integer, nullable=False)
+    empresa_nome = db.Column(db.String, nullable=False)
+
 class Funcionario(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String, nullable=False)
@@ -47,6 +67,7 @@ class Documento(db.Model):
 
     #ID DO CONTRADO ATRELADO AO DOCUMENTO
     contrato_id = db.Column(db.Integer, nullable=False)
+    contrato_nome = db.Column(db.String, nullable=False)
     
     # ID DA EMPRESA OU SUBCONTRATADA DO DOCUMENTO
     # Se o documento for de uma empresa, o ID será o da empresa
@@ -62,7 +83,7 @@ class Documento(db.Model):
     categoria_id =  db.Column(db.String, nullable=False)
     
     # ID DO TIPO DE PROCESSO ATRELADO AO DOCUMENTO
-    tipo_processo = db.Column(db.String, nullable=False) #Tipo do processo
+    tipo_processo_id = db.Column(db.Integer, nullable=False) #Tipo do processo
 
     #CONTROLA O STATUS GERAL DO DOCUMENTO
     status = db.Column(db.String, nullable=False, default="AGUARDANDO") #APROVADO / AGUARDANDO / NAO APROVADO / CORRIGIDO
@@ -110,25 +131,13 @@ class Aprovacao(db.Model):
 
 class CUBO(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    categoria_id = db.Column(db.Integer, nullable=False)
-    categoria_nome = db.Column(db.String, nullable=False)
-    contrato_id = db.Column(db.Integer, nullable=False)
-    contrato_nome = db.Column(db.String, nullable=False)
+    categoria_ids = db.Column(db.Integer, nullable=False)
+    categoria_nomes = db.Column(db.String, nullable=False)
     
     perfil_ids = db.Column(db.String, nullable=False) #IDs dos perfis separados por vírgula
     perfil_nomes = db.Column(db.String, nullable=False) #Nomes dos perfis separados por vírgula
     
     pasta_drive = db.Column(db.String, nullable=False)
-
-class Contrato(db.Model):
-    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nome = db.Column(db.String, nullable=False)
-    empresa_id = db.Column(db.Integer, nullable=False)
-    empresa_nome = db.Column(db.String, nullable=False)
-
-class Categoria(db.Model):
-    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nome = db.Column(db.String, nullable=False)
 
 class Perfil(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -174,12 +183,18 @@ class Perfil(db.Model):
     can_delete_users = db.Column(db.Boolean, nullable=False, default=False)
     can_view_users = db.Column(db.Boolean, nullable=False, default=False)
 
+    # Permissoes de TIPO_PROCESSO
+    can_create_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
+    can_edit_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
+    can_delete_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
+    can_update_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
+    can_view_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
+    
 # Helper function to make strings uppercase
 def uppercase_string(mapper, connection, target):
     for column in target.__table__.columns:
         if isinstance(column.type, db.String) and getattr(target, column.name) and column.name != "pasta_drive":
             setattr(target, column.name, getattr(target, column.name).upper())
-
 
 class Log(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)

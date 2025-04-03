@@ -1,0 +1,60 @@
+{%for tipo_processo in tipo_processos%}
+<div class="col-layout">
+    <div class="key-box row-layout">
+        <div class="row-layout">
+            <input type="text" id="nome" value="{{tipo_processo.nome}}" disabled>
+        </div>
+        
+        <div class="row-layout">
+            {%if permissao.can_edit_tipo_processo%}
+            <button class="button" id="alterar-{{tipo_processo._id}}" name="alterar">
+                alterar
+            </button>
+            {%endif%}
+
+            {%if permissao.can_delete_tipo_processo%}
+            <button class="button" id="excluir-{{tipo_processo._id}}" name="excluir">
+                excluir
+            </button>
+            {%endif%}
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#alterar-{{tipo_processo._id}}").click(() => {
+        $("#nome").val("{{tipo_processo.nome}}");
+
+        //Adiciona sinal visual da alteração no menu
+        $("#form_dados").addClass("ball");
+
+        //Muda o id do tipo_processo para realizar a alteração no item certo
+        $("#_id").val("{{tipo_processo._id}}");
+    })
+    
+    $("#excluir-{{tipo_processo._id}}").click(() => {
+        let url = "/delete_tipo_processo/" + "{{tipo_processo._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if (text.includes("ok"))
+                {
+                    showCustomAlert("Cadastro excluido com sucesso.");                
+                } else {
+                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                }
+            })
+        }).then(() => {
+            let val = $("#content").val();
+            let url = `/list_tipo_processo/${val}`
+            
+            fetch(url).then(data => {
+                data.text().then(text => {
+                
+                setTimeout(() => {$("#tipo-processo-list-content").html(text)}, 100)
+                })
+            })
+        })
+    })
+</script>
+{%endfor%}

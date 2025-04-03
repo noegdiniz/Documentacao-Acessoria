@@ -3,55 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentação Acessoria: Upload</title>
+    <title>Documentação: Upload</title>
     <link rel="stylesheet" href="../static/app.css">
 </head>
 <body>
     <div class="main-container">
         <div class="normal-container upload-container col-layout">
             <div class="input-title badge">
-                DOCUMENTAÇÂO ACESSORIA
+                FORMULARIO DOCUMENTAÇÂO
             </div>
             
-            <div class="container form-container">
-                <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" style="align-items: normal;flex-direction: column;">
-                    <input type="text" id="titulo" name="titulo" required placeholder="Descrição">
+            <div class="container row-layout" style="max-width: min-content;">
+                <div class="container form-container">
+                    <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" style="align-items: normal;flex-direction: column;">
+                        <span>
+                            DESCRIÇÃO:
+                        </span>
+                        <input type="text" id="titulo" name="titulo" required placeholder="Descrição">
+            
+                        
+                        <span>
+                            TIPO DE DOCUMENTO:
+                        </span>
+                        <select name="categoria" id="categoria" required placeholder="" style="width: auto;">
+                            {%for t_processo in tipo_processo%}
+                            <optgroup label="t_processo.nome">
+                                {%for categoria in t_processo.categorias%}
+                                    <option value="{{categoria._id}}">{{categoria.nome}}</option>
+                                {%endfor%}
+                            </optgroup>
+                            {%endfor%}
+                        </select>
+                        
+                        
+                        <span>
+                            CONTRATO:
+                        </span>
+                        <select name="contrato" id="contrato" required placeholder="" style="width: auto;">
+                            {%for contrato in contratos%}
+                            <option value="{{contrato._id}}">{{contrato.nome}}</option>
+                            {%endfor%}
+                        </select>
+
+                        <span>
+                            JUSTIFICATIVA
+                        </span>
+                        <input type="text" id="justificativa" name="justificativa" required placeholder="Justificativa" disabled>
+                        
+                        <input type="datetime-local" id="data" name="data" required>
+                        
+                    </form>
                     
-                    <span>
-                        CONTRATO:
-                    </span>
-                    <select name="contrato" id="contrato" required placeholder="" style="width: auto;">
-                        {%for contrato in contratos%}
-                        <option value="{{contrato._id}}">{{contrato.nome}}</option>
-                        {%endfor%}
-                    </select>
-                    
-                    <span>
-                        TIPO DE DOCUMENTO:
-                    </span>
-                    <select name="categoria" id="categoria" required placeholder="" style="width: auto;">
-                        {%for categoria in categorias%}
-                        <option value="{{categoria._id}}">{{categoria.nome}}</option>
-                        {%endfor%}
-                    </select>
-                    
-                    <input type="datetime-local" id="data" name="data" required>
-                    
-                    <span>
-                        SELECIONE UM OU VARIOS ARQUIVOS:
-                    </span>
-                    <!-- Container to display selected files as tags -->
-                    <div id="file-tags-container" ></div>
-                    
-                    <input type="file" id="anexo" name="anexo" accept=".pdf" multiple required>
-                </form>
+                    <div class="flex-center" style="width: 100%;">
+                        <button id="make-upload" class="button">
+                            Enviar Documento
+                        </button>
+                    </div>
+                </div>
                 
-                <div class="flex-center" style="width: 100%;">
-                    <button id="make-upload" class="button">
-                        Enviar Documento
-                    </button>
+                <div class="container form-container" style="overflow-y: auto; min-height: 76vh; max-height: 1px;">
+                    
+                    <div class="col-layout" id="anexos">
+                    
+                        <span>
+                            Teste:
+                        </span>
+                        <input type="file" id="anexo" name="anexo" accept=".pdf" required>
+                    
+                    </div>
                 </div>
             </div>
+            
         </div>
     </div>
     <!-- Importa a lib JQuery -->
@@ -59,30 +81,64 @@
     <script src="../static/scripts.js"></script>
     
     <script>
-        // Function to display selected files as tags
-        function updateFileTags(files) {
-            const container = $("#file-tags-container");
-            container.empty(); // Clear previous tags
-            Array.from(files).forEach(file => {
-                const tag = $("<span>").text(file.name).addClass("file-tag");
-                container.append(tag);
-            });
-        }
+        $("#titulo").click(() => {
+            $("#titulo").css("background-color", "white");
+        })
 
-        $("#anexo").on("change", function() {
-            const files = this.files;
-            updateFileTags(files);
-        });
+        $("#anexo").on("change", () => {    
+            let value = $("#categoria").val();
+            let url = `/get_documentos_precisos/${value}`;
 
+            fetch(url).then(data => {
+                data.json().then(text => {
+                    // Percorrer todos os elementos do json
+                    let html = "";
+
+                    text.forEach(element => {
+                        let nome = element.nome;
+                        let id = element._id
+
+                        html += `<span>
+                            ${nome}:
+                            </span>
+                            <input type="file" id="anexo${id}" name="anexo" accept=".pdf" required>
+                        `;
+                    })
+                    
+                    $("#anexos").html(html);
+                })
+            })
+        })
+        
         $("#make-upload").click(() => {
             // Perform client-side validation
             let titulo = $("#titulo").val();
             let contrato = $("#contrato").val();
             let categoria = $("#categoria").val();
             let data = $("#data").val();
-            let files = $("#anexo")[0].files; // Get the files
 
-            if (!titulo || !contrato || !categoria || !data || files.length === 0) {
+            let arquivos = [];
+
+            $('#anexos input[type="file"]').each(function () {
+                // Verifica se o input possui arquivos selecionados
+                if (this.files && this.files.length > 0 ) {
+                    // Adiciona os arquivos ao array
+                    for (let i = 0; i < this.files.length; i++) {
+                        arquivos.push(this.files[i]);
+                    }
+                } else {
+                    if (!$("#justificativa").val()) {
+                        // Deixa a borda vermelha e o texto vermelho
+                        $(this).css('border-color', 'red');
+                        $(this).css('color', 'red');
+                        
+                        showCustomAlert("Por favor, selecione todos os arquivos. ou preencha a justificativa.");
+                        return;
+                    }
+                }
+            });
+            
+            if (!titulo || !contrato || !categoria || !data) {
                 showCustomAlert("Por favor, preencha todos os campos.");
                 return;
             }
@@ -93,10 +149,11 @@
             formData.append("contrato", contrato);
             formData.append("categoria", categoria);
             formData.append("data", data);
-            Array.from(files).forEach(file => {
+
+            Array.from(arquivos).forEach(file => {
                 formData.append("anexo", file);
             });
-
+            
             // Submit the form using AJAX
             $.ajax({
                 type: "POST",

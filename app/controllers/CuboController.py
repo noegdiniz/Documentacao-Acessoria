@@ -1,6 +1,6 @@
 from datetime import datetime
 from app.controllers.FilterController import FilterController
-from app.models.tables import CUBO, Perfil
+from app.models.tables import CUBO, Categoria, Perfil
 from app.controllers.LogController import LogController
 from app.ext.db import db
 from sqlalchemy import inspect
@@ -20,27 +20,24 @@ class CuboController:
         pattern_perfil = r'"(\d+)"'
         
         # Extract perfil IDs from the stringified list
-        pids_list = re.findall(pattern_perfil, cubo_form["perfis"])
-        pids = ",".join(pids_list) if pids_list else ""  # Handle empty case explicitly
+        cats_id_list = re.findall(pattern_perfil, cubo_form["categoria"])
+        cats_ids = ",".join(cats_id_list) if cats_id_list else ""  # Handle empty case explicitly
         
         # Calculate perfil_nomes only if there are perfil IDs
-        if pids:
-            pnomes = ",".join(
-                [Perfil.query.get(int(pid)).nome 
-                for pid in pids.split(",") if pid and Perfil.query.get(int(pid))]
+        if cats_ids:
+            cats_nomes = ",".join(
+                [Categoria.query.get(int(cat_id)).nome 
+                for cat_id in cats_ids.split(",") if cat_id and Categoria.query.get(int(cat_id))]
             )
         else:
-            pnomes = ""  # Empty string if no profiles
+            cats_nomes = ""  # Empty string if no Categoria
 
         # Create new CUBO object
         new_cubo = CUBO(
-            categoria_id=cubo_form["categoria"],
-            categoria_nome=cubo_form["categoria_nome"],
-            contrato_id=cubo_form["contrato"],
-            contrato_nome=cubo_form["contrato_nome"],
-            prazo=cubo_form["prazo"],
-            perfil_ids=pids,
-            perfil_nomes=pnomes,
+            categoria_ids=cats_ids,
+            categoria_nomes=cats_nomes,
+            perfil_ids=cubo_form["perfil"],
+            perfil_nomes=cubo_form["perfil_nome"],
             pasta_drive=cubo_form["drive"]
         )
         
@@ -71,10 +68,8 @@ class CuboController:
 
         # Store old data for logging
         old_data = {
-            "categoria_id": cubo.categoria_id,
-            "categoria_nome": cubo.categoria_nome,
-            "contrato_id": cubo.contrato_id,
-            "contrato_nome": cubo.contrato_nome,
+            "categoria_ids": cubo.categoria_ids,
+            "categoria_nomes": cubo.categoria_nomes,
             "prazo": cubo.prazo,
             "perfil_ids": cubo.perfil_ids,
             "perfil_nomes": cubo.perfil_nomes,
@@ -98,10 +93,8 @@ class CuboController:
             pnomes = ""  # Empty string if no profiles
 
         # Update cubo with new data
-        cubo.categoria_id = form["categoria"]
-        cubo.categoria_nome = form["categoria_nome"]
-        cubo.contrato_id = form["contrato"]
-        cubo.contrato_nome = form["contrato_nome"]
+        cubo.categoria_ids = form["categoria"]
+        cubo.categoria_nomes = form["categoria_nome"]
         cubo.prazo = form["prazo"]
         cubo.perfil_ids = pids
         cubo.perfil_nomes = pnomes
@@ -111,10 +104,8 @@ class CuboController:
         
         # Store new data for logging
         new_data = {
-            "categoria_id": cubo.categoria_id,
-            "categoria_nome": cubo.categoria_nome,
-            "contrato_id": cubo.contrato_id,
-            "contrato_nome": cubo.contrato_nome,
+            "categoria_ids": cubo.categoria_ids,
+            "categoria_nomes": cubo.categoria_nomes,
             "prazo": cubo.prazo,
             "perfil_ids": cubo.perfil_ids,
             "perfil_nomes": cubo.perfil_nomes,
@@ -142,6 +133,10 @@ class CuboController:
     @staticmethod
     def get_all(filter):
         filtered_data = FilterController.filter(filter, CUBO)
+
+        for cubo in filtered_data:
+            cubo.tipo_processo_nome = Categoria.query.filter_by(categoria_id=cubo.categoria_id).first().tipo_de_processo_nome
+            
         return filtered_data
 
     @staticmethod
@@ -160,6 +155,3 @@ class CuboController:
                                  f"PERFIL: {cubo.perfil_nome} | CATEGORIA: {cubo.categoria_nome}")
             return True
         return False
-
-## Eis a questao do prazo...
-## Resolver

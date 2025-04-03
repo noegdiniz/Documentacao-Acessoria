@@ -1,5 +1,6 @@
 from flask import Blueprint, redirect, render_template, request, session, url_for, send_file, abort
 from app.auth.auth import auth, get_google_provider_cfg, client, GOOGLE_CLIENT_SECRET, GOOGLE_CLIENT_ID
+from app.controllers.TipoProcessoController import TipoProcessoController
 from app.controllers.UserController import UserController
 from app.controllers.DocsControlller import DocsController
 from app.controllers.EmpresaController import EmpresaController
@@ -359,7 +360,7 @@ def delete_documento(id):
 ##
 @bp_app.route("/cubo_menu")
 def cubo_menu():
-    categorias = CategoriaController.get_all("")
+    tipos_processos = TipoProcessoController.get_all("")
     contratos = ContratoController.get_all("")
     perfis = PerfilController.get_all("")
 
@@ -367,7 +368,7 @@ def cubo_menu():
     perfil_id = UserController.get(session["id"]).perfil_id
     permissao = PerfilController.get(perfil_id)
 
-    return render_template("menu_cubo.html",categorias=categorias,
+    return render_template("menu_cubo.html",tipos_processos=tipos_processos,
                            contratos=contratos,
                            perfis=perfis,
                            permissao=permissao)
@@ -377,8 +378,7 @@ def cubo_menu():
 def create_cubo():
     form = dict(request.form)
     
-    form["categoria_nome"] = CategoriaController.get(form["categoria"]).nome
-    form["contrato_nome"] = ContratoController.get(form["contrato"]).nome
+    form["perfil_nome"] = PerfilController.get(form["perfil"]).nome
     
     try:
         if form["_id"]:
@@ -473,12 +473,15 @@ def categorias_menu():
     perfil_id = UserController.get(session["id"]).perfil_id
     permissao = PerfilController.get(perfil_id)
 
-    return render_template("menu_categorias.html", permissao=permissao)
+    tipos_processos = TipoProcessoController.get_all("")
+    return render_template("menu_categorias.html", permissao=permissao, tipos_processos=tipos_processos)
 
 ##Cria categoria de documentos
 @bp_app.route("/create_categoria", methods=["POST"])
 def create_categoria():
-    form = request.form
+    form = dict(request.form)
+
+    form["tipo_processo_nome"] = TipoProcessoController.get(form["tipo_processo"]).nome
     
     try:
         if form["_id"]:
@@ -514,6 +517,58 @@ def list_categorias(filter):
     return render_template("list_categorias.html", categorias=categorias, permissao=permissao)
 
 ##
+## Sub-pagina menu Tipo de Processo
+##
+
+@bp_app.route("/tipo_processo_menu")
+def tipo_processo_menu():
+    #Puxa o objeto de permissão
+    perfil_id = UserController.get(session["id"]).perfil_id
+    permissao = PerfilController.get(perfil_id)
+
+    return render_template("menu_tipo_processo.html", permissao=permissao)
+
+# Cria ou atualiza tipo processo
+@bp_app.route("/create_tipo_processo", methods=["POST"])
+def create_tipo_processo():
+    form = request.form
+
+    try:
+        if form["_id"]:
+            # If an _id is provided, retrieve the existing TipoProcesso and update it
+            TipoProcessoController.update(form)
+
+        # If no _id is provided, create a new TipoProcesso
+        else:
+            TipoProcessoController.create(form)
+        
+        return "ok"
+        
+    except Exception as e:
+        return f"erro:{e}"
+
+# Deleta tipo processo
+@bp_app.route("/delete_tipo_processo/<id>")
+def delete_tipo_processo(id):
+    try:
+        TipoProcessoController.delete(id)
+        return "ok"
+    except Exception as e:
+        return (f"erro:{e}")
+
+# Lista tipo processo
+@bp_app.route("/list_tipo_processo/", defaults={"filter": ""})
+@bp_app.route("/list_tipo_processo/<filter>")
+def list_tipo_processo(filter):
+    tipo_processos = TipoProcessoController.get_all(filter)
+
+    # Puxa o objeto permissão
+    perfil_id = UserController.get(session["id"]).perfil_id
+    permissao = PerfilController.get(perfil_id)
+    
+    return render_template("list_tipo_processo.html", tipo_processos=tipo_processos, permissao=permissao)
+    
+##
 ## Sub-pagina menu de PERFIS
 ##
 
@@ -529,7 +584,7 @@ def perfil_menu():
 @bp_app.route("/create_perfil", methods=["POST"])
 def create_perfil():
     form = request.form
-
+    
     try:
         if form["_id"]:
             # If an _id is provided, retrieve the existing Perfil and update it

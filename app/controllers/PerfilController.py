@@ -137,6 +137,28 @@ class PerfilController:
             perfil.can_view_users = form.get("view-users") == '1'
             modified_permissions.append(f"view-users: {perfil.can_view_users}")
 
+        # Update and track changes for tipo_processo
+        if perfil.can_create_tipo_processo != (form.get("criar-tipo-processo") == '1'):
+            perfil.can_create_tipo_processo = form.get("criar-tipo-processo") == '1'
+            modified_permissions.append(f"criar-tipo-processo: {perfil.can_create_tipo_processo}")
+
+        if perfil.can_edit_tipo_processo != (form.get("edit-tipo-processo") == '1'):
+            perfil.can_edit_tipo_processo = form.get("edit-tipo-processo") == '1'
+            modified_permissions.append(f"edit-tipo-processo: {perfil.can_edit_tipo_processo}")
+
+        if perfil.can_delete_tipo_processo != (form.get("delete-tipo-processo") == '1'):
+            perfil.can_delete_tipo_processo = form.get("delete-tipo-processo") == '1'
+            modified_permissions.append(f"delete-tipo-processo: {perfil.can_delete_tipo_processo}")
+
+        if perfil.can_update_tipo_processo != (form.get("update-tipo-processo") == '1'):
+            perfil.can_update_tipo_processo = form.get("update-tipo-processo") == '1'
+            modified_permissions.append(f"update-tipo-processo: {perfil.can_update_tipo_processo}")
+        
+        if perfil.can_view_tipo_processo != (form.get("view-tipo-processo") == '1'):
+            perfil.can_view_tipo_processo = form.get("view-tipo-processo") == '1'
+            modified_permissions.append(f"view-tipo-processo: {perfil.can_view_tipo_processo}")
+        
+
         # Save the log with only modified permissions
         if modified_permissions:
             db.session.commit()

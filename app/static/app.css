@@ -120,14 +120,15 @@ body {
     text-decoration: none;
     margin: 0 var(--padding);
     font-weight: bold;
-
     padding: var(--padding) var(--padding);
     border-radius: var(--border-radius);
-
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .navbar a:hover {
     background-color: var(--hover-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.02);
 }
 
 /* BUTTONS */
@@ -563,6 +564,25 @@ span {
 }
 
 .upload-btn:hover {
+    background-color: white;
+    color: black;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.tag-item {
+    background-color:black;
+    color: white;
+    padding: var(--padding);
+    margin: var(--margin);
+    border-radius: var(--border-radius);
+
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
+    cursor:default;
+}
+
+.tag-item:hover {
     background-color: white;
     color: black;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);

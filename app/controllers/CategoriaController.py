@@ -7,7 +7,12 @@ from flask import session
 class CategoriaController:
     @staticmethod
     def create(categoria_form):
-        new_categoria = Categoria(nome=categoria_form["nome"])
+
+        new_categoria = Categoria(nome=categoria_form["nome"],
+                                tipo_de_processo_id=categoria_form["tipo_processo"],
+                                tipo_de_processo_nome=categoria_form["tipo_processo_nome"],
+                                documentos_pedidos=categoria_form["docs_precisos"])
+        
         db.session.add(new_categoria)
         db.session.commit()
         
@@ -25,6 +30,10 @@ class CategoriaController:
         old_categoria = categoria
 
         categoria.nome = form["nome"]
+        categoria.tipo_de_processo_id = form["tipo_processo"]
+        categoria.tipo_de_processo_nome = form["tipo_processo_nome"]
+        categoria.documentos_pedidos = form["docs_precisos"]
+        
         db.session.commit()
 
         #Salva o Log da ação
