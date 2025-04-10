@@ -16,13 +16,13 @@
                             {%endfor%}
                         </select>
                         
-                        <select name="perfil" id="perfil" required placeholder="" multiple>
+                        <select name="perfil" id="perfil" required placeholder="" size="4">
                             {%for perfil in perfis%}
                             <option value="{{perfil._id}}">{{perfil.nome}}</option>
                             {%endfor%}
                         </select>
                         
-                        <input type="text" id="drive" name="drive" placeholder="pasta do drive">
+                        <input type="text" id="drive" name="drive" placeholder="Pasta do drive do departamento">
                         
                         <input type="hidden" id="_id" name="_id">
                     </div>
@@ -43,7 +43,6 @@
         <div class="key-box row-layout data-names">
             <div class="row-layout">
                 <input type="text" value="CATEGORIA:" disabled>
-                <input type="text" value="CONTRATO:" disabled>
                 <input type="text" value="PERFIL:" disabled>
                 <input type="text" value="PASTA DRIVE:" disabled>
             </div>
@@ -88,7 +87,7 @@ fetch("/list_cubo").then(data => {
     let perfil = $("#perfil").val();
     let drive = $("#drive").val();
     
-    if(!categoria || !contrato || !drive || !perfil) {
+    if(!categoria || !drive || !perfil) {
         showCustomAlert("Favor preecher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
@@ -112,8 +111,12 @@ fetch("/list_cubo").then(data => {
                         })
                     })
 
-                    showCustomAlert("Criado com sucesso!")
-
+                    if (response === "ok") {
+                        showCustomAlert("Criado com sucesso!")
+                    } else {
+                        showCustomAlert(response)
+                    }
+                    
                     //Remove marcador de alteração
                     $("#form_dados").removeClass("ball");
                 },
@@ -124,8 +127,6 @@ fetch("/list_cubo").then(data => {
             });  
     }
     })
-
-
 </script>
 
 <style>

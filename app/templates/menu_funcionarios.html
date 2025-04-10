@@ -1,0 +1,114 @@
+<div class="col-layout container empresas-box-docs">
+    <div class="row-layout">
+        <div class="flex-center key-box">
+            <div class="key-box row-layout">
+                <form id="form_dados" name="form_dados">
+                    <div class="row-layout">
+                        <input type="text" id="nome" name="nome" placeholder="Nome do funcionário">
+                        <input type="text" id="matricula" name="matricula" placeholder="Matrícula">
+                        <input type="text" id="cargo" name="cargo" placeholder="Cargo">
+                        <input type="text" id="setor" name="setor" placeholder="Setor">
+                        
+                        <input type="hidden" id="_id" name="_id">
+                    </div>
+                </form>
+
+                <div class="row-layout">
+                    <button class="button" id="salvar" name="salvar">
+                        salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="key-box empresas-box">
+        <div class="key-box row-layout data-names">
+            <div class="row-layout">
+                <input type="text" value="NOME:" disabled>
+                <input type="text" value="MATRÍCULA:" disabled>
+                <input type="text" value="CARGO:" disabled>
+                <input type="text" value="SETOR:" disabled>
+            </div>
+            
+            <div class="row-layout">
+            </div>
+        </div>
+
+        <div id="funcionarios-list-content">
+        </div>
+    </div>
+</div>
+
+<script>
+//Carrega a lista de funcionários
+fetch("/list_funcionarios").then(data => {
+    data.text().then(text => {
+        setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
+    })
+})
+
+$("#content").on("keypress", (e) => {
+    if(e.which == 13) {
+        const url = "/list_funcionarios/" + $("#content").val();
+
+        fetch(url).then(data => {
+            data.text().then(text => {
+                setTimeout(() => {
+                    $("#funcionarios-list-content").html(text)
+                }, 100);
+            })
+        })
+    }
+})
+
+$("#salvar").click(() => {
+    let nome = $("#nome").val();
+    let matricula = $("#matricula").val();
+    let cargo = $("#cargo").val();
+    let setor = $("#setor").val();
+
+    if(!nome || !matricula || !cargo || !setor) {
+        showCustomAlert("Favor preencher todos os campos!")
+    } else {
+        let formData = $("#form_dados").serialize();
+        formData["_id"] = $("#_id").val();
+        
+        $.ajax({
+            type: "POST",
+            url: "create_funcionario",
+            data: formData,
+            success: function(response) {
+                let val = $("#content").val();
+                let url = `/list_funcionarios/${val}`
+                
+                fetch(url).then(data => {
+                    data.text().then(text => {
+                        setTimeout(() => {
+                            $("#funcionarios-list-content").html(text)
+                        }, 100)
+                    })
+                })
+                
+                showCustomAlert("Cadastrado com sucesso!")
+                
+                //Remove marcador de alteração 
+                $("#form_dados").removeClass("ball");
+
+                //Clear form
+                $("#nome").val("");
+                $("#matricula").val("");
+                $("#cargo").val("");
+                $("#setor").val("");
+                $("#_id").val("");
+            },
+
+            //Caso ocorra erro na requisição
+            error: function(error) {
+                showCustomAlert("Erro ao cadastrar funcionário: " + error)
+            }
+        });  
+    }
+})
+
+</script>

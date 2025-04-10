@@ -8,13 +8,14 @@
     <div class="flex-center">
         <div class="key-box row-layout">
             <div class="row-layout flex-center">
+                <input type="text" id="versao" name="versao" value="{{doc.versao}}" class="key-input" disabled>
                 <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
                 <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
                 <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
                 
                 <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
-
                 <input type="text" id="pasta" name="pasta" value="{{doc.pasta}}" class="key-input" disabled>
+
                 
                 <div id="status{{doc._id}}" class="status-btn">
                     {%if doc.status == "CORRIGIDO" %}
@@ -33,10 +34,12 @@
                 {%else%}
                     <input type="text" id="upload" name="upload" value="PENDENTE" class="key-input" disabled style="background-color: red;color: white;">
                 {%endif%}
-                
-                <button id="historico{{doc._id}}" name="historico{{doc._id}}" class="button">
-                    HISTORICO
-                </button>
+
+                {%if not hist %}    
+                    <button id="historico{{doc._id}}" name="historico{{doc._id}}" class="button">
+                        HISTORICO
+                    </button>
+                {%endif%}
 
                 {%if permissao.can_delete_docs%}
                 <button id="delete{{doc._id}}" name="delete{{doc._id}}" class="button">
@@ -121,6 +124,7 @@
                                     }).then(() => {
                                     //change color to green
                                     $("#status-apr{{aprovacao._id}}").html('<input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="APROVADO" class="key-input" disabled>');
+                                    $("#status{{doc._id}}").html('<input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="APROVADO" class="key-input" readonly>');
                                     $("#obs{{aprovacao._id}}").attr("disabled", true);
                                     })
                                 })
@@ -151,6 +155,7 @@
                                     }).then(() => {
                                     //change color to red
                                     $("#status-apr{{aprovacao._id}}").html('<input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="NAO APROVADO" class="key-input" disabled>');
+                                    $("#status{{doc._id}}").html('<input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="NAO APROVADO" class="key-input" readonly>');
                                     
                                     $("#obs{{aprovacao._id}}").attr("disabled", true);
                                     })
@@ -176,14 +181,15 @@
         });
 
         $("#historico{{doc._id}}").click(() => {
-            let url = f`/filter_docs/{{doc.empresa_id}}/hist,{{doc.titulo}}`;
+            let url =  `/filter_docs/{{doc.empresa_id}}/hist,{{doc.titulo}}`;
+
+            console.log(url);
+
             fetch(url).then(data => {
                 data.text().then(text => {
                     $("#box-docs").html(text)
 
-                    $("#page-status").html(
-                        '<input type="text" id="upload" name="upload" value="HISTORICO - {{doc.titulo}}" class="key-input" disabled="" style="background-color: white;">'
-                    )
+                    $("#upload").val('HISTORICO - {{doc.titulo}}');
                 })
             })
         })

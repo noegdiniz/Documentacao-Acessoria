@@ -29,11 +29,10 @@ class TipoProcessoController():
         
     @staticmethod
     def get_all(content):
-
         
         filter_tipo_processos = FilterController.filter(content, TipoProcesso)
         for tipo_processo in filter_tipo_processos:
             tipo_processo.categorias = Categoria.query.filter_by(tipo_de_processo_id=tipo_processo._id).all()
-
+        
         return filter_tipo_processos
     

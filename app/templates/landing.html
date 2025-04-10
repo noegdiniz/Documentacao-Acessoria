@@ -1,0 +1,183 @@
+// filepath: index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DocAcessoria - Professional document management software for businesses. Streamline workflows, secure document storage, and intelligent organization.">
+    <meta name="keywords" content="document management, document workflow, digital documents, contractor management, document security, business automation">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="DocAcessoria - Smart Document Management Solution">
+    <meta property="og:description" content="Transform your document management with our intelligent SaaS solution. Start free trial today!">
+    <meta property="og:image" content="/images/docacessoria-preview.jpg">
+    <meta property="og:url" content="https://docacessoria.com">
+    <title>DocAcessoria | Smart Document Management Software for Business</title>
+    
+    <link rel="canonical" href="https://docacessoria.com">
+    <style>
+        :root {
+            --primary: #0056b3;
+            --secondary: #f8f9fa;
+            --accent: #ffc107;
+            --text: #333;
+            --light: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary), #003366);
+            color: var(--light);
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            background: var(--accent);
+            color: var(--text);
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+        }
+
+        .features {
+            padding: 4rem 2rem;
+            background: var(--secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .feature-card h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .pricing {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--primary);
+            font-size: 2rem;
+        }
+        
+        /* Added semantic styles */
+        article {
+            margin-bottom: 2rem;
+        }
+        
+        h1, h2, h3 {
+            font-weight: 700;
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Schema markup styles */
+        .schema-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <h1>DocAcessoria - Intelligent Document Management</h1>
+        <p>Transform your business workflow with AI-powered document organization and secure collaboration</p>
+        <a href="/free-trial" class="cta-button" rel="nofollow">Start Free 14-Day Trial</a>
+    </header>
+
+    <main>
+        <section class="features" aria-label="Features">
+            <h2 class="section-title">Key Features That Transform Document Management</h2>
+            <div class="features-grid">
+                <article class="feature-card">
+                    <h3>Smart Document Organization</h3>
+                    <p>AI-powered document categorization and automated filing system for efficient organization.</p>
+                </article>
+                <!-- ... other feature cards ... -->
+            </div>
+        </section>
+
+        <section class="pricing" aria-label="Pricing">
+            <h2 class="section-title">Start Your Document Management Journey</h2>
+            <p>Transform your workflow today with our secure and intelligent solution</p>
+            <a href="/pricing" class="cta-button">View Pricing Plans</a>
+        </section>
+    </main>
+
+    <footer>
+        <nav aria-label="Footer Navigation">
+            <a href="/about">About Us</a>
+            <a href="/blog">Blog</a>
+            <a href="/contact">Contact</a>
+            <a href="/privacy">Privacy Policy</a>
+        </nav>
+    </footer>
+
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "DocAcessoria",
+        "applicationCategory": "BusinessApplication",
+        "offers": {
+            "@type": "Offer",
+            "price": "29.99",
+            "priceCurrency": "USD"
+        },
+        "description": "Professional document management software for businesses with intelligent organization and secure collaboration features."
+    }
+    </script>
+</body>
+</html>

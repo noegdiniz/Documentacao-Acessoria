@@ -16,14 +16,21 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "GOCSPX-cuOOKNvpA4
 class CuboController:
     @staticmethod
     def create(cubo_form):
+        #Checa se ja existe um Cubo para esse perfil
+        existing_cubo = CUBO.query.filter_by(perfil_id=cubo_form["perfil"]).first()
+        
+        if existing_cubo:
+            raise Exception(f"Já existe para o perfil. {existing_cubo.perfil_nome}")
+        
         # Create a new CUBO entry
         pattern_perfil = r'"(\d+)"'
         
         # Extract perfil IDs from the stringified list
-        cats_id_list = re.findall(pattern_perfil, cubo_form["categoria"])
+        cats_id_list = re.findall(pattern_perfil, cubo_form["categorias"])
+        
         cats_ids = ",".join(cats_id_list) if cats_id_list else ""  # Handle empty case explicitly
         
-        # Calculate perfil_nomes only if there are perfil IDs
+        # Calculate perfil_nome only if there are perfil IDs
         if cats_ids:
             cats_nomes = ",".join(
                 [Categoria.query.get(int(cat_id)).nome 
@@ -32,12 +39,13 @@ class CuboController:
         else:
             cats_nomes = ""  # Empty string if no Categoria
 
+
         # Create new CUBO object
         new_cubo = CUBO(
             categoria_ids=cats_ids,
             categoria_nomes=cats_nomes,
-            perfil_ids=cubo_form["perfil"],
-            perfil_nomes=cubo_form["perfil_nome"],
+            perfil_id=cubo_form["perfil"],
+            perfil_nome=cubo_form["perfil_nome"],
             pasta_drive=cubo_form["drive"]
         )
         
@@ -50,8 +58,7 @@ class CuboController:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            print(f"Error during commit: {e}")
-            raise
+            raise Exception(f"Erro ao criar CUBO: {e}")
 
         # Save the log of the action
         LogController.create(
@@ -59,7 +66,7 @@ class CuboController:
             session["perfil"],
             "DADOS",
             "CRIAR",
-            f"PERFIL: {new_cubo.perfil_nomes} | CATEGORIA: {new_cubo.categoria_nome}"
+            f"PERFIL: {new_cubo.perfil_nome} | CATEGORIA: {new_cubo.categoria_nomes}"
         )
     
     @staticmethod
@@ -70,45 +77,42 @@ class CuboController:
         old_data = {
             "categoria_ids": cubo.categoria_ids,
             "categoria_nomes": cubo.categoria_nomes,
-            "prazo": cubo.prazo,
-            "perfil_ids": cubo.perfil_ids,
-            "perfil_nomes": cubo.perfil_nomes,
+            "perfil_id": cubo.perfil_id,
+            "perfil_nome": cubo.perfil_nome,
             "pasta_drive": cubo.pasta_drive
         }
 
         # Create a new CUBO entry
         pattern_perfil = r'"(\d+)"'
-        
+
         # Extract perfil IDs from the stringified list
-        pids_list = re.findall(pattern_perfil, form["perfis"])
-        pids = ",".join(pids_list) if pids_list else ""  # Handle empty case explicitly
+        cats_id_list = re.findall(pattern_perfil, form["categorias"])
         
-        # Calculate perfil_nomes only if there are perfil IDs
-        if pids:
-            pnomes = ",".join(
-                [Perfil.query.get(int(pid)).nome 
-                for pid in pids.split(",") if pid and Perfil.query.get(int(pid))]
+        cats_ids = ",".join(cats_id_list) if cats_id_list else ""  # Handle empty case explicitly
+
+        # Calculate perfil_nome only if there are perfil IDs
+        if cats_ids:
+            cats_nomes = ",".join(
+                [Categoria.query.get(int(cat_id)).nome 
+                for cat_id in cats_ids.split(",") if cat_id and Categoria.query.get(int(cat_id))]
             )
         else:
-            pnomes = ""  # Empty string if no profiles
+            cats_nomes = ""  # Empty string if no Categoria
 
-        # Update cubo with new data
-        cubo.categoria_ids = form["categoria"]
-        cubo.categoria_nomes = form["categoria_nome"]
-        cubo.prazo = form["prazo"]
-        cubo.perfil_ids = pids
-        cubo.perfil_nomes = pnomes
-        cubo.pasta_drive = form["drive"]
-
+        cubo.categoria_ids=cats_ids
+        cubo.categoria_nomes=cats_nomes
+        cubo.perfil_id=form["perfil"]
+        cubo.perfil_nome=form["perfil_nome"]
+        cubo.pasta_drive=form["drive"]
+        
         db.session.commit()
         
         # Store new data for logging
         new_data = {
             "categoria_ids": cubo.categoria_ids,
             "categoria_nomes": cubo.categoria_nomes,
-            "prazo": cubo.prazo,
-            "perfil_ids": cubo.perfil_ids,
-            "perfil_nomes": cubo.perfil_nomes,
+            "perfil_id": cubo.perfil_id,
+            "perfil_nome": cubo.perfil_nome,
             "pasta_drive": cubo.pasta_drive
         }
 
@@ -134,9 +138,6 @@ class CuboController:
     def get_all(filter):
         filtered_data = FilterController.filter(filter, CUBO)
 
-        for cubo in filtered_data:
-            cubo.tipo_processo_nome = Categoria.query.filter_by(categoria_id=cubo.categoria_id).first().tipo_de_processo_nome
-            
         return filtered_data
 
     @staticmethod
@@ -152,6 +153,6 @@ class CuboController:
                                  session["perfil"],
                                  "DADOS",
                                  "DELETAR",
-                                 f"PERFIL: {cubo.perfil_nome} | CATEGORIA: {cubo.categoria_nome}")
+                                 f"PERFIL: {cubo.perfil_nome} | CATEGORIA: {cubo.categoria_nomes}")
             return True
         return False

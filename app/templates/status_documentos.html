@@ -2,6 +2,7 @@
     <div class="flex-center data-names">
         <div class="key-box row-layout">
             <div class="row-layout flex-center">
+                <input type="text" value="VERSAO:" class="key-input" disabled>
                 <input type="text" value="TITULO:" class="key-input" disabled>
                 <input type="text" value="CONTRATO:" class="key-input" disabled>
                 <input type="text" value="CATEGORIA:" class="key-input" disabled>
@@ -10,9 +11,9 @@
                 <input type="text" value="STATUS:" class="key-input" disabled>
                 <input type="text" value="UPLOAD:" class="key-input" disabled>
             </div>
-
+            
             <div id="page-status">
-                <input type="text" id="upload" name="upload" value="TODOS OS DOCUMENTOS" class="key-input" disabled="" style="background-color: white;">
+                <input type="text" id="upload" name="upload" value="TODOS OS DOCUMENTOS" class="key-input" disabled="" style="background-color: white; min-width: 12rem;">
             </div>
         </div>
     </div>
@@ -26,6 +27,7 @@
     <div class="flex-center">
         <div class="key-box row-layout">
             <div class="row-layout flex-center">
+                <input type="text" id="versao" name="versao" value="{{doc.versao}}" class="key-input" disabled>
                 <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
                 <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
                 <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
@@ -52,9 +54,11 @@
                 </button>
                 {%endif%}
 
+                {% if not hist %}
                 <button id="historico{{doc._id}}" name="historico{{doc._id}}" class="button">
                     HISTORICO
                 </button>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -199,11 +203,11 @@
                 });
 
                 $("#historico{{doc._id}}").click(() => {
-                    let url = f`/filter_docs/{{doc.empresa_id}}/hist,{{doc.titulo}}`;
+                    let url = '/filter_docs_prestadora/{{doc.empresa_id}}/hist,{{doc.titulo}}';
                     fetch(url).then(data => {
                         data.text().then(text => {
-                            $("#box-docs").html(text)
-
+                            $("#content-emp").html(text)
+                            
                             $("#page-status").html(
                                 '<input type="text" id="upload" name="upload" value="HISTORICO - {{doc.titulo}}" class="key-input" disabled="" style="background-color: white;">'
                             )
@@ -263,5 +267,21 @@
             {%endfor%}
             {%endfor%}
         </div>
+        <script>
+            $("#content").on("keypress", (e) => {
+                    if (e.which == 13) {
+                    let content = $("#content").val();
+                    let url = `/status_files/${content}`
+                    
+                    fetch(url).then((data) => {
+                        data.text().then(text => {
+                            setTimeout(() => {
+                                $("#content-emp").html(text)
+                            }, 100)
+                        })
+                    })
+                }
+            })
+        </script>
     </div>
 </div>

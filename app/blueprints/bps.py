@@ -1,3 +1,4 @@
+from functools import wraps
 from flask import Blueprint, redirect, render_template, request, session, url_for, send_file, abort
 from app.auth.auth import auth, get_google_provider_cfg, client, GOOGLE_CLIENT_SECRET, GOOGLE_CLIENT_ID
 from app.controllers.TipoProcessoController import TipoProcessoController
@@ -9,6 +10,7 @@ from app.controllers.CategoriaController import CategoriaController
 from app.controllers.ContratoController import ContratoController
 from app.controllers.PerfilController import PerfilController
 from app.controllers.LogController import LogController
+from app.controllers.IntegraController import IntegraController
 
 from io import BytesIO
 import urllib
@@ -17,9 +19,32 @@ import requests
 import json
 import zlib
 
-from app.models.tables import CUBO, Anexo
+from app.models.tables import Anexo
 
 bp_app = Blueprint("bp", __name__)
+
+# Permission decorator
+def permission_required(required_permission=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if "id" not in session:
+                return redirect(url_for("bp.index"))
+            user = UserController.get(session["id"])
+            if not user:
+                return redirect(url_for("bp.index"))
+            if not user.perfil:
+                return redirect(url_for("bp.blocked"))
+            perfil_id = user.perfil_id
+            permissao = PerfilController.get(perfil_id)
+            if required_permission is None:
+                return f(*args, **kwargs)
+            if hasattr(permissao, required_permission) and getattr(permissao, required_permission):
+                return f(*args, **kwargs)
+            else:
+                abort(403)
+        return decorated_function
+    return decorator
 
 ##
 ## Views
@@ -30,7 +55,7 @@ bp_app = Blueprint("bp", __name__)
 ###                                         ###
 
 # Redireciona o usuario para o endpoint de confirmaão de login
-
+# Public Routes (No authentication required)
 @bp_app.route("/")
 def index():
     return render_template("login.html")
@@ -78,7 +103,7 @@ def get_user_info():
         'refresh_token': client.refresh_token,
         'expires_in': client.expires_in
     }
-
+    
     # Now that we have tokens (yay) let's find and hit URL
     # from Google that gives you user's profile information,
     # including their Google Profile Image and Email
@@ -105,8 +130,6 @@ def get_user_info():
 
     icon = user["icon"].split("/")[-1]
 
-    # print(url_for("bp.create_user", id=user["id"], email=user["email"], nome=user["nome"], icon=icon))
-    # Send user back to homepage
     return redirect(url_for("bp.create_user", _id=user["id"], email=user["email"], nome=user["nome"], icon=icon))
 
 @bp_app.route("/create_user/<_id>/<email>/<nome>/<icon>", methods=["GET"])
@@ -182,7 +205,9 @@ def upload_file_view():
     contratos = ContratoController.get_all(str(empresa_id))
     categorias = CategoriaController.get_all("")
 
-    return render_template("upload_file.html", contratos=contratos, categorias=categorias)
+    tipo_processo = TipoProcessoController.get_all("")
+    
+    return render_template("upload_file.html", contratos=contratos, categorias=categorias, tipo_processo=tipo_processo)
 
 ##Pagina para upload de arquivos / Action
 @bp_app.route("/upload_file_action", methods=["POST"])
@@ -192,7 +217,9 @@ def upload_file_action():
     
     chave = session["chave_empresa"]
     empresa_id = EmpresaController.get(chave=chave)._id
-    categoria_nome = CategoriaController.get(form["categoria"]).nome
+
+    categoria_nome = CategoriaController.get(form["categoria"].split("|")[0]).nome
+
     contrato_nome = ContratoController.get(form["contrato"]).nome
 
     form = dict(form)
@@ -221,6 +248,7 @@ def auth_prestadora():
     chave = form["chave"]
     nome = form["nome"].upper()
     
+    session["perfil"] = f"PRESTADORA: {nome}"
     empresa = EmpresaController.auth(nome, chave)
 
     if empresa:
@@ -235,7 +263,6 @@ def auth_prestadora():
 def serve_anexo(id):
     # Query the Documento by _id
     anexo = Anexo.query.filter_by(_id=id).first()
-    
     
     if anexo is None:
         # If no document is found, return a 404 error
@@ -266,14 +293,14 @@ def generate_key():
     return str(random.randint(100000, 999999))
 
 ##Adiciona uma nova prestadora no banco
-@bp_app.route("/create_empresa/<nome>/<chave>/")
-@bp_app.route("/create_empresa/<nome>/<chave>/<_id>")
-def create_empresa(nome, chave, _id=None):
+@bp_app.route("/create_empresa/<nome>/<chave>/<cnpj>/")
+@bp_app.route("/create_empresa/<nome>/<chave>/<cnpj>/<_id>")
+def create_empresa(nome, chave, cnpj, _id=None):
     try:
         if _id:
-            EmpresaController.update(nome, chave, _id)
+            EmpresaController.update(nome, chave, cnpj, _id)
         else:
-            EmpresaController.create(nome, chave)
+            EmpresaController.create(nome, chave, cnpj)
         
         return "ok"
     except Exception as e:
@@ -311,6 +338,7 @@ def list_prestadoras_filter(content):
     
     docs = docs.items()
 
+
     return render_template("list_prestadoras_filter.html", docs=docs)
 
 ##Lista os documentos filtrados (quando clicado na empresa)
@@ -318,12 +346,16 @@ def list_prestadoras_filter(content):
 @bp_app.route('/filter_docs/<int:empresa_id>/<path:content>')
 def list_docs_filter(empresa_id, content):    
     ##Faz o decode do argumento para filtrar
-    content = urllib.parse.unquote(content) if content else None
+    content = urllib.parse.unquote(content) if content else ""
+
+    #Checa se a requisiçao e para documentos ou historico
+    hist = False
 
     # Checa se precisa retornar o historico do documento
     if "hist" in content:
-        titulo = content.aplit(",")[1]
+        titulo = content.split(",")[1]
         docs = DocsController.get_history_docs(titulo)
+        hist = True
     else:
         docs = DocsController.filter(empresa_id, content)
     
@@ -333,7 +365,28 @@ def list_docs_filter(empresa_id, content):
     perfil_id = UserController.get(session["id"]).perfil_id
     permissao = PerfilController.get(perfil_id)
     
-    return render_template("list_docs_filter.html", docs_emp=docs, permissao=permissao)
+    return render_template("list_docs_filter.html", docs_emp=docs, permissao=permissao, hist=hist)
+
+@bp_app.route("/filter_docs_prestadora/<int:empresa_id>/", defaults={'content': None})
+@bp_app.route("/filter_docs_prestadora/<int:empresa_id>/<path:content>")
+def list_docs_filter_prestadora(empresa_id, content):
+    ##Faz o decode do argumento para filtrar
+    content = urllib.parse.unquote(content) if content else ""
+
+    #Checa se a requisiçao e para documentos ou historico
+    hist = False
+
+    # Checa se precisa retornar o historico do documento
+    if "hist" in content:
+        titulo = content.split(",")[1]
+        docs = DocsController.get_history_docs(titulo)
+        hist = True
+    else:
+        docs = DocsController.filter(empresa_id, content)
+    
+    docs = docs.items()
+
+    return render_template("status_documentos.html", docs_emp=docs, hist=hist)
 
 # Atualiza o documento e cria uma nova versao, recria os anexos
 @bp_app.route("/update_documento/<id>", methods=["POST"])
@@ -532,7 +585,7 @@ def tipo_processo_menu():
 @bp_app.route("/create_tipo_processo", methods=["POST"])
 def create_tipo_processo():
     form = request.form
-
+    
     try:
         if form["_id"]:
             # If an _id is provided, retrieve the existing TipoProcesso and update it
@@ -708,7 +761,6 @@ def adm_documentos():
 @bp_app.route("/update_status/<_id>/<string:status>/<obs>")
 def update_status(_id,status,obs):
     try:
-    
         DocsController.update_status(_id, obs, status)
         return "ok"
     
@@ -723,9 +775,102 @@ def configure(app):
 def upload_gdrive():
     try:
         DocsController.upload_drive()
-        #DocsController.limpa_anexos()
 
         return "ok"
     except Exception as e:
         return(f"erro:{e}")
+
+# Agendamento Integração
+@bp_app.route("/agendamento_integracao")
+def agendamento_integracao():
+    return render_template("menu_agendamento_integracao.html")
+
+@bp_app.route("/list_agendamento_integracao/", defaults={"filter": ""})
+@bp_app.route("/list_agendamento_integracao/<filter>")
+def list_agendamento_integracao(filter):
+    agendamentos = IntegraController.get_all_agendamento(filter)
+    return render_template("list_agendamento_integracao.html", agendamentos=agendamentos)
+
+@bp_app.route("/create_agendamento_integracao", methods=["POST"])
+def create_agendamento_integracao():
+    try:
+        form = request.form
+
+        if form["_id"]:
+            IntegraController.update_agendamento(form)
+        else:
+            IntegraController.create_agendamento(form)
+        
+        return "ok"
+        
+    except Exception as e:
+        return f"erro:{e}"  
+
+# Menu Cadastro subcontratados
+@bp_app.route("/cadastro_subcontratados")
+def cadastro_subcontratados():
+    return render_template("menu_subcontratados.html")
+
+@bp_app.route("/list_subcontratados/", defaults={"filter": ""})
+@bp_app.route("/list_subcontratados/<filter>")
+def list_subcontratados(filter):
+    subcontratados = IntegraController.get_all_subcontratados(filter)
+    return render_template("list_subcontratados.html", subcontratados=subcontratados)
+
+@bp_app.route("/create_subcontratados", methods=["POST"])
+def create_subcontratados():
+    try:
+        form = request.form
+
+        if form["_id"]:
+            IntegraController.update_subcontratados(form)
+        else:
+            IntegraController.create_subcontratados(form)
+        
+        return "ok"
+        
+    except Exception as e:
+        return f"erro:{e}"
+
+@bp_app.route("/delete_subcontratados/<_id>")
+def delete_subcontratados(_id):
+    try:
+        IntegraController.delete_subcontratados(_id)
+        return "ok"
+    except Exception as e:
+        return f"erro:{e}"
+
+# Cadastro de funcionarios
+@bp_app.route("/cadastro_funcionarios")
+def cadastro_funcionarios():
+    return render_template("menu_funcionarios.html")
+
+@bp_app.route("/create_funcionario", methods=["POST"]) 
+def create_funcionario():
+    try:
+        form = request.form
+
+        if form["_id"]:
+            # Update existing funcionario
+            IntegraController.update_funcionario(form)
+        else:
+            # Create new funcionario
+            IntegraController.create_funcionario(form)
+        return "ok"
     
+    except Exception as e:
+        return f"erro:{e}"
+
+@bp_app.route("/delete_funcionario/<_id>")
+def delete_funcionario(_id):
+    try:
+        IntegraController.delete_funcionario(_id)
+        return "ok"
+    except Exception as e:
+        return f"erro:{e}"
+
+@bp_app.route("/list_funcionarios/", defaults={"filter": ""})
+@bp_app.route("/list_funcionarios/<filter>")
+def list_funcionarios(filter):
+    funcionarios = IntegraController.get_all_funcionario(filter)
+    return render_template("list_funcionarios.html", funcionarios=funcionarios)

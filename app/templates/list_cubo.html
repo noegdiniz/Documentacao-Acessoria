@@ -2,10 +2,8 @@
 <div class="flex-center col-layout">
     <div class="key-box row-layout">
         <div class="row-layout">
-            <input type="text" value="{{cubo.tipo_processo_nome}} -> {{ cubo.categoria_nome}}" disabled>
-            <input type="text" value="{{cubo.contrato_nome}}" disabled>
-            <input type="text" value="{{cubo.perfil_nomes}}" disabled>
-            <input type="text" value="{{cubo.prazo}}" disabled>
+            <input type="text" value="{{cubo.categoria_nomes}}" disabled>
+            <input type="text" value="{{cubo.perfil_nome}}" disabled>
             <input type="text" value="{{cubo.pasta_drive}}" disabled>
         </div>
 
@@ -30,7 +28,6 @@
     $("#alterar-{{cubo._id}}").click(() => {
         $("#categoria").val("{{cubo.categoria_id}}");
         $("#contrato").val("{{cubo.contrato_id}}");
-        $("#prazo").val("{{cubo.prazo}}");
         $("#drive").val("{{cubo.pasta_drive}}");
 
         //Adiciona sinal visual da alteração no menu
@@ -39,7 +36,7 @@
         //Muda o id da cubo para realizar a alteração no item certo
         $("#_id").val("{{cubo._id}}");
     })
-
+    
     $("#excluir-{{cubo._id}}").click(() => {
         let url = "/delete_cubo/" + "{{cubo._id}}";
         

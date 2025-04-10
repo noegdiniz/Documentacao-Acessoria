@@ -9,8 +9,8 @@ from sqlalchemy import inspect
 
 class EmpresaController():
     @staticmethod
-    def create(nome, chave):
-        empresa = Empresa(nome=nome, chave=chave)
+    def create(nome, chave, cnpj):
+        empresa = Empresa(nome=nome, chave=chave, cnpj=cnpj)
         db.session.add(empresa)
         db.session.commit()
 
@@ -19,16 +19,19 @@ class EmpresaController():
                              session["perfil"],
                              "EMPRESA",
                              "CRIAR",
-                             f"NOME: {empresa.nome} | CHAVE: {empresa.chave}")
+                             f"NOME: {empresa.nome} | CHAVE: {empresa.chave} | CNPJ: {empresa.cnpj}")
     
     @staticmethod
-    def update(nome, chave, _id):
+    def update(nome, chave, cnpj, _id):
         empresa = EmpresaController.get(_id=_id)
         old_empresa_nome = empresa.nome
         old_empresa_chave = empresa.chave
+        old_empresa_chave = empresa.cnpj
         
         empresa.nome = nome
         empresa.chave = chave
+        empresa.cnpj = cnpj
+
         db.session.commit()
         
         #Salva o Log da ação
@@ -36,7 +39,7 @@ class EmpresaController():
                              session["perfil"],
                              "EMPRESA",
                              "ALTERAR",
-                             f"NOME: {old_empresa_nome} | CHAVE: {old_empresa_chave} -> NOME: {empresa.nome} | CHAVE: {empresa.chave}")
+                             f"NOME: {old_empresa_nome} | CHAVE: {old_empresa_chave} -> NOME: {empresa.nome} | CHAVE: {empresa.chave} | CNPJ: {empresa.cnpj}")
     
     @staticmethod
     def get(chave=None, _id=None):

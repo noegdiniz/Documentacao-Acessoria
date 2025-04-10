@@ -3,6 +3,7 @@ import json
 from collections import defaultdict
 
 import requests
+from app.controllers.FilterController import FilterController
 from app.models.tables import Anexo, Aprovacao, Documento, Perfil, User
 from app.controllers.EmpresaController import EmpresaController
 from app.controllers.LogController import LogController
@@ -46,22 +47,19 @@ class DocsController:
     def get_history_docs(titulo):
         filtered_emps = defaultdict(list)
 
-        docs = Documento.query.filter_by(titulo=titulo).order_by(Documento.data.desc()).all()
+        docs = Documento.query.filter_by(titulo=titulo).order_by(Documento.versao.asc()).all()
         
         for doc in docs:
             # Load anexos to the document
             doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
 
-            # Load pasta_drive to the document
-            doc.pasta_drive = CUBO.query.filter_by(categoria_id=doc.categoria_id).filter_by(contrato_id=doc.contrato_id).first().pasta_drive
-
-            cubo = CUBO.query.filter_by(categoria_id=doc.categoria_id).filter_by(contrato_id=doc.contrato_id).first()
-
+            cubo = CUBO.query.filter(CUBO.categoria_ids.contains(doc.categoria_id)).first()
             doc.pasta = cubo.pasta_drive
-            doc.perfil_nomes = cubo.perfil_nomes
+            
+            doc.perfil_nome = cubo.perfil_nome
             doc.aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
 
-            filtered_emps[doc.empresa_nome].append(doc).all()
+            filtered_emps[doc.empresa_nome].append(doc)
         
         return filtered_emps
 
@@ -79,52 +77,34 @@ class DocsController:
         # Initialize a dictionary to hold lists of documents for each company
         filtered_emps = defaultdict(list)
 
+        docs = FilterController.filter(content, Documento)
+        
         try:
             perfil_id = User.query.get(session["id"]).perfil_id
 
             # Retrieve all cubos associated with the user's profile
-            cubos = CUBO.query.filter(CUBO.perfil_ids.contains(perfil_id)).all()
-            categorias = [cubo.categoria_id for cubo in cubos]
-            
-            # Retrieve all documents
-            if emp:
-                docs = Documento.query.filter_by(empresa_id=emp).filter(Documento.categoria_id.in_(categorias)).order_by(Documento.data.desc(), Documento.titulo).all()
-            else:
-                docs = Documento.query.filter(Documento.categoria_id.in_(categorias)).order_by(Documento.data.desc(), Documento.titulo).all()
-        except:
-            docs = Documento.query.filter_by(empresa_id=emp).order_by(Documento.data.desc(), Documento.titulo).all()
-            
-        # Get the list of column names dynamically
-        mapper = inspect(Documento)
-        columns = [column.key for column in mapper.attrs]
+            cubo = CUBO.query.filter_by(perfil_id=perfil_id).first()
+
+            categorias = cubo.categoria_ids
+        except Exception as e:
+            categorias = ""
+
+        for doc in docs:
+            if (doc.categoria_id in categorias and doc.versao == '1.0') or (not categorias and doc.versao == '1.0'):
+                if emp == doc.empresa_id:
+                    # Append the document to the list corresponding to its company
+                    filtered_emps[doc.empresa_nome].append(doc)
+                elif emp == None:
+                    # If the company is not in the list, create a new entry
+                    filtered_emps[doc.empresa_nome].append(doc)
         
-        if content:
-            for doc in docs:
-
-                # Check if the content is in the column value
-                for column in columns:
-
-                    if content in str(getattr(doc, column)):
-                        # Append the document to the list corresponding to its company
-                        filtered_emps[doc.empresa_nome].append(doc)
-                        #sai do loop depois que o primeiro 
-                        break
-        else:
-            for doc in docs:
-                # Append the document to the list corresponding to its company
-                filtered_emps[doc.empresa_nome].append(doc)
-
         for doc in docs:
             # Load anexos to the document
             doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
-
-            # Load pasta_drive to the document
-            doc.pasta_drive = CUBO.query.filter_by(categoria_id=doc.categoria_id).filter_by(contrato_id=doc.contrato_id).first().pasta_drive
-
-            cubo = CUBO.query.filter_by(categoria_id=doc.categoria_id).filter_by(contrato_id=doc.contrato_id).first()
-
+            cubo = CUBO.query.filter(CUBO.categoria_ids.contains(doc.categoria_id)).first()
+            
             doc.pasta = cubo.pasta_drive
-            doc.perfil_nomes = cubo.perfil_nomes
+            doc.perfil_nome = cubo.perfil_nome
             doc.aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
         
         return filtered_emps
@@ -145,25 +125,30 @@ class DocsController:
 
                         ## Nome da empresa
                         empresa_nome=EmpresaController.get(_id=form["empresa"]).nome,
-                        categoria_id=form["categoria"],
+                        categoria_id=form["categoria"].split("|")[0],
                         data=data)
         
         db.session.add(doc)
         db.session.commit()
         
-        cubo = CUBO.query.filter_by(categoria_id=form["categoria"]).filter_by(contrato_id=form["contrato"]).first()
-        users = User.query.filter(User.perfil_id.in_(cubo.perfil_ids.split(","))).all()
-        emails = [user.email for user in users]
+        cubos = CUBO.query.filter(CUBO.categoria_ids.contains(doc.categoria_id)).all()
+        emails = []
+
+        for cubo in cubos:
+            users = User.query.filter_by(perfil_id=cubo.perfil_id).all()
+
+            emails.extend([user.email for user in users])
         
         # Create Aprovacao for documento based on perfil_id
-        for perfi_id in cubo.perfil_ids.split(","):
+        for cubo in cubos:
             new_aprovacao = Aprovacao(
-                perfil_id=perfi_id,
-                perfil_nome=Perfil.query.get(int(perfi_id)).nome,
+                perfil_id=cubo.perfil_id,
+                perfil_nome=Perfil.query.get(cubo.perfil_id).nome,
                 documento_id=doc._id,  # Assumes _id is available after add
                 data=datetime.now().strftime("%d/%m/%Y %H:%M"),
                 status="AGUARDANDO"
             )
+            
 
             db.session.add(new_aprovacao)
             db.session.commit()
@@ -175,8 +160,8 @@ class DocsController:
             Um novo documento foi adicionado: {doc.titulo}.\n\n
             Contrato: {doc.contrato_nome}\n
             Categoria: {doc.categoria_nome}\n
+            Empresa: {doc.empresa_nome}\n
             Data: {doc.data}\n
-            Prazo: {cubo.prazo} dias\n
             """
 
             # Create a Message object
@@ -184,16 +169,16 @@ class DocsController:
                         recipients=emails,
                         body=body)
                         
-            # Crete an Anexo object for each file
+            # Create an Anexo object for each file
             for file in files.getlist("anexo"):
                 file.seek(0)  # Reset file pointer to the beginning
 
                 anexo = Anexo(
                     filename=file.filename,
                     data=compress_file(file),
-                    documento_id=doc._id
+                    documento_id=doc._id,
                 )
-
+                
                 db.session.add(anexo)
                 db.session.commit()
                 
@@ -276,7 +261,7 @@ class DocsController:
             categoria_nome=doc.categoria_nome,
             empresa_nome=doc.empresa_nome,
             categoria_id=doc.categoria_id,
-            tipo_processo=doc.tipo_processo,
+
             status="CORRIGIDO", ## Novo documento inicia com status CORRIGIDO para nova aprovação
             data=datetime.now().strftime("%d/%m/%Y %H:%M"),
             versao = float(doc.versao) + 0.1
@@ -321,22 +306,60 @@ class DocsController:
         headers = {
             'Authorization': f'Bearer {access_token}',
         }
-
-        docs = Documento.query.filter_by(uploaded=False).filter_by(status="APROVADO").filter_by(expirado=False).all()
+        
+        docs = Documento.query.filter_by(uploaded=False).filter_by(status="APROVADO").all()
         print(f"Found {len(docs)} documents to upload to Google Drive...")
-
+        
         for doc in docs:
             # Get the drive folder ID
-            pasta_drive = CUBO.query.filter_by(
+            cubo = CUBO.query.filter_by(
                 categoria_id=doc.categoria_id,
                 contrato_id=doc.contrato_id
-            ).first().pasta_drive
+            ).first()
             
+            if not cubo:
+                raise Exception(f"No CUBO found for categoria_id {doc.categoria_id} and contrato_id {doc.contrato_id}")
+
+            pasta_drive = cubo.pasta_drive
+
+            # Create folder structure in Google Drive
+            def create_folder_if_not_exists(parent_id, folder_name):
+                query = f"'{parent_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+                search_url = f'https://www.googleapis.com/drive/v3/files?q={query}'
+                response = requests.get(search_url, headers=headers)
+                if response.status_code == 200:
+                    files = response.json().get('files', [])
+                    if files:
+                        return files[0]['id']
+                    else:
+                        # Create folder if it doesn't exist
+                        metadata = {
+                            'name': folder_name,
+                            'mimeType': 'application/vnd.google-apps.folder',
+                            'parents': [parent_id]
+                        }
+                        create_response = requests.post(
+                            'https://www.googleapis.com/drive/v3/files',
+                            headers=headers,
+                            json=metadata
+                        )
+                        if create_response.status_code == 200:
+                            return create_response.json()['id']
+                        else:
+                            raise Exception(f"Error creating folder {folder_name}: {create_response.status_code} - {create_response.text}")
+                else:
+                    raise Exception(f"Error searching for folder {folder_name}: {response.status_code} - {response.text}")
+
+            empresa_folder_id = create_folder_if_not_exists(pasta_drive, doc.empresa_nome)
+            contrato_folder_id = create_folder_if_not_exists(empresa_folder_id, doc.contrato_nome)
+            categoria_folder_id = create_folder_if_not_exists(contrato_folder_id, doc.categoria_nome)
+
             print(f"Uploading document {doc.titulo} to Google Drive...")
 
             files = Anexo.query.filter_by(documento_id=doc._id).all()
-            print(f"Found {len(files)} files to upload for document {doc.titulo}...")
 
+            print(f"Found {len(files)} files to upload for document {doc.titulo}...")
+            
             for file in files:
                 try:
                     print(f"Uploading file {file.filename} to Google Drive...")
@@ -346,13 +369,12 @@ class DocsController:
                     # Prepare file metadata
                     metadata = {
                         'name': file.filename,
-                        'parents': [pasta_drive],
+                        'parents': [categoria_folder_id],
                         'mimeType': 'application/octet-stream'
                     }
 
                     # Convert BLOB to BytesIO for upload
                     decompressed_data = zlib.decompress(file.data)
-                    file_content = BytesIO(decompressed_data)
 
                     # Prepare multipart request
                     boundary = '---011000010111000001101001'

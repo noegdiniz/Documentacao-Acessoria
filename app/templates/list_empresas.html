@@ -4,6 +4,7 @@
         <div class="row-layout">
             <input type="text" name="nome" value="{{empresa.nome}}" placeholder="Nome da empresa..." disabled>
             <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" disabled>
+            <input type="text" name="cnpj" value="{{empresa.cnpj}}" placeholder="CNPJ - 14 char" disabled>
         </div>
 
         <div class="row-layout">
@@ -26,6 +27,7 @@
     $("#alterar-{{empresa._id}}").click(() => {
         $("#nome").val("{{empresa.nome}}");
         $("#key").val("{{empresa.chave}}");
+        $("#cnpj").val("{{empresa.cnpj}}");
 
         //Adiciona sinal visual da alteração no menu
         $("#form_dados").addClass("ball");

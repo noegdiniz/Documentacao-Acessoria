@@ -10,15 +10,23 @@ class FilterController:
         mapper = inspect(table)
         columns = [column.key for column in mapper.attrs]
 
-        rows = table.query.all()
+        rows = table.query.all()  # Ensure rows are objects with accessible attributes
 
-        if content:
+        content_list = content.split(" ") if content else []
+        
+        # Join all columns into a single string
+        for row in rows:
+            row.combined_columns = " ".join(str(getattr(row, column)) for column in columns if getattr(row, column) is not None)
+
+        if content: 
             for row in rows:
                 for column in columns:
-                    if content in str(getattr(row, column)):
-                        filtered_rows.append(row)
-                        break
-        
+                    # Check if the column is a string
+                    if isinstance(getattr(row, column), str):
+                        # Check if all of the content_list items are in diferent columns
+                        if all(item.lower() in row.combined_columns.lower() for item in content_list):
+                            filtered_rows.append(row)
+                            break
         else:
             return rows
         

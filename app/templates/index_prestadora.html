@@ -11,11 +11,15 @@
     <div class="container main-container">
         <div class="normal-container col-layout">
             <div class="navbar row-layout user-data">
+                
                 <div>
                     <a href="#" id="upload-emp">Enviar Documentação</a>
                     <a href="#" id="status-emp">Status Documentação</a>
+                    <a href="#" id="cadastro-emp">Funcionarios</a>
+                    <a href="#" id="casub-emp">Sub-contratadas</a>
+                    <a href="#" id="agenda-emp">Integração</a>
                 </div>
-
+                
                 <div class="user-data">
                     <input type="search" id="content">
 
@@ -24,7 +28,7 @@
                     <a href="/logout_prestadora">Sair</a>
                 </div>
             </div>
-
+            
             <div class="container-normal row-layout" id="content-emp" style="margin-left: 0; margin-right: 0;">
                 
             </div>
@@ -37,9 +41,9 @@
         document.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', function() {
             this.value = this.value.toUpperCase();
+            });
         });
-        });
-
+        
         $("#upload-emp").click(() => {
             fetch("/upload_file_view").then((data) => {
                 data.text().then(text => {
@@ -49,21 +53,6 @@
             }
         )
         
-        $("#content").on("keypress", (e) => {
-            if (e.which == 13) {
-            let content = $("#content").val();
-            let url = `/status_files/${content}`
-            
-            fetch(url).then((data) => {
-                data.text().then(text => {
-                    setTimeout(() => {
-                        $("#content-emp").html(text)
-                    }, 100)
-                })
-            })
-        }
-    })
-
         $("#status-emp").click(() => {
             fetch("/status_files").then((data) => {
                 data.text().then(text => {
@@ -72,7 +61,34 @@
                 })
             }
         )
+        
+        $("#cadastro-emp").click(() => {
+            fetch("/cadastro_funcionarios").then((data) => {
+                data.text().then(text => {
+                        $("#content-emp").html(text)
+                    })
+                })
+            }
+        )
+        
+        $("#agenda-emp").click(() => {
+            fetch("/agendamento_integracao").then((data) => {
+                data.text().then(text => {
+                        $("#content-emp").html(text)
+                    })
+                })
+            }
+        )
 
+        $("#casub-emp").click(() => {
+            fetch("/cadastro_subcontratados").then((data) => {
+                data.text().then(text => {
+                        $("#content-emp").html(text)
+                    })
+                })
+            }
+        )
+        
     </script>
 </body>
 </html>

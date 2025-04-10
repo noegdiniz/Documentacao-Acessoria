@@ -51,7 +51,7 @@ fetch("/list_perfil").then(data => {
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
-
+    
     if(!nome) {
         showCustomAlert("Favor preecher todos os campos!")
     } else {

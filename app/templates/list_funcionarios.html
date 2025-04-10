@@ -1,0 +1,62 @@
+{%for funcionario in funcionarios%}
+<div class="col-layout">
+    <div class="key-box row-layout">
+        <div class="row-layout">
+            <input type="text" id="nome" value="{{funcionario.nome}}" disabled>
+            <input type="text" id="matricula" value="{{funcionario.matricula}}" disabled> 
+            <input type="text" id="cargo" value="{{funcionario.cargo}}" disabled>
+            <input type="text" id="setor" value="{{funcionario.setor}}" disabled>
+        </div>
+        
+        <div class="row-layout">
+            <button class="button" id="alterar-{{funcionario._id}}" name="alterar">
+                alterar
+            </button>
+            
+            <button class="button" id="excluir-{{funcionario._id}}" name="excluir">
+                excluir
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#alterar-{{funcionario._id}}").click(() => {
+        $("#nome").val("{{funcionario.nome}}");
+        $("#matricula").val("{{funcionario.matricula}}");
+        $("#cargo").val("{{funcionario.cargo}}");
+        $("#setor").val("{{funcionario.setor}}");
+
+        //Adiciona sinal visual da alteração no menu
+        $("#form_dados").addClass("ball");
+        
+        //Muda o id do funcionário para realizar a alteração no item certo
+        $("#_id").val("{{funcionario._id}}");
+    })
+
+    $("#excluir-{{funcionario._id}}").click(() => {
+        let url = "/delete_funcionario/" + "{{funcionario._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                if (text.includes("ok")) {
+                    showCustomAlert("Cadastro excluido com sucesso.");                
+                } else {
+                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                }
+            })
+        }).then(() => {
+            let val = $("#content").val();
+            let url = `/list_funcionarios/${val}`
+
+            fetch(url).then(data => {
+                data.text().then(text => {
+                    setTimeout(() => {
+                        $("#funcionarios-list-content").html(text)
+                    }, 100)
+                })
+            })
+        })
+    })
+</script>
+{%endfor%}

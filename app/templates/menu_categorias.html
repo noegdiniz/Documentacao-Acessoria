@@ -65,7 +65,6 @@
             })
         })
     
-    
     function removeTag(index) {
         tags.splice(index, 1);
 
@@ -98,7 +97,6 @@
         }
     })
 
-    
 
     $("#content").on("keypress", (e) => {
         if(e.which == 13) {
@@ -108,10 +106,10 @@
             data.text().then(text => {
             setTimeout(() => {$("#categoria-list-content").html(text)}, 100);
         
+            })
         })
+        }
     })
-    }
-})
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();

@@ -26,22 +26,29 @@
                             TIPO DE DOCUMENTO:
                         </span>
                         <select name="categoria" id="categoria" required placeholder="" style="width: auto;">
+                            <option value="" selected></option>
+
                             {%for t_processo in tipo_processo%}
-                            <optgroup label="t_processo.nome">
+                            <optgroup label="{{t_processo.nome}}">
                                 {%for categoria in t_processo.categorias%}
-                                    <option value="{{categoria._id}}">{{categoria.nome}}</option>
+                                    <option value="{{categoria._id}}|{{categoria.documentos_pedidos}}">
+                                        {{categoria.nome}}
+                                    </option>
                                 {%endfor%}
                             </optgroup>
                             {%endfor%}
                         </select>
                         
-                        
                         <span>
                             CONTRATO:
                         </span>
                         <select name="contrato" id="contrato" required placeholder="" style="width: auto;">
+                            <option value="" selected></option>
+                            
                             {%for contrato in contratos%}
-                            <option value="{{contrato._id}}">{{contrato.nome}}</option>
+                            <option value="{{contrato._id}}">
+                                {{contrato.nome}}
+                            </option>
                             {%endfor%}
                         </select>
 
@@ -64,12 +71,7 @@
                 <div class="container form-container" style="overflow-y: auto; min-height: 76vh; max-height: 1px;">
                     
                     <div class="col-layout" id="anexos">
-                    
-                        <span>
-                            Teste:
-                        </span>
-                        <input type="file" id="anexo" name="anexo" accept=".pdf" required>
-                    
+                        
                     </div>
                 </div>
             </div>
@@ -85,29 +87,22 @@
             $("#titulo").css("background-color", "white");
         })
 
-        $("#anexo").on("change", () => {    
+        
+        $("#categoria").change(() => {
             let value = $("#categoria").val();
-            let url = `/get_documentos_precisos/${value}`;
 
-            fetch(url).then(data => {
-                data.json().then(text => {
-                    // Percorrer todos os elementos do json
-                    let html = "";
+            let docs_necessarios = value.split("|")[1].split(",");
+            let html = "";
 
-                    text.forEach(element => {
-                        let nome = element.nome;
-                        let id = element._id
-
-                        html += `<span>
-                            ${nome}:
+            docs_necessarios.forEach(doc => {
+                html += `<span>
+                            ${doc}:
                             </span>
-                            <input type="file" id="anexo${id}" name="anexo" accept=".pdf" required>
+                            <input type="file" id="anexo" onchange="this.style.borderColor='green'; this.style.color='green';" name="anexo" accept=".pdf" required>
                         `;
-                    })
-                    
-                    $("#anexos").html(html);
                 })
-            })
+            
+            $("#anexos").html(html)
         })
         
         $("#make-upload").click(() => {
@@ -116,7 +111,7 @@
             let contrato = $("#contrato").val();
             let categoria = $("#categoria").val();
             let data = $("#data").val();
-
+            
             let arquivos = [];
 
             $('#anexos input[type="file"]').each(function () {
@@ -131,8 +126,9 @@
                         // Deixa a borda vermelha e o texto vermelho
                         $(this).css('border-color', 'red');
                         $(this).css('color', 'red');
-                        
-                        showCustomAlert("Por favor, selecione todos os arquivos. ou preencha a justificativa.");
+
+                        //Habilita justificativa
+                        $("#justificativa").attr( "disabled", false );
                         return;
                     }
                 }

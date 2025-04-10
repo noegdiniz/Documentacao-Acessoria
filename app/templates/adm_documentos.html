@@ -11,6 +11,7 @@
         <div class="flex-center data-names">
             <div class="key-box row-layout">
                 <div class="row-layout flex-center">
+                    <input type="text" value="VERSAO:" class="key-input" disabled>
                     <input type="text" value="TITULO:" class="key-input" disabled>
                     <input type="text" value="CONTRATO:" class="key-input" disabled>
                     <input type="text" value="CATEGORIA:" class="key-input" disabled>
@@ -19,9 +20,9 @@
                     <input type="text" value="STATUS:" class="key-input" disabled>
                     <input type="text" value="UPLOAD:" class="key-input" disabled>
                 </div>
-
+                
                 <div id="page-status">
-                    <input type="text" id="upload" name="upload" value="TODOS OS DOCUMENTOS" class="key-input" disabled="" style="background-color: white;">
+                    <input type="text" id="upload" name="upload" value="STATUS DA PAGINA" class="key-input" disabled="" style="background-color: rgb(0, 0, 0); min-width: 12rem;color: white;">
                 </div>
             </div>
         </div>
@@ -40,7 +41,7 @@
             $("#box-empresas").html(text)
         })
     })
-
+    
     
     $("#content").on("keypress", (e) => {
         if (e.which === 13) { // 13 is the keycode for Enter
@@ -50,7 +51,7 @@
         fetch(url).then((data) => {
         data.text().then(text => {
             $("#box-empresas").html(text)
-
+            
             let content = encodeURIComponent($("#content").val());
             let url = "";
 

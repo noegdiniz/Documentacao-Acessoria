@@ -21,7 +21,7 @@
                 {%if permissao.can_view_perfis%}
                 <a href="#" id="perfil-page">Perfis</a>
                 {%endif%}
-
+                
                 {%if permissao.can_view_users%}
                 <a href="#" id="usuarios-page">Usuarios</a>
                 {%endif%}
@@ -74,7 +74,6 @@
             })
         })
         
-
         $("#perfil-page").click(() => {
             let = url = "/perfil_menu"
 
@@ -97,10 +96,9 @@
 
         $('a').on('click', function(event) {
             // Your custom code here
+            
             $('a').css('background-color', '');
-            
             $(this).css('background-color', '#053a72');
-            
         });
     </script>
 </div>

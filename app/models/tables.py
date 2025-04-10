@@ -5,7 +5,46 @@ from sqlalchemy import event
 ## Declaração das models ##
 ###                     ###
 
+class Funcionario(db.Model):
+    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nome = db.Column(db.String, nullable=False)
 
+    cpf = db.Column(db.String, nullable=False) #CPF do funcionario
+
+# Status do funcionario (Pode mudar sem precisar de nova integração)
+class StatusFuncionario(db.Model):
+    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    status_contratual = db.Column(db.String, nullable=False) #Status contratual do funcionario (ativo, inativo, desligado, etc...)
+
+    funcao = db.Column(db.String, nullable=False) #Função do funcionario
+    cargo = db.Column(db.String, nullable=False) #Cargo do funcionario
+    
+    versao = db.Column(db.String, nullable=False, default="1.0") #Versao do status do funcionario
+    data = db.Column(db.String, nullable=False) #Data do status do funcionario
+
+# Integração do funcionario (Criado a cada nova integração agendada)
+# A cada nova integração, cria um novo registro na tabela
+class Integracao(db.Model):
+    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    
+    unidade_atividade = db.Column(db.String, nullable=False) #Unidade de atividade do funcionario
+    unidade_integracao = db.Column(db.String, nullable=False) #Unidade de integração do funcionario
+    
+    data_integracao = db.Column(db.String, nullable=False) #Data de integração do funcionario
+    data_aso = db.Column(db.String, nullable=False) #Data do ultimo ASO
+
+    funcionario_id = db.Column(db.Integer, nullable=False) #ID do funcionario atrelado a integração
+    funcionario_nome = db.Column(db.String, nullable=False) #Nome do funcionario atrelado a integração
+
+    empresa_id = db.Column(db.Integer, nullable=False) #ID da empresa do funcionario
+    empresa_nome = db.Column(db.String, nullable=False) #Nome da empresa do funcionario
+
+    contrato_id = db.Column(db.Integer, nullable=False) #ID do contrato do funcionario
+    contrato_nome = db.Column(db.String, nullable=False) #Nome do contrato do funcionario
+
+    versao = db.Column(db.String, nullable=False, default="1.0") #Versao da integração do funcionario
+
+# Anexo do documento
 class Anexo(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     filename = db.Column(db.String, nullable=False)
@@ -13,7 +52,7 @@ class Anexo(db.Model):
     #ID DO DOCUMENTO ATRELADO AO ANEXO
     documento_id = db.Column(db.Integer, nullable=False)
     data = db.Column(db.LargeBinary, nullable=False) #Arquivo do anexo
-    link = db.Column(db.String, nullable=False) #Link do anexo no drive
+    link = db.Column(db.String, nullable=False, default="") #Link do anexo no drive
 
 # Empresa subcontratada
 class Subcont(db.Model):
@@ -46,20 +85,6 @@ class Contrato(db.Model):
     empresa_id = db.Column(db.Integer, nullable=False)
     empresa_nome = db.Column(db.String, nullable=False)
 
-class Funcionario(db.Model):
-    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nome = db.Column(db.String, nullable=False)
-    funcao = db.Column(db.String, nullable=False)
-    data_aso = db.Column(db.String, nullable=False) #Data do ultimo ASO
-    cpf = db.Column(db.String, nullable=False) #CPF do funcionario
-    contrato_id = db.Column(db.Integer, nullable=False) #ID do contrato do funcionario
-    unidade_atividade = db.Column(db.String, nullable=False) #Unidade de atividade do funcionario
-    unidade_integracao = db.Column(db.String, nullable=False) #Unidade de integração do funcionario
-    data_integra = db.Column(db.String, nullable=False) #Data de integração do funcionario
-
-    #ID DA EMPRESA OU SUBCONTRATADA DO FUNCIONARIO
-    empresa_id = db.Column(db.Integer, nullable=False)
-
 class Documento(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     titulo = db.Column(db.String, nullable=False)
@@ -75,16 +100,10 @@ class Documento(db.Model):
     empresa_id = db.Column(db.Integer, nullable=False)
     empresa_nome = db.Column(db.String, nullable=False)
 
-    #ID DO CONTRATO ATRELADO AO DOCUMENTO 
-    contrato_nome = db.Column(db.String, nullable=False)
-    categoria_nome = db.Column(db.String, nullable=False)
-    
     #ID DA CATEGORIA ATRELADA AO DOCUMENTO
     categoria_id =  db.Column(db.String, nullable=False)
+    categoria_nome = db.Column(db.String, nullable=False)
     
-    # ID DO TIPO DE PROCESSO ATRELADO AO DOCUMENTO
-    tipo_processo_id = db.Column(db.Integer, nullable=False) #Tipo do processo
-
     #CONTROLA O STATUS GERAL DO DOCUMENTO
     status = db.Column(db.String, nullable=False, default="AGUARDANDO") #APROVADO / AGUARDANDO / NAO APROVADO / CORRIGIDO
 
@@ -112,7 +131,7 @@ class Empresa(db.Model):
     nome = db.Column(db.String, nullable=False)
     cnpj = db.Column(db.String, nullable=False) #CNPJ da empresa
 
-    ##Chave unica de 6 digitos para identificação da empresa
+    ## Chave unica de 6 digitos para identificação da empresa
     chave = db.Column(db.String, nullable=False)
 
 class Aprovacao(db.Model):
@@ -131,11 +150,11 @@ class Aprovacao(db.Model):
 
 class CUBO(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    categoria_ids = db.Column(db.Integer, nullable=False)
+    categoria_ids = db.Column(db.String, nullable=False)
     categoria_nomes = db.Column(db.String, nullable=False)
     
-    perfil_ids = db.Column(db.String, nullable=False) #IDs dos perfis separados por vírgula
-    perfil_nomes = db.Column(db.String, nullable=False) #Nomes dos perfis separados por vírgula
+    perfil_id = db.Column(db.String, nullable=False) #IDs dos perfis separados por vírgula
+    perfil_nome = db.Column(db.String, nullable=False) #Nomes dos perfis separados por vírgula
     
     pasta_drive = db.Column(db.String, nullable=False)
 

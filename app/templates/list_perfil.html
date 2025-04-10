@@ -316,7 +316,6 @@
                             {%endif%}
                         </select>
                     </div>
-    
                 </div>
     
                 <!-- EMPRESA -->
@@ -403,7 +402,6 @@
                         </select>
                     </div>
     
-    
                     <div class="col-layout">
                             
                         <select class="perfil-input" name="delete-perfil" id="perfil" required placeholder="">
@@ -432,7 +430,7 @@
                             {%endif%}
                         </select>
                     </div>
-    
+                    
                     <div class="col-layout">
                     
                         <select class="perfil-input" name="criar-perfil" id="perfil" required placeholder="">
@@ -503,21 +501,13 @@
 
         </form>
         
-
         <div class="row-layout">
-            <!-- {%if permissao.can_edit_perfis%}
-            <button class="button" id="alterar-{{perfil._id}}" name="alterar">
-                alterar
-            </button>
-            {%endif%} -->
-
             {%if permissao.can_delete_perfis%}
             <button class="button" id="excluir-{{perfil._id}}" name="excluir">
                 excluir
             </button>
             {%endif%}
         </div>
-
     </div>
 </div>
 
@@ -577,6 +567,5 @@
             }
         });
     })
-
 </script>
 {%endfor%}

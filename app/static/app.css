@@ -23,8 +23,7 @@ html {
 }
 
 body {
-    height: auto;
-    height: 98.02%;
+    height: 99.1%;
 }
 
 body {
@@ -234,9 +233,6 @@ input[type="submit"] {
 
 .empresas-box {
     width: -webkit-fill-available;
-    max-height: 75vh;
-    height: 75vh;
-    overflow-y: auto;
 }
 
 .empresas-box-docs {
@@ -586,4 +582,19 @@ span {
     background-color: white;
     color: black;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#cubo-list-content {
+    max-height: 61vh;
+    overflow-y: auto;
+}
+
+#contrato-list-content, #categoria-list-content, #tipo-processo-list-content{
+    max-height: 67vh;
+    overflow-y: auto;
+}
+
+.logs-box {
+    max-height: 78vh;
+    overflow-y: auto;
 }

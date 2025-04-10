@@ -4,6 +4,7 @@
             <div class="row-layout" id="form_dados">
                 <input type="text" id="nome" name="nome" placeholder="Nome da empresa...">
                 <input type="text" id="key" name="key" placeholder="Chave - 6 char">
+                <input type="text" id="cnpj" name="cnpj" placeholder="CNPJ - 14 char">
                 <input type="hidden" id="_id" name="_id">
             </div>
             
@@ -23,6 +24,7 @@
         <div class="row-layout">
             <input type="text" value="NOME:" disabled>
             <input type="text" value="CHAVE:" disabled>
+            <input type="text" value="CNPJ:" disabled>
         </div>
         
         <div class="row-layout">
@@ -67,13 +69,14 @@ $("#gen").click(() => {
 $("#salvar").click(() => {
     let nome = $("#nome").val()
     let chave = $("#key").val()
+    let cnpj = $("#cnpj").val()
 
-    if (!nome || !chave) {
+    if (!nome || !chave || !cnpj) {
         showCustomAlert("Por favor, preencha todos os campos.");
         return;
     }
 
-    let url = "/create_empresa" + "/" + nome + "/" + chave + "/" + $("#_id").val();
+    let url = "/create_empresa" + "/" + nome + "/" + chave + "/" + cnpj + "/" + $("#_id").val();
     
     fetch(url).then(data => {
         data.text().then(text => {
@@ -97,6 +100,7 @@ $("#salvar").click(() => {
                 $("#_id").val("");
                 $("#key").val("");
                 $("#nome").val("");
+                $("#cnpj").val("");
             })
         })
     })
