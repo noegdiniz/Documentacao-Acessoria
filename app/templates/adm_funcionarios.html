@@ -4,9 +4,16 @@
             <div class="key-box row-layout">
                 <form id="form_dados" name="form_dados">
                     <div class="row-layout">
-                        <input type="text" id="nome" name="nome" placeholder="Nome da empresa">
-                        <input type="text" id="cnpj" name="cnpj" placeholder="CNPJ">
-
+                        <input type="text" id="nome" name="nome" placeholder="Nome do funcionário">
+                        <input type="text" id="funcao" name="funcao" placeholder="Função">
+                        <input type="text" id="cargo" name="cargo" placeholder="Cargo">
+                        <input type="text" id="setor" name="setor" placeholder="Setor">
+                        
+                        <select name="status" id="status" required placeholder="Status">
+                            <option value="ativo">ativo</option>
+                            <option value="inativo">inativo</option>
+                        </select>
+                        
                         <input type="hidden" id="_id" name="_id">
                     </div>
                 </form>
@@ -24,35 +31,37 @@
         <div class="key-box row-layout data-names">
             <div class="row-layout">
                 <input type="text" value="NOME:" disabled>
-                <input type="text" value="CNPJ:" disabled>
-
-            </div>
+                <input type="text" value="FUNÇÃO:" disabled>
+                <input type="text" value="CARGO:" disabled>
+                <input type="text" value="SETOR:" disabled>
+                <input type="text" value="STATUS:" disabled>
+            </div>  
             
             <div class="row-layout">
             </div>
         </div>
 
-        <div id="subcontratados-list-content">
+        <div id="funcionarios-list-content">
         </div>
     </div>
 </div>
 
 <script>
 //Carrega a lista de funcionários
-fetch("/list_subcontratados").then(data => {
+fetch("/list_funcionarios").then(data => {
     data.text().then(text => {
-        setTimeout(() => {$("#subcontratados-list-content").html(text)}, 100);
+        setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
     })
 })
 
 $("#content").on("keypress", (e) => {
     if(e.which == 13) {
-        const url = "/list_subcontratados/" + $("#content").val();
+        const url = "/list_funcionarios/" + $("#content").val();
 
         fetch(url).then(data => {
             data.text().then(text => {
                 setTimeout(() => {
-                    $("#subcontratados-list-content").html(text)
+                    $("#funcionarios-list-content").html(text)
                 }, 100);
             })
         })
@@ -61,9 +70,12 @@ $("#content").on("keypress", (e) => {
 
 $("#salvar").click(() => {
     let nome = $("#nome").val();
-    let cnpj = $("#cnpj").val();
+    let funcao = $("#funcao").val();
+    let cargo = $("#cargo").val();
+    let setor = $("#setor").val();
+    let status = $("#status").val();
 
-    if(!nome || !cnpj) {
+    if(!nome || !funcao || !cargo || !setor || !status) {
         showCustomAlert("Favor preencher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
@@ -71,16 +83,16 @@ $("#salvar").click(() => {
         
         $.ajax({
             type: "POST",
-            url: "create_subcontratado",
+            url: "create_funcionario",
             data: formData,
             success: function(response) {
                 let val = $("#content").val();
-                let url = `/list_subcontratados/${val}`
+                let url = `/list_funcionarios/${val}`
                 
                 fetch(url).then(data => {
                     data.text().then(text => {
                         setTimeout(() => {
-                            $("#subcontratados-list-content").html(text)
+                            $("#funcionarios-list-content").html(text)
                         }, 100)
                     })
                 })
@@ -92,12 +104,15 @@ $("#salvar").click(() => {
 
                 //Clear form
                 $("#nome").val("");
-                $("#cnpj").val("");
+                $("#funcao").val("");
+                $("#cargo").val("");
+                $("#setor").val("");
+                $("#_id").val("");
             },
-            
+
             //Caso ocorra erro na requisição
             error: function(error) {
-                showCustomAlert("Erro ao cadastrar subcontratado: " + error)
+                showCustomAlert("Erro ao cadastrar funcionário: " + error)
             }
         });  
     }

@@ -1,3 +1,4 @@
+    document.body.style.zoom = "90%";
 
     // Function to create and show custom alert with animation
     function showCustomAlert(message) {

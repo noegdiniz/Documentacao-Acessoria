@@ -19,6 +19,9 @@
                     {%if permissao.can_view_empresas%}
                     <a href="#" id="prestadoras-page">Prestadoras</a>
                     {%endif%}
+                    
+                    <a href="#" id="funcionarios-page">Funcionarios</a>
+                    <a href="#" id="integracao-page">Integração</a>
 
                     <a href="#" id="cubo-page">Dados</a>
 
@@ -88,7 +91,7 @@
                 })
             }
         )
-
+        
         $("#prestadoras-page").click(() => {
             fetch("/adm_empresas").then((data) => {
                 data.text().then((text) => {
@@ -98,6 +101,22 @@
             }
         )
 
+        $("#funcionarios-page").click(() => {
+            fetch("/adm_funcionarios").then(data => {
+                data.text().then(text => {
+                    $("#content-adm").html(text)
+                })
+            })
+        })
+
+        $("#integracao-page").click(() => {
+            fetch("/adm_integracao").then(data => {
+                data.text().then(text => {
+                    $("#content-adm").html(text)
+                })
+            })
+        })
+        
     </script>
 
     <script>

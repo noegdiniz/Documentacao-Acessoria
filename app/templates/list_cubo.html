@@ -26,10 +26,11 @@
 
 <script>
     $("#alterar-{{cubo._id}}").click(() => {
-        $("#categoria").val("{{cubo.categoria_id}}");
-        $("#contrato").val("{{cubo.contrato_id}}");
-        $("#drive").val("{{cubo.pasta_drive}}");
 
+        $("#categoria").val("{{cubo.categoria_ids}}".split(","));
+        $("#perfil").val("{{cubo.perfil_id}}");
+        $("#drive").val("{{cubo.pasta_drive}}");
+        
         //Adiciona sinal visual da alteração no menu
         $("#form_dados").addClass("ball");
         

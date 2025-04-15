@@ -5,10 +5,28 @@
                 <form id="form_dados" name="form_dados">
                     <div class="row-layout">
                         <input type="text" id="nome" name="nome" placeholder="Nome do funcionário">
-                        <input type="text" id="matricula" name="matricula" placeholder="Matrícula">
+                        <input type="text" id="funcao" name="funcao" placeholder="Função">
                         <input type="text" id="cargo" name="cargo" placeholder="Cargo">
                         <input type="text" id="setor" name="setor" placeholder="Setor">
                         
+                        <select name="status" id="status" required>
+                            <option value="ativo">
+                                ativo
+                            </option>
+                            <option value="inativo">
+                                inativo
+                            </option>
+                        </select>
+                        
+                        <select name="empresa_id" id="empresa_id" required placeholder="Empresa">
+                            <option value="">Empresa</option>
+                            <option value="{{empresa._id}}">{{empresa.nome}}</option>
+
+                            {%for empresa in empresas_sub%}
+                                <option value="{{empresa._id}}">{{empresa.nome}}</option>
+                            {%endfor%}
+                        </select>
+
                         <input type="hidden" id="_id" name="_id">
                     </div>
                 </form>
@@ -26,9 +44,11 @@
         <div class="key-box row-layout data-names">
             <div class="row-layout">
                 <input type="text" value="NOME:" disabled>
-                <input type="text" value="MATRÍCULA:" disabled>
+                <input type="text" value="FUNÇÃO:" disabled>
                 <input type="text" value="CARGO:" disabled>
                 <input type="text" value="SETOR:" disabled>
+                <input type="text" value="STATUS:" disabled>
+                <input type="text" value="EMPRESA:" disabled>   
             </div>
             
             <div class="row-layout">
@@ -64,11 +84,13 @@ $("#content").on("keypress", (e) => {
 
 $("#salvar").click(() => {
     let nome = $("#nome").val();
-    let matricula = $("#matricula").val();
+    let funcao = $("#funcao").val();
     let cargo = $("#cargo").val();
     let setor = $("#setor").val();
 
-    if(!nome || !matricula || !cargo || !setor) {
+    let empresa_id = $("#empresa_id").val();
+
+    if(!nome || !funcao || !cargo || !setor || !empresa_id) {
         showCustomAlert("Favor preencher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
@@ -97,9 +119,10 @@ $("#salvar").click(() => {
 
                 //Clear form
                 $("#nome").val("");
-                $("#matricula").val("");
+                $("#funcao").val("");
                 $("#cargo").val("");
                 $("#setor").val("");
+                $("#empresa_id").val("");
                 $("#_id").val("");
             },
 

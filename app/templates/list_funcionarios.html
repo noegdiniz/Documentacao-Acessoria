@@ -1,31 +1,75 @@
-{%for funcionario in funcionarios%}
+{% for funcionario in funcionarios %}
 <div class="col-layout">
     <div class="key-box row-layout">
         <div class="row-layout">
             <input type="text" id="nome" value="{{funcionario.nome}}" disabled>
-            <input type="text" id="matricula" value="{{funcionario.matricula}}" disabled> 
-            <input type="text" id="cargo" value="{{funcionario.cargo}}" disabled>
-            <input type="text" id="setor" value="{{funcionario.setor}}" disabled>
+            <input type="text" id="funcao" value="{{funcionario.status_funcionario[-1].funcao}}" disabled> 
+            <input type="text" id="cargo" value="{{funcionario.status_funcionario[-1].cargo}}" disabled>
+            <input type="text" id="setor" value="{{funcionario.status_funcionario[-1].setor}}" disabled>
+            <input type="text" id="status" value="{{funcionario.status_funcionario[-1].status_contratual}}" disabled>
+            <input type="text" id="empresa_nome" value="{{funcionario.status_funcionario[-1].empresa_nome}}" disabled>
         </div>
         
         <div class="row-layout">
-            <button class="button" id="alterar-{{funcionario._id}}" name="alterar">
-                alterar
+            <button class="button" id="menu-{{funcionario._id}}" name="menu">
+                menu
             </button>
-            
-            <button class="button" id="excluir-{{funcionario._id}}" name="excluir">
-                excluir
-            </button>
+
+            {%if permissao%}
+                {%if permissao.can_edit_funcionarios%}
+                <button class="button" id="alterar-{{funcionario._id}}" name="alterar">
+                    alterar
+                </button>
+                {%endif%}
+                
+                {%if permissao.can_delete_funcionarios%}
+                <button class="button" id="excluir-{{funcionario._id}}" name="excluir">
+                    excluir
+                </button>
+                {%endif%}
+            {%endif%}
         </div>
     </div>
 </div>
 
+<!-- Modal -->
+<div id="menuModal{{funcionario._id}}" class="modal" style="display: none;">
+</div>
+
+<script>
+    // Open modal
+    $("#menu-{{funcionario._id}}").click(() => {
+        $("#menuModal{{funcionario._id}}").css("display", "flex");
+    });
+
+    $("#menu-{{funcionario._id}}").click(() => {
+        let url = "/menu_funcionario/" + "{{funcionario._id}}";
+        
+        fetch(url).then(data => {
+            data.text().then(text => {
+                setTimeout(() => {
+                    $("#menuModal{{funcionario._id}}").html(text);
+                }, 100);
+            });
+        });
+    });
+
+    // Close modal when clicking outside of it
+    $(window).click((event) => {
+        if (event.target.id === "menuModal{{funcionario._id}}") {
+            $("#menuModal{{funcionario._id}}").css("display", "none");
+        }
+    });
+</script>
+
 <script>
     $("#alterar-{{funcionario._id}}").click(() => {
         $("#nome").val("{{funcionario.nome}}");
-        $("#matricula").val("{{funcionario.matricula}}");
-        $("#cargo").val("{{funcionario.cargo}}");
-        $("#setor").val("{{funcionario.setor}}");
+        $("#funcao").val("{{funcionario.status_funcionario[-1].funcao}}");
+        $("#cargo").val("{{funcionario.status_funcionario[-1].cargo}}");
+        $("#setor").val("{{funcionario.status_funcionario[-1].setor}}");
+        $("#status").val("{{funcionario.status_funcionario[-1].status_contratual}}");
+        $("#empresa_id").val("{{funcionario.status_funcionario[-1].empresa_id}}")
 
         //Adiciona sinal visual da alteração no menu
         $("#form_dados").addClass("ball");
@@ -58,5 +102,6 @@
             })
         })
     })
+
 </script>
 {%endfor%}

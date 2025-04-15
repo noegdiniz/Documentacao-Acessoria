@@ -7,7 +7,6 @@ from flask import session
 class CategoriaController:
     @staticmethod
     def create(categoria_form):
-
         new_categoria = Categoria(nome=categoria_form["nome"],
                                 tipo_de_processo_id=categoria_form["tipo_processo"],
                                 tipo_de_processo_nome=categoria_form["tipo_processo_nome"],
@@ -42,7 +41,6 @@ class CategoriaController:
                              "CATEGORIAS",
                              "ALTERAR",
                              f"NOME: {old_categoria.nome} -> {categoria.nome}")
-
     
     @staticmethod
     def get(id):
@@ -52,9 +50,8 @@ class CategoriaController:
     @staticmethod
     def get_all(filter):
         filtered_data = FilterController.filter(filter, Categoria)
-
         return filtered_data
-        
+    
     @staticmethod
     def delete(id):
         categoria = CategoriaController.get(id)

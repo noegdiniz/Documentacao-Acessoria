@@ -1,0 +1,143 @@
+<div class="modal-content">
+    <div class="close-btn-container">
+        <span class="close-btn" id="closeModal{{funcionario._id}}">&times;</span>
+    </div>
+    
+    <h2>Menu - {{funcionario.nome}}</h2>
+    <div class="flex-center">
+        <div class="row-layout container">
+            <button class="button" id="status-{{funcionario._id}}" name="menu">
+                Status
+            </button>
+            <button class="button" id="agenda-{{funcionario._id}}" name="alterar">
+                Agendar Integração
+            </button>
+        </div>
+    </div>
+    
+    <div id="tab-status" class="col-layout container">
+
+        <div class="key-box row-layout  data-names">
+            <div class="row-layout flex-center">
+                <input type="text" value="FUNÇÃO:" class="key-input" disabled>
+                <input type="text" value="CARGO:" class="key-input" disabled>
+                <input type="text" value="SETOR:" class="key-input" disabled>
+                <input type="text" value="DATA:" class="key-input" disabled>
+                <input type="text" value="DATA ASO:" class="key-input" disabled>
+                <input type="text" value="DATA INTEGRAÇÃO:" class="key-input" disabled>
+
+                <input type="text" value="EMPRESA:" class="key-input" disabled>
+                <input type="text" value="CONTRATO:" class="key-input" disabled>
+
+                <input type="text" value="STATUS:" class="key-input" disabled>
+                <input type="text" value="STATUS INTEGRAÇÃO:" class="key-input" disabled>
+            </div>
+        </div>
+        
+        {%for status in funcionario.status_funcionario%}
+        {%if status.tipo == 'status'%}
+        <div class="key-box row-layout status-color">
+        {%elif status.tipo == 'integracao'%}
+        <div class="key-box row-layout integracao-color">
+        {%endif%}
+            <div class="row-layout flex-center">
+                <input type="text" id="funcao" name="funcao" value="{{status.funcao}}" class="key-input" disabled>
+                <input type="text" id="cargo" name="cargo" value="{{status.cargo}}" class="key-input" disabled>
+                <input type="text" id="setor" name="setor" value="{{status.setor}}" class="key-input" disabled>
+                <input type="text" id="data" name="data" value="{{status.data}}" class="key-input" disabled>
+                <input type="text" id="data_aso" name="data_aso" value="{{status.data_aso if status.integracao.data_aso else ''}}" class="key-input" disabled>
+                <input type="text" id="data_integra" name="data_integra" value="{{status.data_integracao if status.integracao.data_integracao else ''}}" class="key-input" disabled>
+                
+                <input type="text" id="empresa" name="empresa" value="{{status.empresa_nome if status.integracao.empresa_nome else ''}}" class="key-input" disabled>
+                <input type="text" id="contrato" name="contrato" value="{{status.contrato_nome if status.integracao.contrato_nome else ''}}" class="key-input" disabled>
+                
+                <input type="text" id="status" name="status" value="{{status.status_contratual}}" class="key-input" disabled>
+                <input type="text" id="status" name="status" value="{{status.status_integracao}}" class="key-input" disabled>
+                
+            </div>
+        </div>
+        {%endfor%}
+    </div>
+    
+    <div id="tab-history" class="col-layout container" style="display: none;">
+        <div class="key-box row-layout  data-names">
+            <div class="row-layout flex-center">
+                <input type="text" value="NOME:" class="key-input" disabled>
+                <input type="text" value="UNIDADE DE ATIVIDADE:" class="key-input" disabled>
+                <input type="text" value="UNIDADE DE INTEGRAÇAO:" class="key-input" disabled>
+                <input type="text" value="DATA INTEGRAÇAO:" class="key-input" disabled>
+                <input type="text" value="DATA ASO" class="key-input" disabled>
+                <input type="text" value="EMPRESA:" class="key-input" disabled>
+                <input type="text" value="CONTRATO:" class="key-input" disabled>
+                <input type="text" value="STATUS:" class="key-input" disabled>
+            </div>
+        </div>
+
+        <div class="key-box row-layout">
+            <div class="row-layout flex-center">
+                <form action="post" nome="agenda-integracao">
+                    <select name="nome" id="nome" class="key-input" required>
+                        <option value="">Funcionario</option>
+                        {%for funcionario in funcionarios%}
+                            <option value="funcionario._id">
+                                {{funcionario.nome}}
+                            </option>
+                        {%endfor%}
+                    </select>
+    
+                    <select name="unidade_atividade" id="unidade_atividade" class="key-input" required>
+                        <option value="">Unidade de Atividade</option>
+    
+                        <option value="Santana">Santana</option>
+                        <option value="Porto Grande">Porto Grande</option>
+                        <option value="Tartarugalzinho">Tartarugalzinho</option>
+                        <option value="KM78">KM78</option>
+                    </select>
+    
+                    <select name="unidade_integracao" id="unidade_integracao" class="key-input" required>
+                        <option value="">Unidade de Integração</option>
+    
+                        <option value="Santana">Santana</option>
+                        <option value="Porto Grande">Porto Grande</option>
+                        <option value="Tartarugalzinho">Tartarugalzinho</option>
+                        <option value="KM78">KM78</option>
+    
+                    </select>
+                    
+                    <input type="text" name="data_integra" id="data_integra" placeholder="Data Integração" class="key-input">
+                    <input type="text" name="data_aso" id="data_aso" placeholder="Data ASO" class="key-input">
+                    
+                    <select name="contrato" id="contrato">
+                        {%for contrato in contratos%}
+                            <option value="contrato._id">
+                                {{contrato.titulo}}
+                            </option>
+                        {%endfor%}
+                    </select>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    $("#status-{{funcionario._id}}").click(
+        () => {
+            $("#tab-status").css("display", "flex");
+            $("#tab-history").css("display", "none");
+        }
+    )
+
+    $("#agenda-{{funcionario._id}}").click(
+        () => {
+            $("#tab-status").css("display", "none");
+            $("#tab-history").css("display", "flex");
+        }
+    )
+
+    // Close modal
+    $("#closeModal{{funcionario._id}}, #closeModalFooter{{funcionario._id}}").click(() => {
+        $("#menuModal{{funcionario._id}}").css("display", "none");
+    });
+</script>

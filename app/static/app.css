@@ -515,6 +515,7 @@ span {
     text-align: center;
     max-height: 90vh;
     overflow-y: auto;
+    width: 90vw;
 }
 
 .close-btn {
@@ -597,4 +598,12 @@ span {
 .logs-box {
     max-height: 78vh;
     overflow-y: auto;
+}
+
+.status-color {
+    background-color: lightslategrey;
+}
+
+.integra-color {
+    background-color: aliceblue;
 }

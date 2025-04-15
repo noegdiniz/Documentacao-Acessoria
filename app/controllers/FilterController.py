@@ -1,4 +1,6 @@
 from sqlalchemy import inspect
+from sqlalchemy import func, desc
+from app.ext.db import db
 
 class FilterController:
     @staticmethod
@@ -10,8 +12,15 @@ class FilterController:
         mapper = inspect(table)
         columns = [column.key for column in mapper.attrs]
 
-        rows = table.query.all()  # Ensure rows are objects with accessible attributes
-
+        rows_temp = table.query.all()  # Ensure rows are objects with accessible attributes
+        rows = []
+        
+        try:
+            for row in rows_temp:
+                rows.append(table.query.filter(table.titulo == row.titulo).order_by(table.versao.desc()).first())
+        except:
+            rows = rows_temp
+        
         content_list = content.split(" ") if content else []
         
         # Join all columns into a single string

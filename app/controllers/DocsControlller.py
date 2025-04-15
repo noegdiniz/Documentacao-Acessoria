@@ -90,7 +90,7 @@ class DocsController:
             categorias = ""
 
         for doc in docs:
-            if (doc.categoria_id in categorias and doc.versao == '1.0') or (not categorias and doc.versao == '1.0'):
+            if (doc.categoria_id in categorias) or (not categorias):
                 if emp == doc.empresa_id:
                     # Append the document to the list corresponding to its company
                     filtered_emps[doc.empresa_nome].append(doc)

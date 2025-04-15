@@ -19,7 +19,7 @@ import requests
 import json
 import zlib
 
-from app.models.tables import Anexo
+from app.models.tables import Anexo, Empresa, Subcont
 
 bp_app = Blueprint("bp", __name__)
 
@@ -585,7 +585,7 @@ def tipo_processo_menu():
 @bp_app.route("/create_tipo_processo", methods=["POST"])
 def create_tipo_processo():
     form = request.form
-    
+
     try:
         if form["_id"]:
             # If an _id is provided, retrieve the existing TipoProcesso and update it
@@ -775,7 +775,7 @@ def configure(app):
 def upload_gdrive():
     try:
         DocsController.upload_drive()
-
+        
         return "ok"
     except Exception as e:
         return(f"erro:{e}")
@@ -840,16 +840,23 @@ def delete_subcontratados(_id):
     except Exception as e:
         return f"erro:{e}"
 
-# Cadastro de funcionarios
+# Cadastro de funcionarios Prestadora
 @bp_app.route("/cadastro_funcionarios")
 def cadastro_funcionarios():
-    return render_template("menu_funcionarios.html")
+    empresa = Empresa.query.filter_by(chave=session["chave_empresa"]).first()
+    empresas_sub = Subcont.query.filter_by(empresa_id=empresa._id)
+    
+    return render_template("menu_funcionarios.html", empresas=empresas_sub, empresa=empresa)
 
-@bp_app.route("/create_funcionario", methods=["POST"]) 
+# Manage funcionarios Prestadora
+@bp_app.route("/adm_funcionarios")
+def adm_funcionarios():
+    return render_template("adm_funcionarios.html")
+
+@bp_app.route("/create_funcionario", methods=["POST"])
 def create_funcionario():
     try:
         form = request.form
-
         if form["_id"]:
             # Update existing funcionario
             IntegraController.update_funcionario(form)
@@ -872,5 +879,27 @@ def delete_funcionario(_id):
 @bp_app.route("/list_funcionarios/", defaults={"filter": ""})
 @bp_app.route("/list_funcionarios/<filter>")
 def list_funcionarios(filter):
-    funcionarios = IntegraController.get_all_funcionario(filter)
-    return render_template("list_funcionarios.html", funcionarios=funcionarios)
+
+    if "id" in session:
+        funcionarios = IntegraController.get_all_funcionario(filter)
+        permissao = PerfilController.get(UserController.get(session["id"]).perfil_id)
+    else:
+        empresa_nome = Empresa.query.filter_by(chave=session["chave_empresa"]).first().nome
+        
+        # Retorna apenas os funcionarios da empresa
+        funcionarios = IntegraController.get_all_funcionario(empresa_nome)
+
+        permissao = False
+        
+    return render_template("list_funcionarios.html", funcionarios=funcionarios, permissao=permissao)
+
+@bp_app.route("/menu_funcionario/<id>")
+def menu_funcionario(id):
+    empresa_nome = Empresa.query.filter_by(chave=session["chave_empresa"]).first().nome
+    
+    funcionario = IntegraController.get_funcionario(id)
+
+    #Para listar os funcionarios na integracao
+    funcionarios = IntegraController.get_all_funcionario(empresa_nome)
+    
+    return render_template("modal_funcionario.html", funcionario=funcionario, funcionarios=funcionarios)

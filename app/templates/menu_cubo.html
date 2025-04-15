@@ -75,7 +75,6 @@ fetch("/list_cubo").then(data => {
         fetch(url).then(data => {
             data.text().then(text => {
             setTimeout(() => {$("#cubo-list-content").html(text)}, 100);
-        
         })
     })
     }

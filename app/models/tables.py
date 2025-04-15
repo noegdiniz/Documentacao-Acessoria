@@ -9,41 +9,37 @@ class Funcionario(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String, nullable=False)
 
-    cpf = db.Column(db.String, nullable=False) #CPF do funcionario
-
 # Status do funcionario (Pode mudar sem precisar de nova integração)
 class StatusFuncionario(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     status_contratual = db.Column(db.String, nullable=False) #Status contratual do funcionario (ativo, inativo, desligado, etc...)
+    status_integracao = db.Column(db.String, nullable=False) #Status de integração do funcionario (ativo, inativo, desligado, etc...)
+    
+    funcionario_id = db.Column(db.Integer, nullable=False) #ID do funcionario atrelado ao status
+    funcionario_nome = db.Column(db.String, nullable=False) #Nome do funcionario atrelado ao status
 
     funcao = db.Column(db.String, nullable=False) #Função do funcionario
     cargo = db.Column(db.String, nullable=False) #Cargo do funcionario
     
-    versao = db.Column(db.String, nullable=False, default="1.0") #Versao do status do funcionario
-    data = db.Column(db.String, nullable=False) #Data do status do funcionario
-
-# Integração do funcionario (Criado a cada nova integração agendada)
-# A cada nova integração, cria um novo registro na tabela
-class Integracao(db.Model):
-    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    setor = db.Column(db.String, nullable=False) #Setor do funcionario
     
+    empresa_id = db.Column(db.Integer, nullable=False) #ID da empresa do funcionario
+    empresa_nome = db.Column(db.String, nullable=False) #Nome da empresa do funcionario
+
     unidade_atividade = db.Column(db.String, nullable=False) #Unidade de atividade do funcionario
     unidade_integracao = db.Column(db.String, nullable=False) #Unidade de integração do funcionario
     
     data_integracao = db.Column(db.String, nullable=False) #Data de integração do funcionario
     data_aso = db.Column(db.String, nullable=False) #Data do ultimo ASO
 
-    funcionario_id = db.Column(db.Integer, nullable=False) #ID do funcionario atrelado a integração
-    funcionario_nome = db.Column(db.String, nullable=False) #Nome do funcionario atrelado a integração
-
-    empresa_id = db.Column(db.Integer, nullable=False) #ID da empresa do funcionario
-    empresa_nome = db.Column(db.String, nullable=False) #Nome da empresa do funcionario
-
     contrato_id = db.Column(db.Integer, nullable=False) #ID do contrato do funcionario
     contrato_nome = db.Column(db.String, nullable=False) #Nome do contrato do funcionario
 
-    versao = db.Column(db.String, nullable=False, default="1.0") #Versao da integração do funcionario
-
+    versao = db.Column(db.String, nullable=False, default="1.0") #Versao do status do funcionario
+    
+    data = db.Column(db.String, nullable=False) #Data do status do funcionario
+    tipo = db.Column(db.String, nullable=False, default="status") # Tipo de status status/integração
+    
 # Anexo do documento
 class Anexo(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -208,6 +204,10 @@ class Perfil(db.Model):
     can_delete_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
     can_update_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
     can_view_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
+    
+    # Permissoes de Funcionarios
+    can_edit_funcionarios = db.Column(db.Boolean, nullable=False, default=False)
+    can_delete_funcionarios = db.Column(db.Boolean, nullable=False, default=False)
     
 # Helper function to make strings uppercase
 def uppercase_string(mapper, connection, target):

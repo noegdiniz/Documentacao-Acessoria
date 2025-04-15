@@ -6,7 +6,7 @@
             <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" disabled>
             <input type="text" name="cnpj" value="{{empresa.cnpj}}" placeholder="CNPJ - 14 char" disabled>
         </div>
-
+        
         <div class="row-layout">
             {%if permissao.can_edit_empresas%}
             <button class="button" id="alterar-{{empresa._id}}" name="alterar">
