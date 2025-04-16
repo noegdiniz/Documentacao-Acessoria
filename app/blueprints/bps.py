@@ -901,5 +901,7 @@ def menu_funcionario(id):
 
     #Para listar os funcionarios na integracao
     funcionarios = IntegraController.get_all_funcionario(empresa_nome)
+
+    contratos = ContratoController.get_all(empresa_nome)
     
-    return render_template("modal_funcionario.html", funcionario=funcionario, funcionarios=funcionarios)
+    return render_template("modal_funcionario.html", contratos=contratos, funcionario=funcionario, funcionarios=funcionarios)

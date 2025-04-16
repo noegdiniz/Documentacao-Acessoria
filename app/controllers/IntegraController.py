@@ -2,7 +2,7 @@ import datetime
 from flask import session
 from app.controllers.FilterController import FilterController
 from app.controllers.LogController import LogController
-from app.models.tables import Integracao, Funcionario, StatusFuncionario, Subcont, Empresa
+from app.models.tables import Funcionario, StatusFuncionario, Subcont, Empresa
 from app.ext.db import db
 
 class IntegraController:
@@ -61,6 +61,8 @@ class IntegraController:
     ## Create, Update, Delete, Get methods for Funcionario
     @staticmethod
     def create_funcionario(form):
+        print(form)
+
         new_funcionario = Funcionario(
             nome=form['nome']
         )
@@ -69,10 +71,21 @@ class IntegraController:
         db.session.flush()
 
         empresa = Empresa.query.filter_by(_id=form['empresa_id']).first()
-        
+
+
         status_funcionario = StatusFuncionario(
             status_contratual="ativo",
             status_integracao="pendente",
+
+            unidade_atividade="",
+            unidade_integracao="",
+
+            data_integracao="",
+            data_aso="",
+
+            contrato_id="",
+            contrato_nome="",
+
             funcionario_id = new_funcionario._id,
             funcionario_nome = new_funcionario.nome,
             funcao=form['funcao'],
@@ -84,10 +97,10 @@ class IntegraController:
 
             data=datetime.datetime.now().strftime("%d/%m/%Y"),
         )
-
+        
         db.session.add(status_funcionario)
         db.session.commit()
-
+    
     @staticmethod
     def update_funcionario(form):
 
@@ -99,6 +112,14 @@ class IntegraController:
             status_integracao=form["status_integracao"],
             funcionario_id = funcionario._id,
             funcionario_nome = funcionario.nome,
+            
+            unidade_atividade=form['unidade_atividade'],
+            unidade_integracao=form['unidade_integracao'],
+            data_integracao=form['data_integracao'],
+            data_aso=form['data_aso'],
+            contrato_id=form['contrato_id'],
+            contrato_nome=form['contrato_nome'],
+
             funcao=form['funcao'],
             cargo=form['cargo'],
             setor=form['setor'],
@@ -134,9 +155,9 @@ class IntegraController:
         
         for status in funcionario_status:
             funcionario_list.append(Funcionario.query.filter_by(_id=status.funcionario_id).first())
-            
+        
         for funcionario in funcionario_list:
             funcionario.status_funcionario = StatusFuncionario.query.filter_by(funcionario_id=funcionario._id).all()
-        
+
         return funcionario_list
     

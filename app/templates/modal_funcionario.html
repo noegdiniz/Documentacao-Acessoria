@@ -6,10 +6,10 @@
     <h2>Menu - {{funcionario.nome}}</h2>
     <div class="flex-center">
         <div class="row-layout container">
-            <button class="button" id="status-{{funcionario._id}}" name="menu">
+            <button class="button bt-status" id="status-{{funcionario._id}}" name="menu">
                 Status
             </button>
-            <button class="button" id="agenda-{{funcionario._id}}" name="alterar">
+            <button class="button bt-integracao" id="agenda-{{funcionario._id}}" name="alterar">
                 Agendar Integração
             </button>
         </div>
@@ -31,6 +31,9 @@
 
                 <input type="text" value="STATUS:" class="key-input" disabled>
                 <input type="text" value="STATUS INTEGRAÇÃO:" class="key-input" disabled>
+                <input type="text" value="APROV. RH" class="key-input" disabled>
+                <input type="text" value="APROV. SEGURANÇA" class="key-input" disabled>
+                
             </div>
         </div>
         
@@ -45,15 +48,17 @@
                 <input type="text" id="cargo" name="cargo" value="{{status.cargo}}" class="key-input" disabled>
                 <input type="text" id="setor" name="setor" value="{{status.setor}}" class="key-input" disabled>
                 <input type="text" id="data" name="data" value="{{status.data}}" class="key-input" disabled>
-                <input type="text" id="data_aso" name="data_aso" value="{{status.data_aso if status.integracao.data_aso else ''}}" class="key-input" disabled>
-                <input type="text" id="data_integra" name="data_integra" value="{{status.data_integracao if status.integracao.data_integracao else ''}}" class="key-input" disabled>
+                <input type="text" id="data_aso" name="data_aso" value="{{status.data_aso if status.data_aso else ''}}" class="key-input" disabled>
+                <input type="text" id="data_integra" name="data_integra" value="{{status.data_integracao if status.data_integracao else ''}}" class="key-input" disabled>
                 
-                <input type="text" id="empresa" name="empresa" value="{{status.empresa_nome if status.integracao.empresa_nome else ''}}" class="key-input" disabled>
-                <input type="text" id="contrato" name="contrato" value="{{status.contrato_nome if status.integracao.contrato_nome else ''}}" class="key-input" disabled>
+                <input type="text" id="empresa" name="empresa" value="{{status.empresa_nome if status.empresa_nome else ''}}" class="key-input" disabled>
+                <input type="text" id="contrato" name="contrato" value="{{status.contrato_nome if status.contrato_nome else ''}}" class="key-input" disabled>
                 
                 <input type="text" id="status" name="status" value="{{status.status_contratual}}" class="key-input" disabled>
                 <input type="text" id="status" name="status" value="{{status.status_integracao}}" class="key-input" disabled>
                 
+                <input type="text" id="aprov-rh" name="aprov-rh" value="{{status.aprov_rh}}" class="key-input" disabled>
+                <input type="text" id="aprov-seg" name="aprov-seg" value="{{status.aprov_seg}}" class="key-input" disabled>
             </div>
         </div>
         {%endfor%}
@@ -69,14 +74,19 @@
                 <input type="text" value="DATA ASO" class="key-input" disabled>
                 <input type="text" value="EMPRESA:" class="key-input" disabled>
                 <input type="text" value="CONTRATO:" class="key-input" disabled>
-                <input type="text" value="STATUS:" class="key-input" disabled>
+            </div>
+            
+            <div class="row-layout flex-center">
+                <button id="salvar-integra" name="salvar" class="button">
+                    salvar
+                </button>
             </div>
         </div>
 
         <div class="key-box row-layout">
             <div class="row-layout flex-center">
-                <form action="post" nome="agenda-integracao">
-                    <select name="nome" id="nome" class="key-input" required>
+                <form action="post" nome="agenda-integracao" id="agenda-integracao">
+                    <select name="nome" id="nome" class="key-input-select" required>
                         <option value="">Funcionario</option>
                         {%for funcionario in funcionarios%}
                             <option value="funcionario._id">
@@ -84,8 +94,8 @@
                             </option>
                         {%endfor%}
                     </select>
-    
-                    <select name="unidade_atividade" id="unidade_atividade" class="key-input" required>
+                    
+                    <select name="unidade_atividade" id="unidade_atividade" class="key-input-select" required>
                         <option value="">Unidade de Atividade</option>
     
                         <option value="Santana">Santana</option>
@@ -94,7 +104,7 @@
                         <option value="KM78">KM78</option>
                     </select>
     
-                    <select name="unidade_integracao" id="unidade_integracao" class="key-input" required>
+                    <select name="unidade_integracao" id="unidade_integracao" class="key-input-select" required>
                         <option value="">Unidade de Integração</option>
     
                         <option value="Santana">Santana</option>
@@ -104,16 +114,22 @@
     
                     </select>
                     
-                    <input type="text" name="data_integra" id="data_integra" placeholder="Data Integração" class="key-input">
-                    <input type="text" name="data_aso" id="data_aso" placeholder="Data ASO" class="key-input">
+                    <input type="text" name="data_integra" id="data_integra" placeholder="Data Integração" class="key-input" required>
+                    <input type="text" name="data_aso" id="data_aso" placeholder="Data ASO" class="key-input" required>
                     
-                    <select name="contrato" id="contrato">
+                    <input type="text" name="empresa" id="empresa" value="{{funcionario.status_funcionario[-1].empresa_nome}}" class="key-input" disabled>
+
+                    <select name="contrato" id="contrato" class="key-input-select" required>
+                        <option value="">Contrato</option>
                         {%for contrato in contratos%}
                             <option value="contrato._id">
                                 {{contrato.titulo}}
                             </option>
                         {%endfor%}
                     </select>
+
+                    <input type="hidden" id="tipo" name="tipo" value="integracao">
+                    <input type="hidden" id="_id" name="_id" value="{{funcionario._id}}">
                 </form>
             </div>
         </div>
@@ -122,6 +138,45 @@
 </div>
 
 <script>
+
+$("#salvar-integra").click(() => {
+    let nome = $("#nome").val();
+    let unidade_atividade = $("#unidade_atividade").val();
+    let unidade_integracao = $("#unidade_integracao").val();
+    let data_integra = $("#data_integra").val();
+    let data_aso = $("#data_aso").val();
+    let contrato = $("#contrato").val();
+    
+    if(!nome || !unidade_atividade || !unidade_integracao || !data_integra || !data_aso || !contrato) {
+        showCustomAlert("Favor preencher todos os campos!")
+    } else {
+        let formData = $("#agenda-integracao").serialize();
+        formData["_id"] = nome;
+
+        $.ajax({
+            type: "POST",
+            url: "create_funcionario",
+            data: formData,
+            success: function(response) {
+                showCustomAlert("Agendado com sucesso!")
+                
+                //Clear form
+                $("#nome").val("");
+                $("#unidade_atividade").val("");
+                $("#unidade_integracao").val("");
+                $("#data_integra").val("");
+                $("#data_aso").val("");
+                $("#contrato").val("");
+            },
+            
+            //Caso ocorra erro na requisição
+            error: function(error) {
+                showCustomAlert("Erro ao agendar integração: " + error)
+            }
+        });  
+    }
+})
+
     $("#status-{{funcionario._id}}").click(
         () => {
             $("#tab-status").css("display", "flex");

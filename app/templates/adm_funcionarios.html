@@ -9,11 +9,25 @@
                         <input type="text" id="cargo" name="cargo" placeholder="Cargo">
                         <input type="text" id="setor" name="setor" placeholder="Setor">
                         
-                        <select name="status" id="status" required placeholder="Status">
-                            <option value="ativo">ativo</option>
-                            <option value="inativo">inativo</option>
+                        <select name="status" id="status" required>
+                            <option value="ativo">
+                                ativo
+                            </option>
+                            <option value="inativo">
+                                inativo
+                            </option>
                         </select>
                         
+                        <select name="empresa_id" id="empresa_id" required placeholder="Empresa">
+                            <option value="">Empresa</option>
+                            <option value="{{empresa._id}}">{{empresa.nome}}</option>
+
+                            {%for empresa in empresas_sub%}
+                                <option value="{{empresa._id}}">{{empresa.nome}}</option>
+                            {%endfor%}
+                        </select>
+                        
+                        <input type="hidden" id="tipo" name="tipo" value="status">
                         <input type="hidden" id="_id" name="_id">
                     </div>
                 </form>
@@ -35,7 +49,8 @@
                 <input type="text" value="CARGO:" disabled>
                 <input type="text" value="SETOR:" disabled>
                 <input type="text" value="STATUS:" disabled>
-            </div>  
+                <input type="text" value="EMPRESA:" disabled>   
+            </div>
             
             <div class="row-layout">
             </div>
@@ -73,9 +88,10 @@ $("#salvar").click(() => {
     let funcao = $("#funcao").val();
     let cargo = $("#cargo").val();
     let setor = $("#setor").val();
-    let status = $("#status").val();
 
-    if(!nome || !funcao || !cargo || !setor || !status) {
+    let empresa_id = $("#empresa_id").val();
+
+    if(!nome || !funcao || !cargo || !setor || !empresa_id) {
         showCustomAlert("Favor preencher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
@@ -107,6 +123,7 @@ $("#salvar").click(() => {
                 $("#funcao").val("");
                 $("#cargo").val("");
                 $("#setor").val("");
+                $("#empresa_id").val("");
                 $("#_id").val("");
             },
 

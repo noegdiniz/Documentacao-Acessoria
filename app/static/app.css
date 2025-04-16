@@ -601,9 +601,37 @@ span {
 }
 
 .status-color {
-    background-color: lightslategrey;
+    background-color: lightblue;
 }
 
 .integra-color {
     background-color: aliceblue;
+}
+
+.bt-status::after {
+    content: '';
+
+    padding-left: 7.5px;
+    padding-right: 7.5px;
+
+    margin: 5px;
+    background-color: lightblue;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.bt-integracao::after {
+    content: '';
+
+    padding-left: 7.5px;
+    padding-right: 7.5px;
+
+    margin: 5px;
+    background-color: aliceblue;
+    border-radius: 50%;
+    align-self: center;
+}
+
+.key-input-select {
+    width: 6.7rem;
 }

@@ -17,7 +17,6 @@
                     <a href="#" id="status-emp">Status Documentação</a>
                     <a href="#" id="cadastro-emp">Funcionarios</a>
                     <a href="#" id="casub-emp">Sub-contratadas</a>
-                    <a href="#" id="agenda-emp">Integração</a>
                 </div>
                 
                 <div class="user-data">
@@ -65,15 +64,6 @@
         
         $("#cadastro-emp").click(() => {
             fetch("/cadastro_funcionarios").then((data) => {
-                data.text().then(text => {
-                        $("#content-emp").html(text)
-                    })
-                })
-            }
-        )
-        
-        $("#agenda-emp").click(() => {
-            fetch("/agendamento_integracao").then((data) => {
                 data.text().then(text => {
                         $("#content-emp").html(text)
                     })
