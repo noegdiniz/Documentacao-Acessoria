@@ -42,19 +42,6 @@
     </div>
 
     <div class="key-box empresas-box">
-        <div class="key-box row-layout data-names">
-            <div class="row-layout">
-                <input type="text" value="NOME:" disabled>
-                <input type="text" value="FUNÇÃO:" disabled>
-                <input type="text" value="CARGO:" disabled>
-                <input type="text" value="SETOR:" disabled>
-                <input type="text" value="STATUS:" disabled>
-                <input type="text" value="EMPRESA:" disabled>   
-            </div>
-            
-            <div class="row-layout">
-            </div>
-        </div>
 
         <div id="funcionarios-list-content">
         </div>
@@ -63,25 +50,13 @@
 
 <script>
 //Carrega a lista de funcionários
+
 fetch("/list_funcionarios").then(data => {
     data.text().then(text => {
         setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
     })
-})
+})    // Filter functionality removed
 
-$("#content").on("keypress", (e) => {
-    if(e.which == 13) {
-        const url = "/list_funcionarios/" + $("#content").val();
-
-        fetch(url).then(data => {
-            data.text().then(text => {
-                setTimeout(() => {
-                    $("#funcionarios-list-content").html(text)
-                }, 100);
-            })
-        })
-    }
-})
 
 $("#salvar").click(() => {
     let nome = $("#nome").val();
@@ -102,8 +77,7 @@ $("#salvar").click(() => {
             url: "create_funcionario",
             data: formData,
             success: function(response) {
-                let val = $("#content").val();
-                let url = `/list_funcionarios/${val}`
+                let url = `/list_funcionarios/`
                 
                 fetch(url).then(data => {
                     data.text().then(text => {
@@ -113,7 +87,11 @@ $("#salvar").click(() => {
                     })
                 })
                 
-                showCustomAlert("Cadastrado com sucesso!")
+                if (response.includes("ok")) {
+                    showCustomAlert("Cadastrado com sucesso!")
+                } else {
+                    showCustomAlert("Erro ao cadastrar funcionário: " + response.text())
+                }
                 
                 //Remove marcador de alteração 
                 $("#form_dados").removeClass("ball");

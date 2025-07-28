@@ -40,16 +40,6 @@
     </div>
 
     <div class="key-box empresas-box">
-        <div class="key-box row-layout data-names">
-            <div class="row-layout">
-                <input type="text" value="CATEGORIA:" disabled>
-                <input type="text" value="PERFIL:" disabled>
-                <input type="text" value="PASTA DRIVE:" disabled>
-            </div>
-    
-            <div class="row-layout">
-            </div>
-        </div>
 
         <div id="cubo-list-content">
 
@@ -68,17 +58,7 @@ fetch("/list_cubo").then(data => {
         })
     })
 
-    $("#content").on("keypress", (e) => {
-        if(e.which == 13) {
-        const url = "/list_cubo/" + $("#content").val();
-
-        fetch(url).then(data => {
-            data.text().then(text => {
-            setTimeout(() => {$("#cubo-list-content").html(text)}, 100);
-        })
-    })
-    }
-})
+    // Filter functionality removed
 
 
     $("#salvar").click(() => {
@@ -101,8 +81,7 @@ fetch("/list_cubo").then(data => {
             data: formData,
             success: function(response) {
                     // Display the result in the 'result' div
-                    let val = $("#content").val();
-                    let url = `/list_cubo/${val}`
+                    let url = `/list_cubo/`
                     
                     fetch(url).then(data => {
                         data.text().then(text => {

@@ -8,6 +8,9 @@
                         
                         <input type="text" id="nome" name="nome" placeholder="descrição do contrato">
                         
+                        <input type="date" id="dt-inicio" name="dt-inicio" placeholder="data de inicio">
+                        <input type="date" id="dt-fim" name="dt-fim" placeholder="data de fim">
+
                         <select name="empresa" id="empresa" required placeholder="">
                             {%for empresa in empresas%}
                             <option value="{{empresa._id}}">{{empresa.nome}}</option>
@@ -28,18 +31,8 @@
             </div>
         </div>
     </div>
-
-    <div class="key-box empresas-box">
-        <div class="key-box row-layout data-names">
-            <div class="row-layout">
-                <input type="text" value="DESCRIÇÂO:" disabled>
-                <input type="text"value="EMPRESA:" disabled>
-            </div>
     
-            <div class="row-layout">
-            </div>
-        </div>
-
+    <div class="key-box empresas-box">
         <div id="contrato-list-content">
         </div>
     </div>
@@ -56,22 +49,24 @@ fetch("/list_contratos").then(data => {
 
     $("#content").on("keypress", (e) => {
         if(e.which == 13) {
-        const url = "/list_contratos/" + $("#content").val();
+        const url = "/list_contratos/"
 
         fetch(url).then(data => {
             data.text().then(text => {
             setTimeout(() => {$("#contrato-list-content").html(text)}, 100);
-        
-        })
+            
+                })
+            })
+        }
     })
-    }
-})
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
     let empresa = $("#empresa").val();
-
-    if(!nome || !empresa) {
+    let dt_inicio = $("#dt-inicio").val();
+    let dt_fim = $("#dt-fim").val();
+    
+    if(!nome || !empresa || !dt_inicio || !dt_fim) {
         showCustomAlert("Favor preecher todos os campos!")
     } else {
         let formData = $("#form_dados").serialize();
@@ -83,15 +78,14 @@ fetch("/list_contratos").then(data => {
             data: formData,
             success: function(response) {
                     // Display the result in the 'result' div
-                    let val = $("#content").val();
-                    let url = `/list_contratos/${val}`
+                    let url = `/list_contratos/`
                     
                     fetch(url).then(data => {
                         data.text().then(text => {
                             setTimeout(() => {$("#contrato-list-content").html(text)}, 100)
                         })
                     })
-
+                    
                     showCustomAlert("Criado com sucesso!")
                     
                     //Remove marcador de alteração
@@ -102,7 +96,7 @@ fetch("/list_contratos").then(data => {
                     showCustomAlert("Erro ao criar contrato: " + error)
                 }
             });  
-    }
+        }
     })
 
 </script>

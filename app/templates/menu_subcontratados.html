@@ -21,16 +21,6 @@
     </div>
 
     <div class="key-box empresas-box">
-        <div class="key-box row-layout data-names">
-            <div class="row-layout">
-                <input type="text" value="NOME:" disabled>
-                <input type="text" value="CNPJ:" disabled>
-
-            </div>
-            
-            <div class="row-layout">
-            </div>
-        </div>
 
         <div id="subcontratados-list-content">
         </div>
@@ -43,21 +33,7 @@ fetch("/list_subcontratados").then(data => {
     data.text().then(text => {
         setTimeout(() => {$("#subcontratados-list-content").html(text)}, 100);
     })
-})
-
-$("#content").on("keypress", (e) => {
-    if(e.which == 13) {
-        const url = "/list_subcontratados/" + $("#content").val();
-
-        fetch(url).then(data => {
-            data.text().then(text => {
-                setTimeout(() => {
-                    $("#subcontratados-list-content").html(text)
-                }, 100);
-            })
-        })
-    }
-})
+})    // Filter functionality removed
 
 $("#salvar").click(() => {
     let nome = $("#nome").val();
@@ -74,8 +50,7 @@ $("#salvar").click(() => {
             url: "create_subcontratado",
             data: formData,
             success: function(response) {
-                let val = $("#content").val();
-                let url = `/list_subcontratados/${val}`
+                let url = `/list_subcontratados/`
                 
                 fetch(url).then(data => {
                     data.text().then(text => {

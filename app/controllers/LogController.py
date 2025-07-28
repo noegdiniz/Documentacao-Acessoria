@@ -2,8 +2,6 @@ from app.models.tables import Log
 from datetime import datetime
 from app.ext.db import db
 
-from app.controllers.FilterController import FilterController # type: ignore
-
 class LogController:
     @staticmethod
     def create(user, perfil, menu, action, info:str):
@@ -12,7 +10,7 @@ class LogController:
                     menu=menu,
                     action=action,
                     info=info.upper(),
-                    date=datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+                    date=datetime.now())
         
         
         db.session.add(log)
@@ -21,8 +19,8 @@ class LogController:
     def get(id):
         return Log.query.get(id)
     
-    def get_all(filter):
-        logs = FilterController.filter(filter, Log)
+    def get_all():
+        logs = Log.query.all()
         logs.reverse()
         return logs
         
@@ -30,3 +28,5 @@ class LogController:
         log = Log.query.get(id)
         db.session.remove(log)
         db.session.commit()
+
+

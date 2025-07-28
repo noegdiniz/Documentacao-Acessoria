@@ -7,20 +7,9 @@
 
     <script>
         $("#empresa-{{doc_emp[1][0].empresa_id}}").click(() => {
-            let content = encodeURIComponent($("#content").val());
-            let url = "";
-
             $("#selected").val("{{doc_emp[1][0].empresa_id}}");
-
-            if (!content) {
-                url = "/filter_docs/{{doc_emp[1][0].empresa_id}}";
-            } else {
-                url = "/filter_docs/{{doc_emp[1][0].empresa_id}}/"+ content;
-            }
             
-            $("#upload").val(
-                "{{doc_emp[0]}}"
-            )
+            let url = "/list_docs/{{doc_emp[1][0].empresa_id}}";
             
             fetch(url).then(data => {
                 data.text().then(text => {

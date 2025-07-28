@@ -13,7 +13,7 @@
                 {%if permissao.can_view_categorias%}
                 <a href="#" id="categorias-page">Categorias</a>
                 {%endif%}
-
+                
                 {%if permissao.can_view_tipo_processo%}
                 <a href="#" id="tipo-processo-page">Tipo Processo</a>
                 {%endif%}
@@ -43,7 +43,7 @@
                 })
             })
         })
-
+        
         $("#contratos-page").click(() => {
             let = url = "/contrato_menu"
 
@@ -53,7 +53,7 @@
                 })
             })
         })
-
+        
         $("#categorias-page").click(() => {
             let = url = "/categorias_menu"
             
@@ -63,7 +63,7 @@
                 })
             })
         })
-
+        
         $("#tipo-processo-page").click(() => {
             let = url = "/tipo_processo_menu"
 
@@ -83,7 +83,7 @@
                 })
             })
         })
-
+        
         $("#usuarios-page").click(() => {
             let = url = "/users_menu"
 
@@ -93,12 +93,13 @@
                 })
             })
         })
-
+        
         $('a').on('click', function(event) {
             // Your custom code here
             
             $('a').css('background-color', '');
             $(this).css('background-color', '#053a72');
         });
+    
     </script>
 </div>

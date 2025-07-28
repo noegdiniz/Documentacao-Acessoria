@@ -21,9 +21,11 @@
             </div>
         </div>
     </div>
-
-    <div class="key-box empresas-box" id="perfil-list-content">
-
+    
+    <div class="key-box empresas-box" id="perfil-list-content" style="
+    max-height: 85vh;
+    overflow-y: auto;">
+    
     </div>
 </div>
 
@@ -36,18 +38,7 @@ fetch("/list_perfil").then(data => {
         })
     })
 
-    $("#content").on("keypress", (e) => {
-        if(e.which == 13) {
-        const url = "/list_perfil/" + $("#content").val();
-
-        fetch(url).then(data => {
-            data.text().then(text => {
-            setTimeout(() => {$("#perfil-list-content").html(text)}, 100);
-                
-            })
-        })
-    }
-})
+    // Filter functionality removed
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
@@ -64,8 +55,7 @@ fetch("/list_perfil").then(data => {
             data: formData,
             success: function(response) {
                     // Display the result in the 'result' div
-                    let val = $("#content").val();
-                    let url = `/list_perfil/${val}`
+                    let url = `/list_perfil/`
                     
                     fetch(url).then(data => {
                         data.text().then(text => {

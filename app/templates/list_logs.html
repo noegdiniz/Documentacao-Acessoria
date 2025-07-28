@@ -1,46 +1,199 @@
-{%for log in logs%}
-<div class="col-layout">
-    <div class="key-box row-layout">
-        <div class="row-layout">
-            <input type="text" id="nome" value="{{log.user_name}}" disabled>
-            <input type="text" id="nome" value="{{log.action}}" disabled>
-            <input type="text" id="nome" value="{{log.menu}}" disabled>
-            <input type="text" id="nome" value="{{log.user_perfil}}" disabled>
-            <input type="text" id="nome" value="{{log.date}}" disabled>
-            <input type="text" id="nome" value="{{log.info}}" disabled>
-        </div>
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
 
-        <div class="row-layout">
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
 
-        </div>
-    </div>
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.dt-responsive {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.log-info {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media screen and (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="table-responsive">
+    <table id="logsTable" class="display dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Usuário</th>
+                <th>Ação</th>
+                <th>Menu</th>
+                <th>Perfil</th>
+                <th>Data</th>
+                <th>Informações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>
+                    <input type="text" id="nome" value="{{log.user_name}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="action" value="{{log.action}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="menu" value="{{log.menu}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="perfil" value="{{log.user_perfil}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="data" value="{{log.date}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="info" value="{{log.info}}" class="key-input" disabled>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <script>
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
 
-    $("#excluir-{{log._id}}").click(() => {
-        let url = "/delete_log/" + "{{log._id}}";
-        
-        fetch(url).then(data => {
-            data.text().then(text => {
-                if (text.includes("ok"))
-                {
-                    showCustomAlert("Cadastro excluido com sucesso.");                
-                } else {
-                    showCustomAlert("Erro ao realizar exclusão: " + text);
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function handleServerError(error) {
+    hideLoading();
+    showCustomAlert("Erro no servidor: " + (error.responseText || error.statusText || error));
+}
+
+$(document).ready(function() {
+    var table = $('#logsTable').DataTable({
+        responsive: true,
+        language: {
+            searchPlaceholder: "Buscar em todas as colunas...",
+            url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json',
+            lengthMenu: "_MENU_ resultados por página",
+        },
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+        order: [[4, 'desc']], // Sort by date column descending by default
+        buttons: [
+            {
+                extend: 'collection',
+                text: 'Exportar',
+                buttons: ['copy', 'excel', 'pdf']
+            }
+        ],
+        columnDefs: [
+            { width: "15%", targets: 0 }, // Usuário
+            { width: "15%", targets: 1 }, // Ação
+            { width: "15%", targets: 2 }, // Menu
+            { width: "15%", targets: 3 }, // Perfil
+            { width: "15%", targets: 4 }, // Data
+            { width: "25%", targets: 5 }, // Informações
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+                    return $(data).val() || data;
                 }
-            })
-        }).then(() => {
-            let val = $("#content").val();
-            let url = `/list_logs/${val}`
+            }
+        ],
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = $('.dataTables_filter');
+            searchWrapper.find('input[type="search"]')
+                .attr('class', 'form-control')
+                .css({
+                    'width': '100%',
+                    'margin-left': '0'
+                });
+            
+        }
+    });
 
-            fetch(url).then(data => {
-                data.text().then(text => {
-                
-                setTimeout(() => {$("#logs-box").html(text)}, 100)
-                })
-            })
-        })
-    })
+    // Add search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .dataTables_filter {
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+            }
+            .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            @media (max-width: 767px) {
+                .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+                .buttons-collection {
+                    width: 100%;
+                    margin-bottom: 10px;
+                }
+            }
+        `)
+        .appendTo('head');
+});
 </script>
-{%endfor%}

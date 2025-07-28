@@ -7,7 +7,6 @@ from flask import request
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
-
 # Configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "13256348917-k29q8fpfoblkan04mfadpr8fe6vafkg6.apps.googleusercontent.com")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "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")
@@ -27,6 +26,7 @@ def auth():
         redirect_uri=request.base_url + "/get_user_info",
         scope=["openid", "email", "profile", "https://www.googleapis.com/auth/drive"],
     )
+    
     return request_uri
 
 def get_google_provider_cfg():

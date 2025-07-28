@@ -25,15 +25,6 @@
     </div>
 
     <div class="key-box empresas-box">
-        <div class="key-box row-layout data-names">
-            <div class="row-layout">
-                <input type="text" id="desc" value="DESCRIÇÂO" disabled>
-            </div>
-    
-            <div class="row-layout">
-            </div>
-        </div>
-
         <div id="tipo-processo-list-content">
         </div>
     </div>
@@ -49,18 +40,7 @@
             })
         })
 
-    $("#content").on("keypress", (e) => {
-        if(e.which == 13) {
-        const url = "/list_tipo_processo/" + $("#content").val();
-
-        fetch(url).then(data => {
-            data.text().then(text => {
-            setTimeout(() => {$("#tipo-processo-list-content").html(text)}, 100);
-        
-        })
-    })
-    }
-})
+    // Filter functionality removed
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
@@ -77,8 +57,7 @@
             data: formData,
             success: function(response) {
                     // Display the result in the 'result' div
-                    let val = $("#content").val();
-                    let url = `/list_tipo_processo/${val}`
+                    let url = `/list_tipo_processo/`
                     
                     fetch(url).then(data => {
                         data.text().then(text => {

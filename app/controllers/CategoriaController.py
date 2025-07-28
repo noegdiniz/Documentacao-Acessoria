@@ -1,4 +1,3 @@
-from app.controllers.FilterController import FilterController
 from app.models.tables import Categoria
 from app.ext.db import db
 from app.controllers.LogController import LogController
@@ -34,7 +33,7 @@ class CategoriaController:
         categoria.documentos_pedidos = form["docs_precisos"]
         
         db.session.commit()
-
+        
         #Salva o Log da ação
         LogController.create(session["nome"],
                              session["perfil"],
@@ -48,9 +47,8 @@ class CategoriaController:
         return categoria
     
     @staticmethod
-    def get_all(filter):
-        filtered_data = FilterController.filter(filter, Categoria)
-        return filtered_data
+    def get_all():
+        return Categoria.query.all()
     
     @staticmethod
     def delete(id):
@@ -69,3 +67,4 @@ class CategoriaController:
             
             return True
         return False
+    

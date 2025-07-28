@@ -12,20 +12,19 @@
             <div class="input-title badge">
                 FORMULARIO DOCUMENTAÇÂO
             </div>
-            
-            <div class="container row-layout" style="max-width: min-content;">
+              <div class="container row-layout upload-form-container">
                 <div class="container form-container">
-                    <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" style="align-items: normal;flex-direction: column;">
+                    <form method="post" name="form-upload" id="form-upload" enctype="multipart/form-data" class="upload-form">
                         <span>
                             DESCRIÇÃO:
                         </span>
                         <input type="text" id="titulo" name="titulo" required placeholder="Descrição">
-            
                         
                         <span>
                             TIPO DE DOCUMENTO:
                         </span>
-                        <select name="categoria" id="categoria" required placeholder="" style="width: auto;">
+                        
+                        <select name="categoria" id="categoria" required placeholder="" class="upload-select">
                             <option value="" selected></option>
 
                             {%for t_processo in tipo_processo%}
@@ -42,7 +41,8 @@
                         <span>
                             CONTRATO:
                         </span>
-                        <select name="contrato" id="contrato" required placeholder="" style="width: auto;">
+                        
+                        <select name="contrato" id="contrato" required placeholder="" class="upload-select">
                             <option value="" selected></option>
                             
                             {%for contrato in contratos%}
@@ -51,13 +51,48 @@
                             </option>
                             {%endfor%}
                         </select>
+                        
+                        <span>
+                            EMAIL
+                        </span>
+                        <input type="email" id="email" name="email" required placeholder="ex:email@empresa.com">
+                        
+                        <span>
+                            COMPETÊNCIA
+                        </span>
+                        
+                        <input type="text" id="competencia" name="competencia" required placeholder="Competência (MM-AAAA)" maxlength="7">
+                        
+                        <script>
+                        document.getElementById('competencia').addEventListener('input', function(e) {
+                            let value = this.value.replace(/[^0-9\-]/g, '');
+
+                            // Auto-insert '-' after two digits
+                            if (value.length === 2 && !value.includes('-')) {
+                                value = value + '-';
+                            }
+
+                            // Limit to MM-AAAA
+                            if (value.length > 7) {
+                                value = value.slice(0, 7);
+                            }
+
+                            // Validate MM
+                            if (value.length >= 2) {
+                                let mm = value.slice(0, 2);
+                                if (parseInt(mm) < 1 || parseInt(mm) > 12) {
+                                    value = '';
+                                }
+                            }
+
+                            this.value = value;
+                        });
+                        </script>
 
                         <span>
                             JUSTIFICATIVA
                         </span>
                         <input type="text" id="justificativa" name="justificativa" required placeholder="Justificativa" disabled>
-                        
-                        <input type="datetime-local" id="data" name="data" required>
                         
                     </form>
                     
@@ -68,8 +103,7 @@
                     </div>
                 </div>
                 
-                <div class="container form-container" style="overflow-y: auto; min-height: 76vh; max-height: 1px;">
-                    
+                <div class="container form-container upload-form-scroll">
                     <div class="col-layout" id="anexos">
                         
                     </div>
@@ -78,6 +112,7 @@
             
         </div>
     </div>
+
     <!-- Importa a lib JQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="../static/scripts.js"></script>
@@ -86,31 +121,41 @@
         $("#titulo").click(() => {
             $("#titulo").css("background-color", "white");
         })
-
         
         $("#categoria").change(() => {
             let value = $("#categoria").val();
 
             let docs_necessarios = value.split("|")[1].split(",");
             let html = "";
-
+            
             docs_necessarios.forEach(doc => {
                 html += `<span>
                             ${doc}:
                             </span>
-                            <input type="file" id="anexo" onchange="this.style.borderColor='green'; this.style.color='green';" name="anexo" accept=".pdf" required>
+                            <input type="file" id="anexo" onchange="this.style.borderColor='green'; this.style.color='green';" name="anexo" accept=".pdf,.xlsx" required>
                         `;
                 })
             
             $("#anexos").html(html)
         })
         
+        $("#justificativa").click(() => {
+            $("#justificativa").css("background-color", "white");
+        })    
+        
         $("#make-upload").click(() => {
+            const submitButton = $("#make-upload");
+            submitButton.prop('disabled', true);
+            
+            submitButton.css('cursor', 'not-allowed');
+            submitButton.text('Enviando...');
+
             // Perform client-side validation
             let titulo = $("#titulo").val();
             let contrato = $("#contrato").val();
             let categoria = $("#categoria").val();
-            let data = $("#data").val();
+            let email = $("#email").val();
+            let competencia = $("#competencia").val();
             
             let arquivos = [];
 
@@ -129,13 +174,18 @@
 
                         //Habilita justificativa
                         $("#justificativa").attr( "disabled", false );
+                        $("#justificativa").css("background-color", "red");
                         return;
                     }
                 }
             });
             
-            if (!titulo || !contrato || !categoria || !data) {
-                showCustomAlert("Por favor, preencha todos os campos.");
+            if (!titulo || !contrato || !categoria || arquivos.length === 0 || !email || !competencia) {
+                showCustomAlert("Por favor, preencha todos os campos." + " Campo: " + (!titulo ? "Título" : !contrato ? "Contrato" : !categoria ? "Categoria" : !email ? "Email" : !competencia ? "Competência" : "Anexo"));
+                
+                submitButton.prop('disabled', false);
+                submitButton.css('cursor', 'pointer');
+                submitButton.text('Enviar Documento');
                 return;
             }
             
@@ -144,8 +194,9 @@
             formData.append("titulo", titulo);
             formData.append("contrato", contrato);
             formData.append("categoria", categoria);
-            formData.append("data", data);
-
+            formData.append("email", email);
+            formData.append("competencia", competencia);
+            
             Array.from(arquivos).forEach(file => {
                 formData.append("anexo", file);
             });
@@ -157,16 +208,35 @@
                 data: formData,
                 processData: false, // Prevent jQuery from processing the data
                 contentType: false, // Prevent jQuery from setting the content type
-                
-                success: function(response) {
+                  success: function(response) {
                     showCustomAlert("Documentação enviada com sucesso.");
+
+                    // Clear the form fields
+                    $("#form-upload")[0].reset();
+                    $("#anexos").empty();
+                    $("#justificativa").attr("disabled", true);
+                    $("#justificativa").css("background-color", "white");
+                    $("#titulo").css("background-color", "white");
+                    $("#categoria").val("");
+                    $("#contrato").val("");
+                    $("#email").val("");
+                    $("#justificativa").val("");
+                    $("#competencia").val("");
+
+                    $("#make-upload").prop('disabled', false);
+                    $("#make-upload").text('Enviar Documento');
+                    $("#make-upload").css('cursor', 'pointer');
                 },
                 
                 error: function(error) {
                     showCustomAlert("Erro ao enviar documentação.");
+                    $("#make-upload").prop('disabled', false);
+                    $("#make-upload").text('Enviar Documento');
+                    $("#make-upload").css('cursor', 'pointer');
                 }
             });
         });
+        
     </script>
     <style>
         .file-tag {

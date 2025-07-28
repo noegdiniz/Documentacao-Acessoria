@@ -3,7 +3,6 @@ from app.models.tables import User
 from app.ext.db import db
 from app.controllers.LogController import LogController
 from app.controllers.PerfilController import PerfilController
-from app.controllers.FilterController import FilterController
 from flask import session
 
 class UserController:
@@ -15,8 +14,8 @@ class UserController:
         db.session.commit()
         
         #Salva o Log da ação
-        LogController.create(session["nome"],
-                             session["perfil"],
+        LogController.create(session.get("nome", "N/A"),
+                             session.get("perfil", "N/A"),
                             "USER",
                             "CRIAR",
                             f"NOME: {user.nome} EMAIL: {user.email}")
@@ -28,8 +27,8 @@ class UserController:
         return User.query.filter_by(_id=user_id).first()
 
     @staticmethod
-    def get_all(filter):
-        filtered_data = FilterController.filter(filter, User)
+    def get_all():
+        filtered_data = User.query.all()
         
         return filtered_data
 
@@ -42,8 +41,8 @@ class UserController:
         user = User.query.get(_id)
         
         #Salva o Log da ação
-        LogController.create(session["nome"],
-                             session["perfil"],
+        LogController.create(session.get("nome", "N/A"),
+                             session.get("perfil", "N/A"),
                              "PERFIL",
                              "DELETAR",
                              f"NOME: {user.nome}")
@@ -51,6 +50,7 @@ class UserController:
         db.session.delete(user)
         db.session.commit()
         
+    @staticmethod
     def update(user_id, perfil_id):
         user = UserController.get(user_id)
         old_user_perfil = user.perfil
@@ -63,9 +63,8 @@ class UserController:
         db.session.commit()
         
         #Salva o Log da ação
-        LogController.create(session["nome"],
-                             session["perfil"],
+        LogController.create(session.get("nome", "N/A"),
+                             session.get("perfil", "N/A"),
                              "USER",
                              "ALTERAR",
                              f"PERFIL: {old_user_perfil} -> {new_user_perfil}")
-    

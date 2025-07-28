@@ -1,571 +1,742 @@
-{%for perfil in perfis%}
-<div class="flex-center col-layout">
-    <div class="key-box row-layout">
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
 
-        <form action="" id="data-perms-{{perfil._id}}">
-            <div class="row-layout">
-                
-                <!-- DADOS -->
-                <div id="perms" class="col-layout">
-                    <input class="perfil-input-b" type="text" name="nome" value="{{perfil.nome}}" disabled>
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.dt-responsive {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.form-container {
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.perfil-row {
+    margin-bottom: 15px;
+}
+
+.dt-buttons {
+    margin-bottom: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .form-container {
+        overflow-x: auto;
+    }
+}
+</style>
+
+<div class="table-responsive">
+    <table id="perfilTable" class="display dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Perfil</th>
+                <th>Permissões</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {%for perfil in perfis%}
+            <tr>
+                <td>{{perfil.nome}}</td>
+                <td>
+                    <div>
+                        <form action="" id="data-perms-{{perfil._id}}" class="perfil-row">
+                            <div class="row-layout">
+                                <!-- DADOS -->
+                                <div id="perms" class="col-layout">
+                                    <input class="perfil-input-b" type="text" name="nome" value="{{perfil.nome}}" disabled>
+                                    
+                                    <input type="hidden" name="nome" value="{{perfil.nome}}">
+                                    <input class="perfil-input-b" type="text" name="" id="" disabled value="EDITAR:">
+                                    <input class="perfil-input-b" type="text" name="" id="" disabled value="DELETAR:">
+                                    <input class="perfil-input-b" type="text" name="" id="" disabled value="VER:">
+                                    <input class="perfil-input-b" type="text" name="" id="" disabled value="CRIAR:">
+                                </div>
                     
-                    <input type="hidden" name="nome" value="{{perfil.nome}}">
-                    <input class="perfil-input-b" type="text" name="" id="" disabled value="EDITAR:">
-                    <input class="perfil-input-b" type="text" name="" id="" disabled value="DELETAR:">
-                    <input class="perfil-input-b" type="text" name="" id="" disabled value="VER:">
-                    <input class="perfil-input-b" type="text" name="" id="" disabled value="CRIAR:">
-                </div>
-    
-                <div id="perms-dados" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="dados" name="dados" value="dados" disabled>
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="edit-dados" id="dados" required placeholder="">
-                            {%if perfil.can_edit_dados%}
+                                <div id="perms-dados" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="dados" name="dados" value="dados" disabled>
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-dados" id="dados" required placeholder="">
+                                            {%if perfil.can_edit_dados%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="delete-dados" id="dados" required placeholder="">
-                            {%if perfil.can_delete_dados%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
                     
-                    <div class="col-layout">
-        
-                        <select class="perfil-input" name="view-dados" id="dados" required placeholder="">
-                            {%if perfil.can_view_dados%}
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="delete-dados" id="dados" required placeholder="">
+                                            {%if perfil.can_delete_dados%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                
-                        <select class="perfil-input" name="criar-dados" id="dados" required placeholder="">
-                            {%if perfil.can_create_dados%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-                </div>
-                
-
-                <div id="perms-tipo-processo" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="tipo-processo" name="tipo-processo" value="tipo processo" disabled>
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="edit-tipo-processo" id="tipo-processo" required placeholder="">
-                            {%if perfil.can_edit_tipo_processo%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="delete-tipo-processo" id="tipo-processo" required placeholder="">
-                            {%if perfil.can_delete_tipo_processo%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-                    
-                    <div class="col-layout">
-        
-                        <select class="perfil-input" name="view-tipo-processo" id="tipo-processo" required placeholder="">
-                            {%if perfil.can_view_tipo_processo%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                
-                        <select class="perfil-input" name="criar-tipo-processo" id="tipo-processo" required placeholder="">
-                            {%if perfil.can_create_tipo_processo%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-                </div>
-    
-                <!-- CONTRATO -->
-                <div id="perms-contrato" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="contrato" name="contrato" value="contrato" disabled>
-    
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="edit-contrato" id="contrato" required placeholder="">
-                            {%if perfil.can_edit_contratos%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-layout">
                             
-                        <select class="perfil-input" name="delete-contrato" id="contrato" required placeholder="">
-                            {%if perfil.can_delete_contratos%}
+                                        <select class="perfil-input" name="view-dados" id="dados" required placeholder="">
+                                            {%if perfil.can_view_dados%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-            
-                        <select class="perfil-input" name="view-contrato" id="contrato" required placeholder="">
-                            {%if perfil.can_view_contratos%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                
-                        <select class="perfil-input" name="criar-contrato" id="contrato" required placeholder="">
-                            {%if perfil.can_create_contratos%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-    
-                </div>
-    
-    
-                <!-- CATEGORIA -->
-                <div id="perms-categoria" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="categoria" name="categoria" value="categoria" disabled>
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
                     
-                    <div class="col-layout">
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="criar-dados" id="dados" required placeholder="">
+                                            {%if perfil.can_create_dados%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+
+                                <div id="perms-tipo-processo" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="tipo-processo" name="tipo-processo" value="tipo processo" disabled>
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-tipo-processo" id="tipo-processo" required placeholder="">
+                                            {%if perfil.can_edit_tipo_processo%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
                         
-                        <select class="perfil-input" name="edit-categoria" id="categoria" required placeholder="">
-                            {%if perfil.can_edit_categorias%}
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="delete-tipo-processo" id="tipo-processo" required placeholder="">
+                                            {%if perfil.can_delete_tipo_processo%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-layout">
                             
-                        <select class="perfil-input" name="delete-categoria" id="categoria" required placeholder="">
-                            {%if perfil.can_delete_categorias%}
+                                        <select class="perfil-input" name="view-tipo-processo" id="tipo-processo" required placeholder="">
+                                            {%if perfil.can_view_tipo_processo%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-            
-                        <select class="perfil-input" name="view-categoria" id="categoria" required placeholder="">
-                            {%if perfil.can_view_categorias%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                    
-                        <select class="perfil-input" name="criar-categoria" id="categoria" required placeholder="">
-                            {%if perfil.can_create_categorias%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-    
-    
-    
-                </div>
-    
-                <!-- DOCUMENTOS -->
-                <div id="perms-docs" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="docs" name="docs" value="documentos" disabled>
-                    
-                    <div class="col-layout">
-                            
-                        <select class="perfil-input" name="aprove_docs" id="docs" required placeholder="">
-                            {%if perfil.can_aprove_docs%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-                            
-                        <select class="perfil-input" name="delete-docs" id="docs" required placeholder="">
-                            {%if perfil.can_delete_docs%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-            
-                        <select class="perfil-input" name="view-docs" id="docs" required placeholder="">
-                            {%if perfil.can_view_docs%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-                </div>
-    
-                <!-- EMPRESA -->
-                <div id="perms-empresa" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="empresa" name="empresa" value="empresa" disabled>
-    
-                    <div class="col-layout">
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
                         
-                        <select class="perfil-input" name="edit-empresa" id="empresa" required placeholder="">
-                            {%if perfil.can_edit_empresas%}
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="criar-tipo-processo" id="tipo-processo" required placeholder="">
+                                            {%if perfil.can_create_tipo_processo%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-                            
-                        <select class="perfil-input" name="delete-empresa" id="empresa" required placeholder="">
-                            {%if perfil.can_delete_empresas%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-            
-                        <select class="perfil-input" name="view-empresa" id="empresa" required placeholder="">
-                            {%if perfil.can_view_empresas%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                </div>
                     
-                    <div class="col-layout">
+                                <!-- CONTRATO -->
+                                <div id="perms-contrato" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="contrato" name="contrato" value="contrato" disabled>
                     
-                        <select class="perfil-input" name="criar-empresa" id="empresa" required placeholder="">
-                            {%if perfil.can_create_empresas%}
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-contrato" id="contrato" required placeholder="">
+                                            {%if perfil.can_edit_contratos%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-    
-                </div>
-    
-                <!-- PERFIL -->
-                <div id="perms-perfil" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="perfil" name="perfil" value="perfil" disabled>
-    
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="edit-perfil" id="perfil" required placeholder="">
-                            {%if perfil.can_edit_perfis%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                    <div class="col-layout">
-                            
-                        <select class="perfil-input" name="delete-perfil" id="perfil" required placeholder="">
-                            {%if perfil.can_delete_perfis%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-            
-                        <select class="perfil-input" name="view-perfil" id="perfil" required placeholder="">
-                            {%if perfil.can_view_perfis%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
                     
-                    <div class="col-layout">
+                                    <div class="col-layout">
+                                            
+                                        <select class="perfil-input" name="delete-contrato" id="contrato" required placeholder="">
+                                            {%if perfil.can_delete_contratos%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
                     
-                        <select class="perfil-input" name="criar-perfil" id="perfil" required placeholder="">
-                            {%if perfil.can_create_perfis%}
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="view-contrato" id="contrato" required placeholder="">
+                                            {%if perfil.can_view_contratos%}
 
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="criar-contrato" id="contrato" required placeholder="">
+                                            {%if perfil.can_create_contratos%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                </div>
+                    
+                                <!-- CATEGORIA -->
+                                <div id="perms-categoria" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="categoria" name="categoria" value="categoria" disabled>
+                                    
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-categoria" id="categoria" required placeholder="">
+                                            {%if perfil.can_edit_categorias%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                            
+                                        <select class="perfil-input" name="delete-categoria" id="categoria" required placeholder="">
+                                            {%if perfil.can_delete_categorias%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="view-categoria" id="categoria" required placeholder="">
+                                            {%if perfil.can_view_categorias%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                    
+                                        <select class="perfil-input" name="criar-categoria" id="categoria" required placeholder="">
+                                            {%if perfil.can_create_categorias%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                </div>
+                    
+                                <!-- DOCUMENTOS -->
+                                <div id="perms-docs" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="docs" name="docs" value="documentos" disabled>
+                                    
+                                    <div class="col-layout">
+                                            
+                                        <select class="perfil-input" name="aprove_docs" id="docs" required placeholder="">
+                                            {%if perfil.can_aprove_docs%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                            
+                                        <select class="perfil-input" name="delete-docs" id="docs" required placeholder="">
+                                            {%if perfil.can_delete_docs%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="view-docs" id="docs" required placeholder="">
+                                            {%if perfil.can_view_docs%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                </div>
+                    
+                                <!-- EMPRESA -->
+                                <div id="perms-empresa" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="empresa" name="empresa" value="empresa" disabled>
+                    
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-empresa" id="empresa" required placeholder="">
+                                            {%if perfil.can_edit_empresas%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                            
+                                        <select class="perfil-input" name="delete-empresa" id="empresa" required placeholder="">
+                                            {%if perfil.can_delete_empresas%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="view-empresa" id="empresa" required placeholder="">
+                                            {%if perfil.can_view_empresas%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-layout">
+                                    
+                                        <select class="perfil-input" name="criar-empresa" id="empresa" required placeholder="">
+                                            {%if perfil.can_create_empresas%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                </div>
+                    
+                                <!-- PERFIL -->
+                                <div id="perms-perfil" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="perfil" name="perfil" value="perfil" disabled>
+                    
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-perfil" id="perfil" required placeholder="">
+                                            {%if perfil.can_edit_perfis%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                                
+                                        <select class="perfil-input" name="delete-perfil" id="perfil" required placeholder="">
+                                            {%if perfil.can_delete_perfis%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="view-perfil" id="perfil" required placeholder="">
+                                            {%if perfil.can_view_perfis%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-layout">
+                                    
+                                        <select class="perfil-input" name="criar-perfil" id="perfil" required placeholder="">
+                                            {%if perfil.can_create_perfis%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                </div>
+                    
+                                <!-- USER -->
+                                <div id="perms-user" class="col-layout">
+                                    <input class="perfil-input-b" type="text" id="user" name="user" value="user" disabled>
+                                    <div class="col-layout">
+                                        
+                                        <select class="perfil-input" name="edit-users" id="users" required placeholder="">
+                                            {%if perfil.can_edit_users%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                                
+                                        <select class="perfil-input" name="delete-users" id="users" required placeholder="">
+                                            {%if perfil.can_delete_users%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                    
+                                    <div class="col-layout">
+                                
+                                        <select class="perfil-input" name="view-users" id="users" required placeholder="">
+                                            {%if perfil.can_view_users%}
+
+                                                <option value="1" selected>SIM</option>
+                                                <option value="0">NÂO</option>
+                                            {%else%}
+                                                <option value="1">SIM</option>
+                                                <option value="0" selected>NÂO</option>
+                                            {%endif%}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-    
-    
-    
-                </div>
-    
-                <!-- USER -->
-                <div id="perms-user" class="col-layout">
-                    <input class="perfil-input-b" type="text" id="user" name="user" value="user" disabled>
-                    <div class="col-layout">
-                        
-                        <select class="perfil-input" name="edit-users" id="users" required placeholder="">
-                            {%if perfil.can_edit_users%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-                            
-                        <select class="perfil-input" name="delete-users" id="users" required placeholder="">
-                            {%if perfil.can_delete_users%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-    
-                    <div class="col-layout">
-            
-                        <select class="perfil-input" name="view-users" id="users" required placeholder="">
-                            {%if perfil.can_view_users%}
-
-                                <option value="1" selected>SIM</option>
-                                <option value="0">NÂO</option>
-                            {%else%}
-                                <option value="1">SIM</option>
-                                <option value="0" selected>NÂO</option>
-                            {%endif%}
-                        </select>
-                    </div>
-    
-                </div>
-            </div>
-
-        </form>
-        
-        <div class="row-layout">
-            {%if permissao.can_delete_perfis%}
-            <button class="button" id="excluir-{{perfil._id}}" name="excluir">
-                excluir
-            </button>
-            {%endif%}
-        </div>
-    </div>
+                </td>
+                <td>
+                    {%if permissao.can_delete_perfis%}
+                    <button class="button" id="excluir-{{perfil._id}}" name="excluir">
+                        excluir
+                    </button>
+                    {%endif%}
+                </td>
+            </tr>
+            {%endfor%}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    {%if not permissao.can_edit_perfis%}
-    $('#data-perms-{{perfil._id}} select').prop('disabled', true);
-    {%endif%}
+// Loading state management
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
 
-    $("#alterar-{{perfil._id}}").click(() => {
-        $("#nome").val("{{perfil.nome}}");
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
 
-        //Adiciona sinal visual da alteração no menu
-        $("#form_dados").addClass("ball");
-        
-        //Muda o id da perfil para realizar a alteração no item certo
-        $("#_id").val("{{perfil._id}}");
-    })
+function handleServerError(error) {
+    hideLoading();
+    showCustomAlert("Erro no servidor: " + (error.responseText || error.statusText || error));
+}
 
-    $("#excluir-{{perfil._id}}").click(() => {
-        let url = "/delete_perfil/" + "{{perfil._id}}";
-        
-        fetch(url).then(data => {
-            data.text().then(text => {
-                if (text.includes("ok"))
-                {
+// Initialize DataTable with Portuguese language
+$(document).ready(function() {
+    var table = $('#perfilTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json',
+            searchPlaceholder: "Buscar categoria..."
+        },
+        pageLength: 2,
+        ordering: true,
+        order: [[0, "asc"]], // Order by category name ascending
+        responsive: true,
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
 
-                    showCustomAlert("Cadastro excluido com sucesso.");                
-                } else {
-                    showCustomAlert("Erro ao realizar exclusão: " + text);
-                }
-            })
-        }).then(() => {
-            fetch("/list_perfil").then(data => {
-                data.text().then(text => {
-                    setTimeout(() => {$("#perfil-list-content").html(text)}, 100)
-                })
-            })
-        })
-    })
-
-    $("#data-perms-{{perfil._id}}").change(() => {
-
-    let formData = $("#data-perms-{{perfil._id}}").serialize();
-    
-    formData = formData.concat(`&_id={{perfil._id}}`)
-
-    $.ajax({
-        type: "POST",
-        url: "create_perfil", // Replace with your server endpoint
-        data: formData,
-        success: function(response) {
-                showCustomAlert("Atualizado com sucesso!")
+        columnDefs: [
+            {
+                targets: 1,
+                orderable: false
             },
-                
-            error: function(error) {
-                showCustomAlert("Erro ao criar contrato: " + error)
+            { width: "20%", targets: 0 }, // Perfil
+            { width: "60%", targets: 1 }, // Permissões
+            { width: "20%", targets: 2 }, // Ações
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+
+                    // Extract value from input elements and selects for searching
+                    return $(data).find('input, select').map(function() {
+                        return $(this).val();
+                    }).get().join(' ') || data;
+                }
             }
+        ],
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = $('.dataTables_filter');
+            searchWrapper.find('input[type="search"]')
+                .attr('class', 'form-control')
+                .css({
+                    'width': '100%',
+                    'margin-left': '0'
+                });
+            
+        },
+        drawCallback: function(settings) {
+            initializeEventHandlers();
+        }
+    });
+
+    // Add search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .dataTables_filter {
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+            }
+            .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            .buttons-collection {
+                margin-right: 10px;
+            }
+            @media (max-width: 767px) {
+                .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+                .buttons-collection {
+                    width: 100%;
+                    margin-bottom: 10px;
+                    margin-right: 0;
+                }
+            }
+        `)
+        .appendTo('head');
+
+    function initializeEventHandlers() {
+        // Disable form controls if user can't edit
+        {%if not permissao.can_edit_perfis%}
+        $('[id^=data-perms-] select').prop('disabled', true);
+        {%endif%}
+
+        // Handle form changes for each profile
+        $('[id^=data-perms-]').off('change').on('change', function() {
+            showLoading();
+            let form = $(this);
+            let perfilId = form.attr('id').split('-')[2];
+            let formData = form.serialize() + '&_id=' + perfilId;
+
+            $.ajax({
+                type: "POST",
+                url: "create_perfil",
+                data: formData,
+                success: function(response) {
+                    hideLoading();
+                    showCustomAlert("Atualizado com sucesso!");
+                },
+                error: function(error) {
+                    handleServerError(error);
+                }
+            });
         });
-    })
+
+        // Handle delete buttons for each profile
+        $('[id^=excluir-]').off('click').on('click', function() {
+            let perfilId = $(this).attr('id').split('-')[1];
+            
+            if (!confirm('Tem certeza que deseja excluir este perfil?')) {
+                return;
+            }
+
+            showLoading();
+            let url = "/delete_perfil/" + perfilId;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na resposta do servidor');
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    if (text.includes("ok")) {
+                        showCustomAlert("Cadastro excluido com sucesso.");
+                        // Refresh the table
+                        fetch("/list_perfil")
+                            .then(data => data.text())
+                            .then(text => {
+                                $("#perfil-list-content").html(text);
+                                hideLoading();
+                        });
+                    } else {
+                        throw new Error(text);
+                    }
+                })
+                .catch(error => {
+                    handleServerError(error);
+                });
+        });
+    }
+
+    // Initialize event handlers when page loads
+    initializeEventHandlers();
+});
 </script>
-{%endfor%}

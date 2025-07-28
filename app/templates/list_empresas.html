@@ -1,60 +1,264 @@
-{%for empresa in empresas%}
-<div class="flex-center col-layout">
-    <div class="key-box row-layout">
-        <div class="row-layout">
-            <input type="text" name="nome" value="{{empresa.nome}}" placeholder="Nome da empresa..." disabled>
-            <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" disabled>
-            <input type="text" name="cnpj" value="{{empresa.cnpj}}" placeholder="CNPJ - 14 char" disabled>
-        </div>
-        
-        <div class="row-layout">
-            {%if permissao.can_edit_empresas%}
-            <button class="button" id="alterar-{{empresa._id}}" name="alterar">
-                alterar
-            </button>
-            {%endif%}
+<div class="container-fluid">
+    <table id="empresasTable" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Nome da Empresa</th>
+                <th>Chave</th>
+                <th>CNPJ</th>
+                <th>Depto</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {%for empresa in empresas%}
+            <tr>
+                <td>
+                    <input type="text" name="nome" value="{{empresa.nome}}" placeholder="Nome da empresa..." class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" name="cnpj" value="{{empresa.cnpj}}" placeholder="CNPJ - 14 char" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" name="depto" value="{{empresa.departamento}}" placeholder="Departamento" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" name="status" value="{{empresa.status}}" placeholder="Status" class="key-input" disabled>
+                </td>
+                
+                <td class="actions-column">
+                    {%if permissao.can_edit_empresas%}
+                    <button class="button" id="alterar-{{empresa._id}}" name="alterar">
+                        ALTERAR
+                    </button>
+                    {%endif%}
+                    
+                    {%if permissao.can_delete_empresas%}
+                    <button class="button" id="excluir-{{empresa._id}}" name="excluir">
+                        EXCLUIR
+                    </button>
+                    {%endif%}
+                </td>
+            </tr>
 
-            {%if permissao.can_delete_empresas%}
-            <button class="button" id="excluir-{{empresa._id}}" name="excluir">
-                excluir
-            </button>
-            {%endif%}
-        </div>
-    </div>
+            <script>
+                $("#alterar-{{empresa._id}}").click(function() {
+                    $("#nome").val("{{empresa.nome}}");
+                    $("#key").val("{{empresa.chave}}");
+                    $("#cnpj").val("{{empresa.cnpj}}");
+                    $("#departamento").val("{{empresa.departamento}}");
+                    $("#status").val("{{empresa.status}}");
+
+                    //Adiciona sinal visual da alteração no menu
+                    $("#form_dados").addClass("ball");
+                    
+                    //Muda o id da empresa para realizar a alteração no item certo
+                    $("#_id").val("{{empresa._id}}");
+                });
+
+                $("#excluir-{{empresa._id}}").click(function() {
+                    let url = "/exclui_empresa/" + "{{empresa._id}}";
+                    
+                    fetch(url)
+                        .then(function(response) { return response.text(); })
+                        .then(function(text) {
+                            if (text.includes("ok")) {
+                                showCustomAlert("Cadastro excluido com sucesso.");                
+                            } else {
+                                showCustomAlert("Erro ao realizar exclusão: " + text);
+                            }
+                        })
+                        .then(function() {
+                            fetch("/list_empresas")
+                                .then(function(response) { return response.text(); })
+                                .then(function(text) {
+                                    setTimeout(function() {
+                                        $("#emp-box").html(text);
+                                    }, 100);
+                                });
+                        });
+                });
+            </script>
+            {%endfor%}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    $("#alterar-{{empresa._id}}").click(() => {
-        $("#nome").val("{{empresa.nome}}");
-        $("#key").val("{{empresa.chave}}");
-        $("#cnpj").val("{{empresa.cnpj}}");
+$(document).ready(function() {
+    // Add loading overlay
+    if (!$('#loadingOverlay').length) {
+        $('body').append(`
+            <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+                background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+                <div style="background:white;padding:20px;border-radius:5px;">
+                    <span>Processando...</span>
+                </div>
+            </div>
+        `);
+    }
 
-        //Adiciona sinal visual da alteração no menu
-        $("#form_dados").addClass("ball");
-        
-        //Muda o id da empresa para realizar a alteração no item certo
-        $("#_id").val("{{empresa._id}}");
-    })
+    function showLoading() {
+        $('#loadingOverlay').css('display', 'flex');
+    }
 
-    $("#excluir-{{empresa._id}}").click(() => {
-        let url = "/exclui_empresa/" + "{{empresa._id}}";
+    function hideLoading() {
+        $('#loadingOverlay').hide();
+    }
+    
+    async function handleServerError(response) {
+        let errorMessage;
+        try {
+            const text = await response.text();
+            errorMessage = text.includes("error:") ? text.split("error:")[1].trim() : "Erro desconhecido no servidor";
+        } catch (e) {
+            errorMessage = "Erro ao processar resposta do servidor";
+        }
+
+        showCustomAlert(`Erro: ${errorMessage}`);
+        throw new Error(errorMessage);
+    }
+
+    // Initialize DataTable
+    var table = $('#empresasTable').DataTable({
+        language: {
+            searchPlaceholder: "Buscar em todas as colunas...",
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
+        },
+        pageLength: 10,
+        ordering: true,
+        order: [[0, "asc"]], // Order by company name ascending
+        responsive: true,
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+        columnDefs: [
+            { orderable: false, targets: 4 }, // Disable sorting on actions column
+            { width: "40%", targets: 0 }, // Nome da Empresa
+            { width: "20%", targets: 1 }, // Chave
+            { width: "20%", targets: 2 }, // CNPJ
+            { width: "20%", targets: 4 },  // Ações
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+                    // Extract value from input elements for searching
+                    return $(data).val() || data;
+                }
+            }
+        ],
         
-        fetch(url).then(data => {
-            data.text().then(text => {
-                if (text.includes("ok"))
-                {
-                    showCustomAlert("Cadastro excluido com sucesso.");                
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = $('.dataTables_filter');
+            searchWrapper.find('input[type="search"]')
+                .attr('class', 'form-control')
+                .css({
+                    'width': '100%',
+                    'margin-left': '0'
+                });
+        },
+        drawCallback: function(settings) {
+            bindEventHandlers();
+            $('.key-input').css('width', '100%');
+        }
+    });
+
+    // Add search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .dataTables_filter {
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+            }
+            .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            @media (max-width: 767px) {
+                .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+            }
+        `)
+        .appendTo('head');
+
+    // Bind event handlers
+    function bindEventHandlers() {
+        {%for empresa in empresas%}
+        $("#alterar-{{empresa._id}}").off('click').on('click', async function() {
+            try {
+                $("#nome").val("{{empresa.nome}}");
+                $("#key").val("{{empresa.chave}}");
+                $("#cnpj").val("{{empresa.cnpj}}");
+                $("#status").val("{{empresa.status}}");
+                $("#departamento").val("{{empresa.departamento}}");
+
+                //Adiciona sinal visual da alteração no menu
+                $("#form_dados").addClass("ball");
+                
+                //Muda o id da empresa para realizar a alteração no item certo
+                $("#_id").val("{{empresa._id}}");
+            } catch (error) {
+                console.error('Error in alterar handler:', error);
+                showCustomAlert("Erro ao tentar alterar o registro: " + error.message);
+            }
+        });
+
+        $("#excluir-{{empresa._id}}").off('click').on('click', async function() {
+            try {
+                if (!confirm('Tem certeza que deseja excluir esta empresa?')) {
+                    return;
+                }
+
+                showLoading();
+                const url = "/exclui_empresa/{{empresa._id}}";
+                
+                const response = await fetch(url);
+                if (!response.ok) {
+                    await handleServerError(response);
+                    return;
+                }
+
+                const text = await response.text();
+                if (text.includes("ok")) {
+                    showCustomAlert("Cadastro excluído com sucesso.");
+                    // Remove the row and redraw the table
+                    table.row($(this).closest('tr')).remove().draw(false);
                 } else {
                     showCustomAlert("Erro ao realizar exclusão: " + text);
                 }
-            })
-        }).then(() => {
-            fetch("/list_empresas").then(data => {
-                data.text().then(text => {
-                    setTimeout(() => {$("#emp-box").html(text)}, 100)
-                })
-            })
-        })
-    })
+            } catch (error) {
+                console.error('Error in excluir handler:', error);
+                showCustomAlert("Erro ao tentar excluir o registro: " + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+        {%endfor%}
+    }
+
+    // Initial binding
+    bindEventHandlers();
+});
 </script>
-{%endfor%}

@@ -1,44 +1,16 @@
 <div class="container empresas-box">
-    <div class="key-box row-layout data-names">
-        <div class="row-layout">
-            <input type="text" value="USUARIO:" disabled>
-            <input type="text" value="AÇÃO:" disabled>
-            <input type="text" value="MENU:" disabled>
-            <input type="text" value="PERFIL:" disabled>
-            <input type="text" value="DATA:" disabled>
-            <input type="text" value="INFO:" disabled>
-        </div>
-        
-        <div class="row-layout">
-        </div>
-    </div>
 
     <div id="logs-box" class="logs-box">
 
     </div>
 </div>
 
-<script>
-    //Carrega a lista de logs
+<script>    //Carrega a lista de logs
     fetch("/list_logs").then(data => {
             data.text().then(text => {
             setTimeout(() => {$("#logs-box").html(text)}, 100);
                     
             })
         })
-    
-    
-        $("#content").on("keypress", (e) => {
-            if (e.which == 13) {
-            const url = "/list_logs/" + $("#content").val();
-            
-            fetch(url).then(data => {
-                data.text().then(text => {
-                setTimeout(() => {$("#logs-box").html(text)}, 100);
-            
-            })
-        })
-    }
-})
 
 </script>

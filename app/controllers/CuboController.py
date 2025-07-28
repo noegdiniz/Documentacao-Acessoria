@@ -1,13 +1,11 @@
 from datetime import datetime
-from app.controllers.FilterController import FilterController
 from app.models.tables import CUBO, Categoria, Perfil
 from app.controllers.LogController import LogController
 from app.ext.db import db
-from sqlalchemy import inspect
+
 from flask import session
 import os
 import re
-
 
 # Configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "13256348917-k29q8fpfoblkan04mfadpr8fe6vafkg6.apps.googleusercontent.com")
@@ -38,8 +36,7 @@ class CuboController:
             )
         else:
             cats_nomes = ""  # Empty string if no Categoria
-
-
+        
         # Create new CUBO object
         new_cubo = CUBO(
             categoria_ids=cats_ids,
@@ -52,7 +49,7 @@ class CuboController:
         # Add to session first to get an ID if needed
         db.session.add(new_cubo)
         db.session.flush()  # Flush to get the ID before commit
-
+        
         # Commit all changes
         try:
             db.session.commit()
@@ -81,7 +78,7 @@ class CuboController:
             "perfil_nome": cubo.perfil_nome,
             "pasta_drive": cubo.pasta_drive
         }
-
+        
         # Create a new CUBO entry
         pattern_perfil = r'"(\d+)"'
 
@@ -98,7 +95,7 @@ class CuboController:
             )
         else:
             cats_nomes = ""  # Empty string if no Categoria
-
+        
         cubo.categoria_ids=cats_ids
         cubo.categoria_nomes=cats_nomes
         cubo.perfil_id=form["perfil"]
@@ -135,11 +132,9 @@ class CuboController:
         return cubo
     
     @staticmethod
-    def get_all(filter):
-        filtered_data = FilterController.filter(filter, CUBO)
-
-        return filtered_data
-
+    def get_all():
+        return CUBO.query.all()
+    
     @staticmethod
     def delete(id):
         # Delete a CUBO by its ID
@@ -147,12 +142,14 @@ class CuboController:
         if cubo:
             db.session.delete(cubo)
             db.session.commit()
-
-            #Salva o log da ação 
+            
+            #Salva o log da ação
             LogController.create(session["nome"],
                                  session["perfil"],
                                  "DADOS",
                                  "DELETAR",
                                  f"PERFIL: {cubo.perfil_nome} | CATEGORIA: {cubo.categoria_nomes}")
+            
             return True
         return False
+    

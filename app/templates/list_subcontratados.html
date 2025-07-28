@@ -47,8 +47,7 @@
                 }
             })
         }).then(() => {
-            let val = $("#content").val();
-            let url = `/list_categorias/${val}`
+            let url = `/list_categorias/`
 
             fetch(url).then(data => {
                 data.text().then(text => {

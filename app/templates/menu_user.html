@@ -13,17 +13,6 @@ fetch("/list_users").then(data => {
         })
     })
     
-    $("#content").on("keypress", (e) => {
-        if(e.which == 13) {
-        const url = "/list_users/" + $("#content").val();
-        
-        fetch(url).then(data => {
-            data.text().then(text => {
-            setTimeout(() => {$("#user-list-content").html(text)}, 100);
-        
-            })
-        })
-    }
-})
-
+    // Filter functionality removed
+    
 </script>

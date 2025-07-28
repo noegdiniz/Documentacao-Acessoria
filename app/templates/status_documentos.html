@@ -1,287 +1,368 @@
-<div class="container empresas-box-docs " style="height: auto;min-width: 62rem;">
-    <div class="flex-center data-names">
-        <div class="key-box row-layout">
-            <div class="row-layout flex-center">
-                <input type="text" value="VERSAO:" class="key-input" disabled>
-                <input type="text" value="TITULO:" class="key-input" disabled>
-                <input type="text" value="CONTRATO:" class="key-input" disabled>
-                <input type="text" value="CATEGORIA:" class="key-input" disabled>
-                <input type="text" value="DATA:" class="key-input" disabled>
-                <input type="text" value="PASTA:" class="key-input" disabled>
-                <input type="text" value="STATUS:" class="key-input" disabled>
-                <input type="text" value="UPLOAD:" class="key-input" disabled>
-            </div>
-            
-            <div id="page-status">
-                <input type="text" id="upload" name="upload" value="TODOS OS DOCUMENTOS" class="key-input" disabled="" style="background-color: white; min-width: 12rem;">
-            </div>
-        </div>
+<div class="container empresas-box-docs doc-container">
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
     </div>
+
+    <style>
+    .modal {
+        z-index: 10000;
+    }
+
+    @media screen and (max-width: 768px) {
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+
+    /* Approval modal table styles */
+    .approval-table {
+        width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
+    }
     
+    .approval-table th,
+    .approval-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .approval-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.4em 0.8em;
+        border-radius: 4px;
+        color: white;
+        font-weight: 500;
+    }
+
+    .status-badge.aguardando { background-color: darkgray; }
+    .status-badge.aprovado { background-color: darkgreen; }
+    .status-badge.nao-aprovado { background-color: darkred; }
+
+    /* Hide DataTable elements we don't want */
+    .approval-table .dataTables_filter,
+    .approval-table .dataTables_info,
+    .approval-table .dataTables_paginate,
+    .approval-table .dataTables_length {
+        display: none !important;
+    }
+    </style>
+
     <div id="box-docs">
-        
-        <div style="height: auto;">
-            {%for emp in docs_emp%}
-            {%for doc in emp[1]%}
-        
-    <div class="flex-center">
-        <div class="key-box row-layout">
-            <div class="row-layout flex-center">
-                <input type="text" id="versao" name="versao" value="{{doc.versao}}" class="key-input" disabled>
-                <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
-                <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
-                <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
-                
-                <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
-
-                <input type="text" id="pasta" name="pasta" value="{{doc.pasta}}" class="key-input" disabled>
-                
-                <div id="status{{doc._id}}" class="status-btn">
-                    {%if doc.status == "CORRIGIDO" %}
-                    <input style="background-color: darkblue; color: white;cursor: default;" type="text" id="status" name="status" value="CORRIGIDO - AGUARDANDO ANALISE" class="key-input" readonly>
-                    {% elif doc.status == "APROVADO" %}
-                    <input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
-                    {% elif doc.status == "AGUARDANDO" %}
-                    <input style="background-color: darkgray; color: white; cursor: default;" type="text" id="status{{doc._id}}" name="status" value="{{ doc.status }}" class="key-input" readonly>
-                    {% elif doc.status == "NAO APROVADO" %}
-                    <input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
-                    {% endif %}
-                </div>
-                
-                {%if doc.status == "NAO APROVADO" %}
-                <button id="corrigir{{doc._id}}" name="corrigir" class="button">
-                    CORRIGIR
-                </button>
-                {%endif%}
-
-                {% if not hist %}
-                <button id="historico{{doc._id}}" name="historico{{doc._id}}" class="button">
-                    HISTORICO
-                </button>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-            
-    <!-- Modal Structure -->
-        <div id="approvalModal{{doc._id}}" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="close-btn-container">
-                    <span class="close-btn" id="closeModal{{doc._id}}">&times;</span>
-                </div>
-                <h2>Aprovações  - {{doc.titulo}}</h2>
-                    <div class="flex-center data-names">
-                        <div class="key-box row-layout">
-                                <div class="row-layout flex-center">
-                                    <input type="text" value="PERFIL:" class="key-input" disabled>
-                                    <input type="text" value="STATUS:" class="key-input" disabled>
-                                    <input type="text" value="ULTIMA ATUALIZAÇÃO:" class="key-input" style="min-width: 10rem;" disabled>
-                                    <input type="text" value="OBSERVAÇÃO:" class="key-input" style="min-width: 16rem;" disabled>
-                                </div>
+        <div class="table-responsive">
+            <table id="docsTable" class="display dt-responsive nowrap" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Versão</th>
+                        <th>Título</th>
+                        <th>Contrato</th>
+                        <th>Categoria</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for emp in docs_emp%}
+                    {%for doc in emp[1]%}
+                    <tr>
+                        <td>
+                            <input type="text" id="versao" name="versao" value="{{doc.versao}}" class="key-input" disabled>
+                        </td>
+                        <td>
+                            <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
+                        </td>
+                        <td>
+                            <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
+                        </td>
+                        <td>
+                            <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
+                        </td>
+                        <td>
+                            <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
+                        </td>
+                        <td>
+                            <div class="status-cell status-{{doc.status.lower()}}" id="status{{doc._id}}" data-id="{{doc._id}}">
+                                {%if doc.status == "CORRIGIDO" %}
+                                <input style="background-color: darkblue; color: white;cursor: default;" type="text" id="status" name="status" value="CORRIGIDO - AGUARDANDO ANALISE" class="key-input" readonly>
+                                {% elif doc.status == "APROVADO" %}
+                                <input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                                {% elif doc.status == "AGUARDANDO" %}
+                                <input style="background-color: darkgray; color: white; cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                                {% elif doc.status == "NAO APROVADO" %}
+                                <input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                                {% endif %}
                             </div>
-                        </div>
-            
-                        {% for aprovacao in doc.aprovacoes %}
-                            <div class="key-box row-layout">
-                                <div class="row-layout flex-center">
-                                    <input type="text" id="perfil" name="perfil" value="{{aprovacao.perfil_nome}}" class="key-input" disabled>
-                                    
-                                    <div id="status-apr{{aprovacao._id}}" class="status-btn">
-                                        {%if aprovacao.status == "AGUARDANDO"%}
-                                        <input style="background-color: darkgray; color: white; cursor: default;" type="text" id="status" name="status" value="{{aprovacao.status}}" class="key-input" disabled>
-                                        {% elif aprovacao.status == "APROVADO" %}
-                                        <input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="{{aprovacao.status}}" class="key-input" disabled>
-                                        {% elif aprovacao.status == "NAO APROVADO" %}
-                                        <input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="{{aprovacao.status}}" class="key-input" disabled>
-                                        {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                {%if doc.status == "NAO APROVADO" and doc.anexos%}
+                                <button type="button" class="button corrigir-btn" data-id="{{doc._id}}" data-docid="{{doc._id}}" name="corrigir">
+                                    CORRIGIR
+                                </button>
+                                {%endif%}
+                                
+                                {% if not hist %}
+                                <button type="button" class="button historico-btn" data-id="{{doc._id}}" data-empresa="{{doc.empresa_id}}" data-titulo="{{doc.titulo}}" name="historico">
+                                    HISTORICO
+                                </button>
+                                {% endif %}
+
+                                <!-- Modal Structure - approval details -->
+                                <div id="approvalModal{{doc._id}}" class="modal" style="display: none;">
+                                    <div class="modal-content">
+                                        <div class="close-btn-container">
+                                            <span class="close-btn" data-modal="approvalModal{{doc._id}}">&times;</span>
+                                        </div>
+                                        <h2>Aprovações - {{doc.titulo}}</h2>
+                                        
+                                        <table class="approval-table" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Perfil</th>
+                                                    <th>Status</th>
+                                                    <th>Data</th>
+                                                    <th>Observação</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for aprovacao in doc.aprovacoes %}
+                                                <tr>
+                                                    <td>{{aprovacao.perfil_nome}}</td>
+                                                    <td>
+                                                        <div class="status-btn">
+                                                            {%if aprovacao.status == "AGUARDANDO"%}
+                                                            <span class="status-badge aguardando">{{aprovacao.status}}</span>
+                                                            {% elif aprovacao.status == "APROVADO" %}
+                                                            <span class="status-badge aprovado">{{aprovacao.status}}</span>
+                                                            {% elif aprovacao.status == "NAO APROVADO" %}
+                                                            <span class="status-badge nao-aprovado">{{aprovacao.status}}</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                    <td>{{aprovacao.data}}</td>
+                                                    <td>{{aprovacao.obs}}</td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+
+                                        <div class="anexos-container">
+                                            {% for anexo in doc.anexos%}
+                                            {%if anexo.link %}
+                                            <div class="key-box row-layout">
+                                                <a href="{{anexo.link}}" target="_blank" rel="noopener noreferrer">{{anexo.filename}}</a>
+                                            </div>
+                                            {%endif%}
+                                            {%endfor%}
+                                        </div>
                                     </div>
-                                    
-                                    <input type="text" id="data" name="data" value="{{aprovacao.data}}" style="min-width: 10rem;" class="key-input" disabled>
-                                    
-
-                                    <input type="text" id="obs{{aprovacao._id}}" name="obs" value="{{aprovacao.obs}}" style="min-width: 16rem;" class="key-input" disabled>
-                                    
                                 </div>
-                                <script>
-                                    $("#obs{{aprovacao._id}}").click(() => {
-                                        $("#obs{{aprovacao._id}}").css("background-color", "white");
-                                    })
-                                </script>
-                            </div>
-                        {% endfor %}
-                        <div>
-                            {% for anexo in doc.anexos%}
-                            <!-- Show anexos in pdf view on page scroll -->
-                            <div class="key-box row-layout">
-                                <a href="{{anexo.link}}">{{anexo.filename}}</a>
-                            </div>
-                            {%endfor%}
-                        </div>
-                </div>
-            </div>
-            <!-- Modal Structure for Multiple File Upload -->
-            <div id="uploadModal{{doc._id}}" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <div class="close-btn-container">
-                        <span class="close-btn" id="closeUploadModal{{doc._id}}">&times;</span>
-                    </div>
-                    <h2>Corrigir Documento - {{doc.titulo}}</h2>
-                    <form id="uploadForm{{doc._id}}" enctype="multipart/form-data">
-                        <div class="file-upload-container">
-                            <input type="file" id="fileInput{{doc._id}}" name="files" multiple>
-                            <div id="fileTags{{doc._id}}" class="file-tags"></div>
-                        </div>
-                        <button type="submit" class="button">Enviar Arquivos</button>
-                    </form>
-                </div>
-            </div>
 
-            <script>
-                // Open the upload modal when CORRIGIR button is clicked
-                $("#corrigir{{doc._id}}").click(() => {
-                    const modal = document.getElementById("uploadModal{{doc._id}}");
-                    modal.style.display = "flex";
+                                <!-- Modal Structure - upload form -->
+                                <div id="uploadModal{{doc._id}}" class="modal" style="display: none;">
+                                    <div class="modal-content">
+                                        <div class="close-btn-container">
+                                            <span class="close-btn" data-modal="uploadModal{{doc._id}}">&times;</span>
+                                        </div>
+                                        <h2>Corrigir Documento - {{doc.titulo}}</h2>
+                                        <form id="uploadForm{{doc._id}}" class="upload-form" enctype="multipart/form-data">
+                                            <div class="file-upload-container col-layout">
+                                                {%for anexo in doc.anexos%}
+                                                    <div class="file-input-group">
+                                                        <label>{{anexo.filename}}</label>
+                                                        <input type="file" name="anexo" required>
+                                                        <input type="hidden" name="anexo_id" value="{{anexo._id}}">
+                                                    </div>
+                                                {%endfor%}
+                                            </div>
+                                            <input type="hidden" name="id" value="{{doc._id}}">
+                                            <button type="submit" class="button">Enviar Arquivos</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {%endfor%}
+                    {%endfor%}
+                </tbody>
+            </table>
+        </div>
+        
+        <script>
+            // Utility functions
+            function showLoading() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            function hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            function handleServerError(error) {
+                hideLoading();
+                showCustomAlert("Erro no servidor: " + (error.responseText || error.statusText || error));
+            }
+
+            // Modal handling
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+
+            // Document ready handler
+            $(document).ready(function() {
+                // Initialize DataTable
+                var table = $('#docsTable').DataTable({
+                    responsive: true,
+                    language: {
+                        searchPlaceholder: "Buscar em todas as colunas...",
+                        url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                    },
+                    dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+                    order: [[4, 'desc']], // Sort by date column descending
+                    columnDefs: [
+                        { width: "10%", targets: 0 }, // Versão
+                        { width: "20%", targets: 1 }, // Título
+                        { width: "15%", targets: 2 }, // Contrato
+                        { width: "15%", targets: 3 }, // Categoria
+                        { width: "15%", targets: 4 }, // Data
+                        { width: "15%", targets: 5, orderable: true, className: 'dt-center' }, // Status
+                        { width: "10%", targets: 6, orderable: false }, // Ações
+                        {
+                            targets: '_all',
+                            searchable: true,
+                            render: function(data, type, row) {
+                                if (type === 'display') return data;
+                                return $(data).find('input').val() || data;
+                            }
+                        }
+                    ],
+                    autoWidth: false
                 });
 
-                // Close the upload modal when X button is clicked
-                document.getElementById("closeUploadModal{{doc._id}}").addEventListener("click", () => {
-                    document.getElementById("uploadModal{{doc._id}}").style.display = "none";
+                // Event Delegation for Modals
+                $(document).on('click', '.close-btn', function() {
+                    const modalId = $(this).data('modal');
+                    closeModal(modalId);
                 });
-
-                // Close the upload modal when clicking outside the modal content
-                window.addEventListener("click", (event) => {
-                    const modal = document.getElementById("uploadModal{{doc._id}}");
-                    if (event.target === modal) {
-                        modal.style.display = "none";
+                
+                $(document).on('click', '.modal', function(event) {
+                    if (event.target === this) {
+                        closeModal(this.id);
                     }
                 });
 
-                // Handle file input and display file tags
-                $("#fileInput{{doc._id}}").on("change", function () {
-                    const files = this.files;
-                    const fileTagsContainer = $("#fileTags{{doc._id}}");
-                    fileTagsContainer.empty(); // Clear previous tags
-
-                    Array.from(files).forEach((file) => {
-                        const tag = $("<span>").addClass("file-tag").text(file.name);
-                        fileTagsContainer.append(tag);
+                // Status cell click handler
+                $('#docsTable').on('click', '.status-cell', function() {
+                    const docId = $(this).data('id');
+                    const modal = document.getElementById("approvalModal" + docId);
+                    modal.style.display = "flex";
+                    
+                    // Initialize DataTable for the approval table
+                    const approvalTable = $(modal).find('.approval-table').DataTable({
+                        paging: false,
+                        searching: false,
+                        info: false,
+                        ordering: true,
+                        autoWidth: false,
+                        responsive: true,
+                        columnDefs: [
+                            { width: "20%", targets: 0 }, // Perfil
+                            { width: "15%", targets: 1 }, // Status
+                            { width: "15%", targets: 2 }, // Data
+                            { width: "50%", targets: 3 }  // Observação
+                        ]
                     });
                 });
 
-                // Handle form submission for file upload
-                $("#uploadForm{{doc._id}}").on("submit", function (e) {
+                // Destroy DataTable when modal is closed to prevent memory leaks
+                $(document).on('click', '.close-btn, .modal', function(event) {
+                    if (event.target === this || $(this).hasClass('close-btn')) {
+                        const modal = $(this).closest('.modal');
+                        const table = modal.find('.approval-table').DataTable();
+                        if (table) {
+                            table.destroy();
+                        }
+                    }
+                });
+
+                // Corrigir button click handler
+                $('#docsTable').on('click', '.corrigir-btn', function() {
+                    const docId = $(this).data('docid');
+                    document.getElementById("uploadModal" + docId).style.display = "flex";
+                });
+
+                // Histórico button click handler
+                $('#docsTable').on('click', '.historico-btn', function() {
+                    const empresaId = $(this).data('empresa');
+                    const titulo = $(this).data('titulo');
+
+                    showLoading();
+                    
+                    fetch(`/filter_docs_prestadora/${empresaId}/hist,${titulo}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.text();
+                        })
+                        .then(text => {
+                            $("#content-emp").html(text);
+                        })
+                        .catch(error => handleServerError(error))
+                        .finally(() => hideLoading());
+                });
+
+                // Form submission handler
+                $(document).on('submit', '.upload-form', function(e) {
                     e.preventDefault();
+                    showLoading();
 
                     const formData = new FormData(this);
-
-                    fetch("/upload_files/{{doc._id}}", {
+                    
+                    fetch("/update_documento", {
                         method: "POST",
-                        body: formData,
+                        body: formData
                     })
-                        .then((response) => response.json())
-                        .then((data) => {
+                    
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        try {
+                            const data = JSON.parse(text);
                             if (data.success) {
                                 showCustomAlert("Arquivos enviados com sucesso!");
-                                document.getElementById("uploadModal{{doc._id}}").style.display = "none";
+                                // Close the modal and refresh the table
+                                closeModal(this.closest('.modal').id);
+                                table.ajax.reload();
                             } else {
-                                showCustomAlert("Erro ao enviar arquivos: " + data.message);
+                                throw new Error(data.message || 'Erro desconhecido');
                             }
-                        })
-                        .catch((error) => {
-                            console.error("Erro:", error);
-                            showCustomAlert("Erro ao enviar arquivos.");
-                        });
-                });
-            </script>
-        
-        <script>
-        
-                $("#status{{doc._id}}").on('click','.key-input',() => {
-                    const modal = document.getElementById("approvalModal{{doc._id}}");
-        
-                    modal.style.display = "flex";
-                });
+                        } catch (e) {
+                            throw new Error('Erro ao processar resposta do servidor: ' + text);
+                        }
+                    })
 
-                $("#historico{{doc._id}}").click(() => {
-                    let url = '/filter_docs_prestadora/{{doc.empresa_id}}/hist,{{doc.titulo}}';
-                    fetch(url).then(data => {
-                        data.text().then(text => {
-                            $("#content-emp").html(text)
-                            
-                            $("#page-status").html(
-                                '<input type="text" id="upload" name="upload" value="HISTORICO - {{doc.titulo}}" class="key-input" disabled="" style="background-color: white;">'
-                            )
-                        })
+                    .catch(error => {
+                        console.error(error);
+                        showCustomAlert("Erro ao enviar arquivos: " + error.message);
                     })
-                })
-        
-                // Close modal when X button is clicked
-                document.getElementById("closeModal{{doc._id}}").addEventListener("click", () => {
-                    document.getElementById("approvalModal{{doc._id}}").style.display = "none";
-                });
-        
-                // Close modal when clicking outside the modal content
-                window.addEventListener("click", (event) => {
-                    const modal = document.getElementById("approvalModal{{doc._id}}");
-                    if (event.target === modal) {
-                        modal.style.display = "none";
-                        }
-                    });
-        
-                $("#delete{{doc._id}}").click(() => {
-                let url = "/exclui_documento/" + "{{doc._id}}";
-                
-                fetch(url).then(data => {
-                        data.text().then(text => {
-                            if (text.includes("ok"))
-                            {
-                                showCustomAlert("Cadastro excluido com sucesso.");                
-                            } else {
-                                showCustomAlert("Erro ao realizar exclusão: " + text);
-                            }
-                        })
-                    }).then(() => {
-                        let content = encodeURIComponent($("#content").val());
-                        let url = "";
-        
-                        let sel = $("#selected").val();
-        
-                        if(sel) {
-                            if (!content) {
-                                url = `/filter_docs/${sel}`;
-                            } else {
-                                url = `/filter_docs/${sel}/${content}`;
-                            }
-                            
-                            fetch(url).then(data => {
-                                data.text().then(text => {
-                                    setTimeout(() => {
-                                        $("#box-docs").html(text);
-                                    }, 100)
-                                });
-                            });
-                        }
-                    })
-                })
-            </script>
-            {%endfor%}
-            {%endfor%}
-        </div>
-        <script>
-            $("#content").on("keypress", (e) => {
-                    if (e.which == 13) {
-                    let content = $("#content").val();
-                    let url = `/status_files/${content}`
                     
-                    fetch(url).then((data) => {
-                        data.text().then(text => {
-                            setTimeout(() => {
-                                $("#content-emp").html(text)
-                            }, 100)
-                        })
-                    })
-                }
-            })
+                    .finally(() => hideLoading());
+                });
+            });
         </script>
     </div>
 </div>

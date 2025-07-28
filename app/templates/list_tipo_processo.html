@@ -1,60 +1,239 @@
 {%for tipo_processo in tipo_processos%}
-<div class="col-layout">
-    <div class="key-box row-layout">
-        <div class="row-layout">
-            <input type="text" id="nome" value="{{tipo_processo.nome}}" disabled>
-        </div>
-        
-        <div class="row-layout">
-            {%if permissao.can_edit_tipo_processo%}
-            <button class="button" id="alterar-{{tipo_processo._id}}" name="alterar">
-                alterar
-            </button>
-            {%endif%}
+{%endfor%}
 
-            {%if permissao.can_delete_tipo_processo%}
-            <button class="button" id="excluir-{{tipo_processo._id}}" name="excluir">
-                excluir
-            </button>
-            {%endif%}
-        </div>
-    </div>
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
+
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.dt-responsive {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="table-responsive">
+    <table id="tipoProcessoTable" class="display dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {%for tipo_processo in tipo_processos%}
+            <tr>
+                <td>
+                    <input type="text" class="nome-input key-input" value="{{tipo_processo.nome}}" disabled>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        {%if permissao.can_edit_tipo_processo%}
+                        <button class="button alterar-btn" data-id="{{tipo_processo._id}}" data-nome="{{tipo_processo.nome}}" name="alterar">
+                            alterar
+                        </button>
+                        {%endif%}
+
+                        {%if permissao.can_delete_tipo_processo%}
+                        <button class="button excluir-btn" data-id="{{tipo_processo._id}}" name="excluir">
+                            excluir
+                        </button>
+                        {%endif%}
+                    </div>
+                </td>
+            </tr>
+            {%endfor%}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    $("#alterar-{{tipo_processo._id}}").click(() => {
-        $("#nome").val("{{tipo_processo.nome}}");
+// Loading state management
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
 
-        //Adiciona sinal visual da alteração no menu
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function handleServerError(error) {
+    hideLoading();
+    showCustomAlert("Erro no servidor: " + (error.responseText || error.statusText || error));
+}
+
+// Initialize DataTable
+$(document).ready(function() {
+    var table = $('#tipoProcessoTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json',
+            searchPlaceholder: "Buscar tipo processo..."
+        },
+        pageLength: 10,
+        ordering: true,
+        order: [[0, "asc"]], // Order by category name ascending
+        responsive: true,
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+
+        buttons: [
+            {
+                extend: 'collection',
+                text: 'Exportar',
+                buttons: ['copy', 'excel', 'pdf']
+            }
+        ],
+        columnDefs: [
+            { width: "70%", targets: 0 }, // Nome
+            { width: "30%", targets: 1 }, // Ações
+            { orderable: false, targets: 1 }, // Disable sorting on actions column
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+
+                    // Extract text from input fields for searching
+                    return $(data).val() || data;
+                }
+            }
+        ],
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = $('.dataTables_filter');
+            searchWrapper.find('input[type="search"]')
+                .attr('class', 'form-control')
+                .css({
+                    'width': '100%',
+                    'margin-left': '0'
+                });
+            
+        }
+    });
+
+    // Add search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .dataTables_filter {
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+            }
+            .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            .buttons-collection {
+                margin-right: 10px;
+            }
+            @media (max-width: 767px) {
+                .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+                .buttons-collection {
+                    width: 100%;
+                    margin-bottom: 10px;
+                    margin-right: 0;
+                }
+            }
+        `)
+        .appendTo('head');
+
+    // Use event delegation for the buttons
+    $('#tipoProcessoTable').on('click', '.alterar-btn', function() {
+        const id = $(this).data('id');
+        const nome = $(this).data('nome');
+        $("#nome").val(nome);
         $("#form_dados").addClass("ball");
-
-        //Muda o id do tipo_processo para realizar a alteração no item certo
-        $("#_id").val("{{tipo_processo._id}}");
-    })
+        $("#_id").val(id);
+    });
     
-    $("#excluir-{{tipo_processo._id}}").click(() => {
-        let url = "/delete_tipo_processo/" + "{{tipo_processo._id}}";
+    $('#tipoProcessoTable').on('click', '.excluir-btn', function() {
+        const id = $(this).data('id');
         
-        fetch(url).then(data => {
-            data.text().then(text => {
-                if (text.includes("ok"))
-                {
-                    showCustomAlert("Cadastro excluido com sucesso.");                
+        if (!confirm('Tem certeza que deseja excluir este tipo de processo?')) {
+            return;
+        }
+
+        showLoading();
+        let url = "/delete_tipo_processo/" + id;
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                if (text.includes("ok")) {
+                    showCustomAlert("Cadastro excluido com sucesso.");
+                    // Refresh the list
+                    let url = `/list_tipo_processo/`;
+                    return fetch(url);
                 } else {
-                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                    throw new Error(text);
                 }
             })
-        }).then(() => {
-            let val = $("#content").val();
-            let url = `/list_tipo_processo/${val}`
-            
-            fetch(url).then(data => {
-                data.text().then(text => {
-                
-                setTimeout(() => {$("#tipo-processo-list-content").html(text)}, 100)
-                })
+            .then(response => response.text())
+            .then(text => {
+                $("#tipo-processo-list-content").html(text);
+                hideLoading();
             })
-        })
-    })
+            .catch(error => {
+                handleServerError(error);
+            });
+    });
+});
 </script>
-{%endfor%}

@@ -1,81 +1,263 @@
-{%for user in users%}
-<div class="col-layout">
-    <div class="key-box row-layout">
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
 
-        <div class="row-layout">
-            <input type="text" id="nome" value="{{user.nome}}" disabled>
-            <input type="text" id="email" value="{{user.email}}" disabled>
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
 
-            {%if permissao.can_edit_users%}
-            <select name="perfil" id="perfil{{user._id}}" required placeholder="" style="width: auto;">
-                {%for perfil in perfis%}
-                    <option value="{{perfil._id}}">{{perfil.nome}}</option>
-                {%endfor%}
-            </select>
-            {%else%}
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
 
-            <select name="perfil" id="perfil{{user._id}}" required placeholder="" style="width: auto;" disabled>
-                {%for perfil in perfis%}
-                    <option value="{{perfil._id}}">{{perfil.nome}}</option>
-                {%endfor%}
-            </select>
-            {%endif%}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-        </div>
-        <div class="row-layout">
-            {%if permissao.can_delete_users%}
-            <button class="button" id="excluir-{{user._id}}" name="excluir">
-                excluir
-            </button>
-            {%endif%}
-        </div>
+.dt-responsive {
+    width: 100%;
+    margin-bottom: 20px;
+}
 
-    </div>
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+
+<div class="table-responsive">
+    <table id="userTable" class="display dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Perfil</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {%for user in users%}
+            <tr>
+                <td>
+                    <input type="text" class="nome-input key-input" value="{{user.nome}}" disabled>
+                </td>
+                <td>
+                    <input type="text" class="email-input key-input" value="{{user.email}}" disabled>
+                </td>
+                <td>
+                    {%if permissao.can_edit_users%}
+                    <select name="perfil" class="perfil-select key-input" data-id="{{user._id}}" data-current="{{user.perfil_id}}" required style="width: auto;">
+                        {%for perfil in perfis%}
+                            <option value="{{perfil._id}}">{{perfil.nome}}</option>
+                        {%endfor%}
+                    </select>
+                    {%else%}
+                    <select name="perfil" class="perfil-select" data-id="{{user._id}}" data-current="{{user.perfil_id}}" required style="width: auto;" disabled>
+                        {%for perfil in perfis%}
+                            <option value="{{perfil._id}}">{{perfil.nome}}</option>
+                        {%endfor%}
+                    </select>
+                    {%endif%}
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        {%if permissao.can_delete_users%}
+                        <button class="button excluir-btn" data-id="{{user._id}}" name="excluir">
+                            excluir
+                        </button>
+                        {%endif%}
+                    </div>
+                </td>
+            </tr>
+            {%endfor%}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    $("#perfil{{user._id}}").val("{{user.perfil_id}}");
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
 
-    $("#perfil{{user._id}}").change(() => {
-        let perfil = $("#perfil{{user._id}}").val();
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
 
-        let url = `/update_user/{{user._id}}/${perfil}`
+function handleServerError(error) {
+    hideLoading();
+    showCustomAlert("Erro no servidor: " + (error.responseText || error.statusText || error));
+}
 
-        fetch(url).then(data => {
-            data.text().then(text => {
-                if(text.includes("ok")) {
-                    showCustomAlert("Perfil do usuario atualizado.")
-                } else {
-                    showCustomAlert(text)
-                }
-            })
-        })
-    })
-
-    $("#excluir-{{user._id}}").click(() => {
-        let url = "/delete_user/" + "{{user._id}}";
+$(document).ready(function() {
+    var table = $('#userTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json',
+            searchPlaceholder: "Buscar categoria..."
+        },
+        pageLength: 10,
+        ordering: true,
+        order: [[0, "asc"]], // Order by category name ascending
+        responsive: true,
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
         
-        fetch(url).then(data => {
-            data.text().then(text => {
-                if (text.includes("ok"))
-                {
-                    showCustomAlert("Usuario excluido com sucesso.");                
+        columnDefs: [
+            { width: "30%", targets: 0 }, // Nome
+            { width: "30%", targets: 1 }, // Email
+            { width: "25%", targets: 2 }, // Perfil
+            { width: "15%", targets: 3 }, // Ações
+            { orderable: false, targets: 3 }, // Disable sorting on actions column
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+                    
+                    // Extract text from input fields for searching
+                    return $(data).val() || data;
+                }
+            }
+        ],
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = $('.dataTables_filter');
+            searchWrapper.find('input[type="search"]')
+                .attr('class', 'form-control')
+                .css({
+                    'width': '100%',
+                    'margin-left': '0'
+                });
+            
+        }
+    });
+
+    // Add search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .dataTables_filter {
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+            }
+            .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            .buttons-collection {
+                margin-right: 10px;
+            }
+            @media (max-width: 767px) {
+                .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+                .buttons-collection {
+                    width: 100%;
+                    margin-bottom: 10px;
+                    margin-right: 0;
+                }
+            }
+        `)
+        .appendTo('head');
+
+    // Set initial perfil values
+    $('.perfil-select').each(function() {
+        $(this).val($(this).data('current'));
+    });
+
+    // Handle perfil change
+    $('#userTable').on('change', '.perfil-select', function() {
+        const userId = $(this).data('id');
+        const perfilId = $(this).val();
+        showLoading();
+
+        let url = `/update_user/${userId}/${perfilId}`;
+
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                if(text.includes("ok")) {
+                    showCustomAlert("Perfil do usuario atualizado.");
                 } else {
-                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                    throw new Error(text);
+                }
+                hideLoading();
+            })
+            .catch(error => {
+                handleServerError(error);
+            });
+    });
+    
+    // Handle delete button
+    $('#userTable').on('click', '.excluir-btn', function() {
+        const userId = $(this).data('id');
+        
+        if (!confirm('Tem certeza que deseja excluir este usuário?')) {
+            return;
+        }
+
+        showLoading();
+        let url = "/delete_user/" + userId;
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                if (text.includes("ok")) {
+                    showCustomAlert("Usuario excluido com sucesso.");
+                    // Refresh the list
+                    let url = `/list_users/`;
+                    return fetch(url);
+                } else {
+                    throw new Error(text);
                 }
             })
-
-        }).then(() => {
-            let val = $("#content").val();
-            let url = `/list_users/${val}`
-
-            fetch(url).then(data => {
-                data.text().then(text => {
-                
-                setTimeout(() => {$("#user-list-content").html(text)}, 100)
-                })
+            .then(response => response.text())
+            .then(text => {
+                $("#user-list-content").html(text);
+                hideLoading();
             })
-        })
-    })
+            .catch(error => {
+                handleServerError(error);
+            });
+    });
+});
 </script>
-{%endfor%}

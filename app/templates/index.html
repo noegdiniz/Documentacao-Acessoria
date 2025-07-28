@@ -6,7 +6,27 @@
     <title>Documentação</title>
     <link rel="stylesheet" href="../static/app.css">
 
+    <!-- Importa a lib JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- Add DataTables resources -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.7/css/responsive.bootstrap4.min.css">
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
+    <!-- DataTables Buttons extension -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script src="../static/scripts.js"></script>
+
 </head>
+
 <body style="background: #959595;">
     <div class="container main-container">
         <div class="normal-container col-layout">
@@ -21,15 +41,15 @@
                     {%endif%}
                     
                     <a href="#" id="funcionarios-page">Funcionarios</a>
-                    <a href="#" id="integracao-page">Integração</a>
 
                     <a href="#" id="cubo-page">Dados</a>
 
                     <a href="#" id="logs-page">Logs</a>
-                </div>
 
+                    <!-- <a href="#" id="relatorios-page">Relatorios</a> -->
+                </div>         
+                
                 <div class="user-data">
-                    <input type="search" id="content">
 
                     {{user.nome}} - {{user.perfil}}&nbsp;
 
@@ -38,17 +58,13 @@
                     <a href="/logout">Sair</a>
                 </div>
             </div>
-
+            
             <div id="content-adm">
 
             </div>
 
         </div>
     </div>
-
-    <!-- Importa a lib JQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="../static/scripts.js"></script>
 
     <script>
         document.querySelectorAll('input').forEach(input => {
@@ -109,20 +125,21 @@
             })
         })
 
-        $("#integracao-page").click(() => {
-            fetch("/adm_integracao").then(data => {
-                data.text().then(text => {
-                    $("#content-adm").html(text)
-                })
-            })
-        })
+        // $("#relatorios-page").click(() => {
+        //     fetch("/adm_relatorios").then(data => {
+        //         data.text().then(text => {
+        //             $("#content-adm").html(text)
+        //         })
+        //     })
+        // })
         
     </script>
 
     <script>
         $(document).ready(() => {
             let url = "/upload_gdrive/";
-            
+            let url1 = "/update_integra";
+
             fetch(url).then(data => {
                 data.text().then(text => {
                     if (text.includes("ok"))
@@ -135,7 +152,21 @@
             }).then(() => {
                 console.log("Upload realizado com sucesso.");
             })
+
+            fetch(url1).then(data => {
+                data.text().then(text => {
+                    if (text.includes("ok"))
+                    {
+                        showCustomAlert("Integrações atualizadas com sucesso.");                
+                    } else {
+                        showCustomAlert("Erro ao Atualizar integrações: " + text);
+                    }
+                })
+            }).then(() => {
+                console.log("Integrações atualizadas com sucesso.");
+            })
         })
+        
     </script>
 </body>
 </html>

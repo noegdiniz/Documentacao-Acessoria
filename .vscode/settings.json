@@ -1,9 +1,0 @@
-{
-    "python.REPL.enableREPLSmartSend": false,
-    "python.analysis.autoImportCompletions": false,
-    "python.testing.pytestArgs": [
-        "app"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
-}

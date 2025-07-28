@@ -1,79 +1,80 @@
-<div class="modal-content">
-    <div class="close-btn-container">
-        <span class="close-btn" id="closeModal{{funcionario._id}}">&times;</span>
-    </div>
-    
-    <h2>Menu - {{funcionario.nome}}</h2>
+<h2>Menu - {{funcionario.nome}}</h2>
     <div class="flex-center">
-        <div class="row-layout container">
-            <button class="button bt-status" id="status-{{funcionario._id}}" name="menu">
-                Status
-            </button>
-            <button class="button bt-integracao" id="agenda-{{funcionario._id}}" name="alterar">
-                Agendar Integração
-            </button>
+        <div class="row-layout container key-box">
+            <div class="row-layout">
+                <button class="button bt-status btn btn-primary" id="status-{{funcionario._id}}" name="menu">
+                    Status
+                </button>
+                
+                {%if 'chave_empresa' in session.keys()%}
+                <button class="button bt-integracao btn btn-info" id="agenda-{{funcionario._id}}" name="alterar">
+                    Agendar Integração
+                </button>
+                {%else%}
+                <div></div>
+                {%endif%}
+            </div>
+
+            {%if 'perfil' in session.keys()%}
+                {%if session["perfil"] == "RH" or session["perfil"] == "SEGURANCA"%}
+                    <div class="row-layout">
+                        <button class="button btn btn-success" id="aprovar-int">
+                            Aprovar
+                        </button>
+                        
+                        <button class="button btn btn-danger" id="reprovar-int">
+                            Reprovar
+                        </button>
+                    </div>
+                    {%endif%}
+            {%endif%}
         </div>
     </div>
     
     <div id="tab-status" class="col-layout container">
-
-        <div class="key-box row-layout  data-names">
-            <div class="row-layout flex-center">
-                <input type="text" value="FUNÇÃO:" class="key-input" disabled>
-                <input type="text" value="CARGO:" class="key-input" disabled>
-                <input type="text" value="SETOR:" class="key-input" disabled>
-                <input type="text" value="DATA:" class="key-input" disabled>
-                <input type="text" value="DATA ASO:" class="key-input" disabled>
-                <input type="text" value="DATA INTEGRAÇÃO:" class="key-input" disabled>
-
-                <input type="text" value="EMPRESA:" class="key-input" disabled>
-                <input type="text" value="CONTRATO:" class="key-input" disabled>
-
-                <input type="text" value="STATUS:" class="key-input" disabled>
-                <input type="text" value="STATUS INTEGRAÇÃO:" class="key-input" disabled>
-                <input type="text" value="APROV. RH" class="key-input" disabled>
-                <input type="text" value="APROV. SEGURANÇA" class="key-input" disabled>
-                
-            </div>
-        </div>
-        
-        {%for status in funcionario.status_funcionario%}
-        {%if status.tipo == 'status'%}
-        <div class="key-box row-layout status-color">
-        {%elif status.tipo == 'integracao'%}
-        <div class="key-box row-layout integracao-color">
-        {%endif%}
-            <div class="row-layout flex-center">
-                <input type="text" id="funcao" name="funcao" value="{{status.funcao}}" class="key-input" disabled>
-                <input type="text" id="cargo" name="cargo" value="{{status.cargo}}" class="key-input" disabled>
-                <input type="text" id="setor" name="setor" value="{{status.setor}}" class="key-input" disabled>
-                <input type="text" id="data" name="data" value="{{status.data}}" class="key-input" disabled>
-                <input type="text" id="data_aso" name="data_aso" value="{{status.data_aso if status.data_aso else ''}}" class="key-input" disabled>
-                <input type="text" id="data_integra" name="data_integra" value="{{status.data_integracao if status.data_integracao else ''}}" class="key-input" disabled>
-                
-                <input type="text" id="empresa" name="empresa" value="{{status.empresa_nome if status.empresa_nome else ''}}" class="key-input" disabled>
-                <input type="text" id="contrato" name="contrato" value="{{status.contrato_nome if status.contrato_nome else ''}}" class="key-input" disabled>
-                
-                <input type="text" id="status" name="status" value="{{status.status_contratual}}" class="key-input" disabled>
-                <input type="text" id="status" name="status" value="{{status.status_integracao}}" class="key-input" disabled>
-                
-                <input type="text" id="aprov-rh" name="aprov-rh" value="{{status.aprov_rh}}" class="key-input" disabled>
-                <input type="text" id="aprov-seg" name="aprov-seg" value="{{status.aprov_seg}}" class="key-input" disabled>
-            </div>
-        </div>
-        {%endfor%}
+        <table id="statusTable" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Função</th>
+                    <th>Cargo</th>
+                    <th>Setor</th>
+                    <th>Data</th>
+                    <th>Data ASO</th>
+                    <th>Data Integração</th>
+                    <th>Empresa</th>
+                    <th>Contrato</th>
+                    <th>Status</th>
+                    <th>Status Integração</th>
+                    <th>Aprov. RH</th>
+                    <th>Aprov. SEG</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for status in funcionario.status_funcionario%}
+                <tr class="{% if status.tipo == 'STATUS' %}status-color{% else %}integracao-color{% endif %}" id="sts-{{status._id}}">
+                    <td><input type="text" value="{{status.funcao}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.cargo}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.setor}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.data}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.data_aso if status.data_aso else ''}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.data_integracao if status.data_integracao else ''}}" class="key-input" disabled></td>
+                    
+                    <td><input type="text" value="{{status.empresa_nome if status.empresa_nome else ''}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.contrato_nome if status.contrato_nome else ''}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.status_contratual}}" class="key-input" disabled></td>
+                    <td><input type="text" value="{{status.status_integracao}}" class="key-input" disabled></td>
+                    <td><input type="text" id="aprov-rh-{{status._id}}" value="{{status.aprov_rh}}" class="key-input" disabled></td>
+                    <td><input type="text" id="aprov-seg-{{status._id}}" value="{{status.aprov_seg}}" class="key-input" disabled></td>
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>
     </div>
     
     <div id="tab-history" class="col-layout container" style="display: none;">
         <div class="key-box row-layout  data-names">
             <div class="row-layout flex-center">
-                <input type="text" value="NOME:" class="key-input" disabled>
-                <input type="text" value="UNIDADE DE ATIVIDADE:" class="key-input" disabled>
-                <input type="text" value="UNIDADE DE INTEGRAÇAO:" class="key-input" disabled>
-                <input type="text" value="DATA INTEGRAÇAO:" class="key-input" disabled>
-                <input type="text" value="DATA ASO" class="key-input" disabled>
-                <input type="text" value="EMPRESA:" class="key-input" disabled>
-                <input type="text" value="CONTRATO:" class="key-input" disabled>
+                <h2>Histórico de Integração</h2>
             </div>
             
             <div class="row-layout flex-center">
@@ -82,18 +83,11 @@
                 </button>
             </div>
         </div>
-
+        
         <div class="key-box row-layout">
             <div class="row-layout flex-center">
                 <form action="post" nome="agenda-integracao" id="agenda-integracao">
-                    <select name="nome" id="nome" class="key-input-select" required>
-                        <option value="">Funcionario</option>
-                        {%for funcionario in funcionarios%}
-                            <option value="funcionario._id">
-                                {{funcionario.nome}}
-                            </option>
-                        {%endfor%}
-                    </select>
+                    <input type="text" name="nome_integra" id="nome_integra" value="{{funcionario.status_funcionario[-1].funcionario_nome}}" class="key-input" disabled>
                     
                     <select name="unidade_atividade" id="unidade_atividade" class="key-input-select" required>
                         <option value="">Unidade de Atividade</option>
@@ -103,7 +97,7 @@
                         <option value="Tartarugalzinho">Tartarugalzinho</option>
                         <option value="KM78">KM78</option>
                     </select>
-    
+                    
                     <select name="unidade_integracao" id="unidade_integracao" class="key-input-select" required>
                         <option value="">Unidade de Integração</option>
     
@@ -111,88 +105,368 @@
                         <option value="Porto Grande">Porto Grande</option>
                         <option value="Tartarugalzinho">Tartarugalzinho</option>
                         <option value="KM78">KM78</option>
-    
                     </select>
                     
-                    <input type="text" name="data_integra" id="data_integra" placeholder="Data Integração" class="key-input" required>
                     <input type="text" name="data_aso" id="data_aso" placeholder="Data ASO" class="key-input" required>
+                    <input type="text" name="data_integracao" id="data_integracao" placeholder="Data Integração" class="key-input" required>
                     
                     <input type="text" name="empresa" id="empresa" value="{{funcionario.status_funcionario[-1].empresa_nome}}" class="key-input" disabled>
 
                     <select name="contrato" id="contrato" class="key-input-select" required>
                         <option value="">Contrato</option>
                         {%for contrato in contratos%}
-                            <option value="contrato._id">
-                                {{contrato.titulo}}
+                            <option value="{{contrato._id}}">
+                                {{contrato.nome}}
                             </option>
                         {%endfor%}
                     </select>
-
+                    
                     <input type="hidden" id="tipo" name="tipo" value="integracao">
                     <input type="hidden" id="_id" name="_id" value="{{funcionario._id}}">
                 </form>
             </div>
         </div>
-        
     </div>
-</div>
 
 <script>
+$(document).ready(function() {
+    // Add loading overlay if not exists
+    if (!$('#loadingOverlay').length) {
+        $('body').append(`
+            <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+                background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+                <div style="background:white;padding:20px;border-radius:5px;">
+                    <span>Processando...</span>
+                </div>
+            </div>
+        `);
+    }
 
-$("#salvar-integra").click(() => {
-    let nome = $("#nome").val();
-    let unidade_atividade = $("#unidade_atividade").val();
-    let unidade_integracao = $("#unidade_integracao").val();
-    let data_integra = $("#data_integra").val();
-    let data_aso = $("#data_aso").val();
-    let contrato = $("#contrato").val();
+    function showLoading() {
+        $('#loadingOverlay').css('display', 'flex');
+    }
+
+    function hideLoading() {
+        $('#loadingOverlay').hide();
+    }
+
+    async function handleServerError(response) {
+        let errorMessage;
+        try {
+            const text = await response.text();
+            errorMessage = text.includes("error:") ? text.split("error:")[1].trim() : "Erro desconhecido no servidor";
+        } catch (e) {
+            errorMessage = "Erro ao processar resposta do servidor";
+        }
+        showCustomAlert(`Erro: ${errorMessage}`);
+        throw new Error(errorMessage);
+    }
     
-    if(!nome || !unidade_atividade || !unidade_integracao || !data_integra || !data_aso || !contrato) {
-        showCustomAlert("Favor preencher todos os campos!")
-    } else {
-        let formData = $("#agenda-integracao").serialize();
-        formData["_id"] = nome;
+    // Initialize DataTable for status
+    var statusTable = $('#statusTable').DataTable({
+        language: {
+            searchPlaceholder: "Buscar em todas as colunas...",
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
+        },
+        responsive: true,
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">', // Modal-specific controls
+        pageLength: 5,
+        ordering: true,
+        order: [[3, "desc"]], // Order by date descending
+        columnDefs: [
+            { width: "10%", targets: [0,1,2] }, // Função, Cargo, Setor
+            { width: "8%", targets: [3,4] }, // Data, Data ASO
+            { width: "12%", targets: [5,6] }, // Empresa, Contrato
+            { width: "8%", targets: [7,8,9,10] }, // Status columns
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+                    return $(data).find('input').val() || data;
+                }
+            }
+        ],
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = this.api().table().container().querySelector('.dataTables_filter');
+            var searchInput = searchWrapper.querySelector('input[type="search"]');
+            
+            // Enhance search input
+            searchInput.className = 'form-control';
+            searchInput.style.width = '100%';
+            searchInput.style.marginLeft = '0';
+            
+        }
+    });
 
-        $.ajax({
-            type: "POST",
-            url: "create_funcionario",
-            data: formData,
-            success: function(response) {
-                showCustomAlert("Agendado com sucesso!")
-                
-                //Clear form
+    // Add modal-specific search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .modal .dataTables_filter {
+                margin: 15px 0;
+                width: 100%;
+            }
+            .modal .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .modal .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+                margin: 0;
+            }
+            .modal .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            .modal .modal-top {
+                margin-bottom: 15px;
+            }
+            .modal .modal-bottom {
+                margin-top: 15px;
+            }
+            @media screen and (max-width: 767px) {
+                .modal .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .modal .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+                .modal .dataTables_wrapper .dataTables_paginate {
+                    text-align: center;
+                }
+                .modal .dataTables_wrapper .dataTables_info {
+                    text-align: center;
+                    margin-bottom: 10px;
+                }
+            }
+        `)
+        .appendTo('head');
+
+    // Approval handlers with improved error handling
+    $("#aprovar-int").off('click').on('click', async function() {
+        try {
+            if (!confirm('Confirma a aprovação da integração?')) {
+                return;
+            }
+
+            showLoading();
+            const url = "/aprovar_integracao/{{funcionario._id}}";
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                await handleServerError(response);
+                return;
+            }
+
+            const text = await response.text();
+            if (text.startsWith("ok")) {
+                showCustomAlert("Aprovado com sucesso!");
+
+                // Refresh the list of funcionarios
+                fetch("/list_funcionarios").then(data => {
+                    data.text().then(text => {
+                        setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
+                    })
+                })
+
+                statusTable.draw(false); // Refresh table
+            } else {
+                showCustomAlert("Erro ao aprovar integração: " + text);
+            }
+        } catch (error) {
+            console.error('Error in aprovar handler:', error);
+            showCustomAlert("Erro ao processar aprovação: " + error.message);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    $("#reprovar-int").off('click').on('click', async function() {
+        try {
+            if (!confirm('Confirma a reprovação da integração?')) {
+                return;
+            }
+
+            showLoading();
+            const url = "/reprovar_integracao/{{funcionario._id}}";
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                await handleServerError(response);
+                return;
+            }
+
+            const text = await response.text();
+            if (text.startsWith("ok")) {
+                showCustomAlert("Reprovado com sucesso!");
+
+                // Refresh the list of funcionarios
+                fetch("/list_funcionarios").then(data => {
+                    data.text().then(text => {
+                        setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
+                    })
+                })
+
+                statusTable.draw(false); // Refresh table
+            } else {
+                showCustomAlert("Erro ao reprovar integração: " + text);
+            }
+        } catch (error) {
+            console.error('Error in reprovar handler:', error);
+            showCustomAlert("Erro ao processar reprovação: " + error.message);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Save integration with improved error handling
+    $("#salvar-integra").off('click').on('click', async function() {
+        try {
+            const nome = $("#nome_integra").val();
+            const unidade_atividade = $("#unidade_atividade").val();
+            const unidade_integracao = $("#unidade_integracao").val();
+            const data_aso = $("#data_aso").val();
+            const data_integracao = $("#data_integracao").val();
+            const contrato = $("#contrato").val();
+            
+            if(!nome || !unidade_atividade || !unidade_integracao || !data_aso || !contrato || !data_integracao) {
+                showCustomAlert("Favor preencher todos os campos!");
+                return;
+            }
+
+            showLoading();
+            const formData = $("#agenda-integracao").serialize();
+            
+            const response = await $.ajax({
+                type: "POST",
+                url: "create_funcionario",
+                data: formData
+            });
+
+            if (response.includes("ok")) {
+                showCustomAlert("Agendado com sucesso!");
+                // Clear form
                 $("#nome").val("");
                 $("#unidade_atividade").val("");
                 $("#unidade_integracao").val("");
                 $("#data_integra").val("");
                 $("#data_aso").val("");
+                $("#data_integracao").val("");
                 $("#contrato").val("");
-            },
-            
-            //Caso ocorra erro na requisição
-            error: function(error) {
-                showCustomAlert("Erro ao agendar integração: " + error)
+
+                // Refresh the list of funcionarios
+                fetch("/list_funcionarios").then(data => {
+                    data.text().then(text => {
+                        setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
+                    })
+                })
+
+                statusTable.draw(false); // Refresh table
+            } else {
+                showCustomAlert("Erro ao agendar integração: " + response);
             }
-        });  
-    }
-})
-
-    $("#status-{{funcionario._id}}").click(
-        () => {
-            $("#tab-status").css("display", "flex");
-            $("#tab-history").css("display", "none");
+        } catch (error) {
+            console.error('Error in salvar handler:', error);
+            showCustomAlert("Erro ao agendar integração: " + (error.responseText || error.message));
+        } finally {
+            hideLoading();
         }
-    )
+    });
 
-    $("#agenda-{{funcionario._id}}").click(
-        () => {
-            $("#tab-status").css("display", "none");
-            $("#tab-history").css("display", "flex");
-        }
-    )
-
-    // Close modal
-    $("#closeModal{{funcionario._id}}, #closeModalFooter{{funcionario._id}}").click(() => {
+    // Tab switching
+    $("#status-{{funcionario._id}}").off('click').on('click', function() {
+        $("#tab-status").css("display", "flex");
+        $("#tab-history").css("display", "none");
+        statusTable.draw(false); // Refresh table when showing
+    });
+    
+    $("#agenda-{{funcionario._id}}").off('click').on('click', function() {
+        $("#tab-status").css("display", "none");
+        $("#tab-history").css("display", "flex");
+    });
+    
+    // Modal close handler
+    $("#closeModal{{funcionario._id}}, #closeModalFooter{{funcionario._id}}").off('click').on('click', function() {
         $("#menuModal{{funcionario._id}}").css("display", "none");
     });
+});
 </script>
+
+<style>
+/* DataTables Modal Specific Styles */
+.modal table.dataTable {
+    width: 100% !important;
+    margin: 15px 0;
+}
+
+.modal .dataTables_wrapper .dataTables_filter {
+    margin: 10px 0;
+    float: none;
+    text-align: left;
+}
+
+.modal .dataTables_wrapper .dataTables_filter input {
+    width: 200px;
+    margin-left: 10px;
+}
+
+.modal .dataTables_info,
+.modal .dataTables_paginate {
+    margin: 10px 0;
+}
+
+.modal .dataTables_wrapper .dataTables_paginate {
+    float: none;
+    text-align: center;
+    margin-top: 15px;
+}
+
+/* Status colors */
+.status-color {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.integracao-color {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+/* Form controls in table */
+.modal table.dataTable input.key-input {
+    width: 100%;
+    padding: 4px 8px;
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .modal table.dataTable {
+        display: block;
+        width: 100% !important;
+        margin: 0;
+    }
+
+    .modal .dataTables_wrapper .dataTables_filter input {
+        width: calc(100% - 70px);
+    }
+
+    .modal .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.3em 0.6em;
+    }
+    
+    .modal .dataTables_wrapper .dataTables_info {
+        text-align: center;
+        float: none;
+        margin-bottom: 10px;
+    }
+}
+</style>

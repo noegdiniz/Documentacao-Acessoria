@@ -1,107 +1,354 @@
-{% for funcionario in funcionarios %}
-<div class="col-layout">
-    <div class="key-box row-layout">
-        <div class="row-layout">
-            <input type="text" id="nome" value="{{funcionario.nome}}" disabled>
-            <input type="text" id="funcao" value="{{funcionario.status_funcionario[-1].funcao}}" disabled> 
-            <input type="text" id="cargo" value="{{funcionario.status_funcionario[-1].cargo}}" disabled>
-            <input type="text" id="setor" value="{{funcionario.status_funcionario[-1].setor}}" disabled>
-            <input type="text" id="status" value="{{funcionario.status_funcionario[-1].status_contratual}}" disabled>
-            <input type="text" id="empresa_nome" value="{{funcionario.status_funcionario[-1].empresa_nome}}" disabled>
-        </div>
-        
-        <div class="row-layout">
-            <button class="button" id="menu-{{funcionario._id}}" name="menu">
-                menu
-            </button>
+<div class="container-fluid">
+    <table id="funcionariosTable" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Função</th>
+                <th>Cargo</th>
+                <th>Setor</th>
+                <th>Status</th>
+                <th>Empresa</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for funcionario in funcionarios %}
+            <tr>
+                <td>
+                    <input type="text" id="nome-{{funcionario._id}}" value="{{funcionario.nome}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="funcao-{{funcionario._id}}" value="{{funcionario.status_funcionario[-1].funcao}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="cargo-{{funcionario._id}}" value="{{funcionario.status_funcionario[-1].cargo}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="setor-{{funcionario._id}}" value="{{funcionario.status_funcionario[-1].setor}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="status-{{funcionario._id}}" value="{{funcionario.status_funcionario[-1].status_contratual}}" class="key-input" disabled>
+                </td>
+                <td>
+                    <input type="text" id="empresa_nome-{{funcionario._id}}" value="{{funcionario.status_funcionario[-1].empresa_nome}}" class="key-input" disabled>
+                </td>
+                <td class="text-nowrap">
+                    <button class="button btn btn-info" id="menu-{{funcionario._id}}" name="menu">
+                        Menu
+                    </button>
+                    
+                    {%if permissao%}
+                        {%if permissao.can_edit_funcionarios%}
+                        <button class="button btn btn-primary" id="alterar-{{funcionario._id}}" name="alterar">
+                            Alterar
+                        </button>
+                        {%endif%}
+                        
+                        {%if permissao.can_delete_funcionarios%}
+                        <button class="button btn btn-danger" id="excluir-{{funcionario._id}}" name="excluir">
+                            Excluir
+                        </button>
+                        {%endif%}
+                    {%endif%}
+                </td>
+            </tr>
 
-            {%if permissao%}
-                {%if permissao.can_edit_funcionarios%}
-                <button class="button" id="alterar-{{funcionario._id}}" name="alterar">
-                    alterar
-                </button>
-                {%endif%}
-                
-                {%if permissao.can_delete_funcionarios%}
-                <button class="button" id="excluir-{{funcionario._id}}" name="excluir">
-                    excluir
-                </button>
-                {%endif%}
-            {%endif%}
-        </div>
-    </div>
-</div>
-
-<!-- Modal -->
-<div id="menuModal{{funcionario._id}}" class="modal" style="display: none;">
+            <!-- Modal -->
+            <div id="menuModal{{funcionario._id}}" class="modal">
+                <div class="modal-content">
+                    <div class="close-btn-container">
+                        <span class="close-btn" id="closeModal{{funcionario._id}}">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Modal content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <script>
-    // Open modal
-    $("#menu-{{funcionario._id}}").click(() => {
-        $("#menuModal{{funcionario._id}}").css("display", "flex");
-    });
+$(document).ready(function() {
+    // Add loading overlay
+    if (!$('#loadingOverlay').length) {
+        $('body').append(`
+            <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+                background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+                <div style="background:white;padding:20px;border-radius:5px;">
+                    <span>Processando...</span>
+                </div>
+            </div>
+        `);
+    }
 
-    $("#menu-{{funcionario._id}}").click(() => {
-        let url = "/menu_funcionario/" + "{{funcionario._id}}";
-        
-        fetch(url).then(data => {
-            data.text().then(text => {
-                setTimeout(() => {
-                    $("#menuModal{{funcionario._id}}").html(text);
-                }, 100);
-            });
-        });
-    });
+    function showLoading() {
+        $('#loadingOverlay').css('display', 'flex');
+    }
 
-    // Close modal when clicking outside of it
-    $(window).click((event) => {
-        if (event.target.id === "menuModal{{funcionario._id}}") {
-            $("#menuModal{{funcionario._id}}").css("display", "none");
+    function hideLoading() {
+        $('#loadingOverlay').hide();
+    }
+
+    async function handleServerError(response) {
+        let errorMessage;
+        try {
+            const text = await response.text();
+            errorMessage = text.includes("error:") ? text.split("error:")[1].trim() : "Erro desconhecido no servidor";
+        } catch (e) {
+            errorMessage = "Erro ao processar resposta do servidor";
+        }
+        showCustomAlert(`Erro: ${errorMessage}`);
+        throw new Error(errorMessage);
+    }
+
+    // Initialize DataTable
+    var table = $('#funcionariosTable').DataTable({
+        language: {
+            searchPlaceholder: "Buscar em todas as colunas...",
+            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
+        },
+        pageLength: 10,
+        ordering: true,
+        responsive: true,
+        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+        columnDefs: [
+            { orderable: false, targets: 6 }, // Disable sorting on actions column
+            { width: "20%", targets: 0 }, // Nome
+            { width: "15%", targets: 1 }, // Função
+            { width: "15%", targets: 2 }, // Cargo
+            { width: "15%", targets: 3 }, // Setor
+            { width: "10%", targets: 4 }, // Status
+            { width: "15%", targets: 5 }, // Empresa
+            { width: "10%", targets: 6 },  // Ações
+            
+            {
+                targets: '_all',
+                searchable: true,
+                render: function(data, type, row) {
+                    if (type === 'display') return data;
+                    // Extract value from input elements for searching
+                    return $(data).val() || data;
+                }
+            }
+        ],
+        autoWidth: false,
+        initComplete: function() {
+            var searchWrapper = $('.dataTables_filter');
+            searchWrapper.find('input[type="search"]')
+                .attr('class', 'form-control')
+                .css({
+                    'width': '100%',
+                    'margin-left': '0'
+                });
+            
+        },
+        drawCallback: function(settings) {
+            bindEventHandlers();
+            $('.key-input').css('width', '100%');
         }
     });
-</script>
 
-<script>
-    $("#alterar-{{funcionario._id}}").click(() => {
-        $("#nome").val("{{funcionario.nome}}");
-        $("#funcao").val("{{funcionario.status_funcionario[-1].funcao}}");
-        $("#cargo").val("{{funcionario.status_funcionario[-1].cargo}}");
-        $("#setor").val("{{funcionario.status_funcionario[-1].setor}}");
-        $("#status").val("{{funcionario.status_funcionario[-1].status_contratual}}");
-        $("#empresa_id").val("{{funcionario.status_funcionario[-1].empresa_id}}")
-
-        //Adiciona sinal visual da alteração no menu
-        $("#form_dados").addClass("ball");
+    // Add search styling
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .dataTables_filter {
+                margin-bottom: 20px;
+                width: 100%;
+            }
+            .dataTables_filter label {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .dataTables_filter input[type="search"] {
+                flex: 1;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                transition: border-color 0.3s;
+            }
+            .dataTables_filter input[type="search"]:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            @media (max-width: 767px) {
+                .dataTables_filter label {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dataTables_filter input[type="search"] {
+                    margin-bottom: 10px;
+                }
+            }
+        `)
         
-        //Muda o id do funcionário para realizar a alteração no item certo
-        $("#_id").val("{{funcionario._id}}");
-    })
+        .appendTo('head');
+    
+    // Bind event handlers
+    function bindEventHandlers() {
+        {%for funcionario in funcionarios%}
+        // Menu button handler
+        $("#menu-{{funcionario._id}}").off('click').on('click', async function() {
+            try {
+                showLoading();
+                const url = "/menu_funcionario/{{funcionario._id}}";
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    await handleServerError(response);
+                    return;
+                }
+                
+                const text = await response.text();
+                $("#menuModal{{funcionario._id}} .modal-body").html(text);
+                $("#menuModal{{funcionario._id}}").css('display', 'flex');
+            } catch (error) {
+                console.error('Error in menu handler:', error);
+                showCustomAlert("Erro ao carregar menu: " + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
 
-    $("#excluir-{{funcionario._id}}").click(() => {
-        let url = "/delete_funcionario/" + "{{funcionario._id}}";
-        
-        fetch(url).then(data => {
-            data.text().then(text => {
+        // Alter button handler
+        $("#alterar-{{funcionario._id}}").off('click').on('click', function() {
+            try {
+                $("#nome").val("{{funcionario.nome}}");
+                $("#funcao").val("{{funcionario.status_funcionario[-1].funcao}}");
+                $("#cargo").val("{{funcionario.status_funcionario[-1].cargo}}");
+                $("#setor").val("{{funcionario.status_funcionario[-1].setor}}");
+                $("#status").val("{{funcionario.status_funcionario[-1].status_contratual}}");
+                $("#empresa_id").val("{{funcionario.status_funcionario[-1].empresa_id}}");
+
+                //Adiciona sinal visual da alteração no menu
+                $("#form_dados").addClass("ball");
+                
+                //Muda o id do funcionário para realizar a alteração no item certo
+                $("#_id").val("{{funcionario._id}}");
+            } catch (error) {
+                console.error('Error in alterar handler:', error);
+                showCustomAlert("Erro ao preparar alteração: " + error.message);
+            }
+        });
+
+        // Delete button handler
+        $("#excluir-{{funcionario._id}}").off('click').on('click', async function() {
+            try {
+                if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
+                    return;
+                }
+
+                showLoading();
+                const url = "/delete_funcionario/{{funcionario._id}}";
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    await handleServerError(response);
+                    return;
+                }
+                
+                const text = await response.text();
+                console.log(text);
+
                 if (text.includes("ok")) {
-                    showCustomAlert("Cadastro excluido com sucesso.");                
+                    showCustomAlert("Cadastro excluído com sucesso");
+                    table.row($(this).closest('tr')).remove().draw(false);
                 } else {
                     showCustomAlert("Erro ao realizar exclusão: " + text);
                 }
-            })
-        }).then(() => {
-            let val = $("#content").val();
-            let url = `/list_funcionarios/${val}`
+                
+            } catch (error) {
+                console.error('Error in excluir handler:', error);
+                showCustomAlert("Erro ao tentar excluir o registro: " + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
 
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    setTimeout(() => {
-                        $("#funcionarios-list-content").html(text)
-                    }, 100)
-                })
-            })
-        })
-    })
+        // Modal close handlers
+        $("#closeModal{{funcionario._id}}").off('click').on('click', function() {
+            $("#menuModal{{funcionario._id}}").hide();
+        });
 
+        $(window).off('click').on('click', function(event) {
+            if ($(event.target).hasClass('modal')) {
+                $(event.target).hide();
+            }
+        });
+        {%endfor%}
+    }
+
+    // Initial binding
+    bindEventHandlers();
+});
 </script>
-{%endfor%}
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 5px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-btn-container {
+    text-align: right;
+    position: sticky;
+    top: 0;
+    background: #fefefe;
+    padding: 10px;
+    z-index: 1;
+}
+
+.close-btn {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .button {
+        width: 100%;
+        margin: 2px 0;
+    }
+}
+</style>
