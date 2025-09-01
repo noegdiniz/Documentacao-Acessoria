@@ -137,35 +137,32 @@
 
     <script>
         $(document).ready(() => {
-            let url = "/upload_gdrive/";
-            let url1 = "/update_integra";
-
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    if (text.includes("ok"))
-                    {
-                        showCustomAlert("Upload realizado com sucesso.");                
+            async function handleIntegrationUpdates() {
+                try {
+                    const uploadRes = await fetch("/upload_gdrive/");
+                    const uploadText = await uploadRes.text();
+                    if (uploadText.includes("ok")) {
+                        showCustomAlert("Upload realizado com sucesso.");
+                        console.log("Upload realizado com sucesso.");
                     } else {
-                        showCustomAlert("Erro ao realizar upload: " + text);
+                        showCustomAlert("Erro ao realizar upload: " + uploadText);
                     }
-                })
-            }).then(() => {
-                console.log("Upload realizado com sucesso.");
-            })
 
-            fetch(url1).then(data => {
-                data.text().then(text => {
-                    if (text.includes("ok"))
-                    {
-                        showCustomAlert("Integrações atualizadas com sucesso.");                
+                    const integraRes = await fetch("/update_integra");
+                    const integraText = await integraRes.text();
+                    if (integraText.includes("ok")) {
+                        // showCustomAlert("Integrações atualizadas com sucesso.");
+                        // console.log("Integrações atualizadas com sucesso.");
                     } else {
-                        showCustomAlert("Erro ao Atualizar integrações: " + text);
+                        showCustomAlert("Erro ao Atualizar integrações: " + integraText);
                     }
-                })
-            }).then(() => {
-                console.log("Integrações atualizadas com sucesso.");
-            })
-        })
+                } catch (error) {
+                    showCustomAlert("Erro inesperado: " + error.message);
+                    console.error(error);
+                }
+            }
+            handleIntegrationUpdates();
+        });
         
     </script>
 </body>

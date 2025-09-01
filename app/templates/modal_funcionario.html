@@ -49,6 +49,7 @@
                     <th>Aprov. SEG</th>
                 </tr>
             </thead>
+
             <tbody>
                 {%for status in funcionario.status_funcionario%}
                 <tr class="{% if status.tipo == 'STATUS' %}status-color{% else %}integracao-color{% endif %}" id="sts-{{status._id}}">
@@ -149,56 +150,66 @@ $(document).ready(function() {
     function hideLoading() {
         $('#loadingOverlay').hide();
     }
-
+    
     async function handleServerError(response) {
         let errorMessage;
         try {
             const text = await response.text();
-            errorMessage = text.includes("error:") ? text.split("error:")[1].trim() : "Erro desconhecido no servidor";
+            errorMessage = text.includes("error:") ? text.split("error:")[1].trim() : text || "Erro desconhecido";
         } catch (e) {
             errorMessage = "Erro ao processar resposta do servidor";
         }
+        
         showCustomAlert(`Erro: ${errorMessage}`);
         throw new Error(errorMessage);
     }
     
-    // Initialize DataTable for status
-    var statusTable = $('#statusTable').DataTable({
-        language: {
-            searchPlaceholder: "Buscar em todas as colunas...",
-            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
-        },
-        responsive: true,
-        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">', // Modal-specific controls
-        pageLength: 5,
-        ordering: true,
-        order: [[3, "desc"]], // Order by date descending
-        columnDefs: [
-            { width: "10%", targets: [0,1,2] }, // Função, Cargo, Setor
-            { width: "8%", targets: [3,4] }, // Data, Data ASO
-            { width: "12%", targets: [5,6] }, // Empresa, Contrato
-            { width: "8%", targets: [7,8,9,10] }, // Status columns
-            {
-                targets: '_all',
-                searchable: true,
-                render: function(data, type, row) {
-                    if (type === 'display') return data;
-                    return $(data).find('input').val() || data;
+    // Função para inicializar o DataTable de forma segura
+    function initStatusTable() {
+        // Destroi instância anterior se existir
+        if ($.fn.DataTable.isDataTable('#statusTable')) {
+            $('#statusTable').DataTable().destroy();
+        }
+        $('#statusTable').DataTable({
+            language: {
+                searchPlaceholder: "Buscar em todas as colunas...",
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
+            },
+            
+            responsive: true,
+            dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+            pageLength: 5,
+            ordering: true,
+            order: [[3, "desc"]],
+            columnDefs: [
+                { width: "10%", targets: [0,1,2] },
+                { width: "8%", targets: [3,4] },
+                { width: "12%", targets: [5,6] },
+                { width: "8%", targets: [7,8,9,10] },
+                {
+                    targets: '_all',
+                    searchable: true,
+                    render: function(data, type, row) {
+                        if (type === 'display') return data;
+                        return $(data).find('input').val() || data;
+                    }
+                }
+            ],
+            autoWidth: false,
+            initComplete: function() {
+                var searchWrapper = this.api().table().container().querySelector('.dataTables_filter');
+                var searchInput = searchWrapper.querySelector('input[type="search"]');
+                if (searchInput) {
+                    searchInput.className = 'form-control';
+                    searchInput.style.width = '100%';
+                    searchInput.style.marginLeft = '0';
                 }
             }
-        ],
-        autoWidth: false,
-        initComplete: function() {
-            var searchWrapper = this.api().table().container().querySelector('.dataTables_filter');
-            var searchInput = searchWrapper.querySelector('input[type="search"]');
-            
-            // Enhance search input
-            searchInput.className = 'form-control';
-            searchInput.style.width = '100%';
-            searchInput.style.marginLeft = '0';
-            
-        }
-    });
+        });
+    }
+
+    // Inicializa ao abrir modal ou tab-status
+    initStatusTable();
 
     // Add modal-specific search styling
     $('<style>')
@@ -258,7 +269,7 @@ $(document).ready(function() {
             if (!confirm('Confirma a aprovação da integração?')) {
                 return;
             }
-
+            
             showLoading();
             const url = "/aprovar_integracao/{{funcionario._id}}";
             const response = await fetch(url);
@@ -298,14 +309,14 @@ $(document).ready(function() {
             }
 
             showLoading();
-            const url = "/reprovar_integracao/{{funcionario._id}}";
+            const url = "integracao/{{funcionario._id}}";
             const response = await fetch(url);
             
             if (!response.ok) {
                 await handleServerError(response);
                 return;
             }
-
+            
             const text = await response.text();
             if (text.startsWith("ok")) {
                 showCustomAlert("Reprovado com sucesso!");
@@ -387,7 +398,7 @@ $(document).ready(function() {
     $("#status-{{funcionario._id}}").off('click').on('click', function() {
         $("#tab-status").css("display", "flex");
         $("#tab-history").css("display", "none");
-        statusTable.draw(false); // Refresh table when showing
+        initStatusTable(); // Re-inicializa ao mostrar tab-status
     });
     
     $("#agenda-{{funcionario._id}}").off('click').on('click', function() {

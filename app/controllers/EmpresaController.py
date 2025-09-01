@@ -10,6 +10,8 @@ from sqlalchemy import inspect
 class EmpresaController():
     @staticmethod
     def create(nome, chave, cnpj, dep, status):
+        nome = nome.strip().upper()
+        
         empresa = Empresa(nome=nome, chave=chave, cnpj=cnpj, departamento=dep, status=status)
         db.session.add(empresa)
         db.session.commit()
@@ -44,7 +46,6 @@ class EmpresaController():
                     DocsController.update_inative_folders(cubo.pasta_drive, empresa.nome)
                 except Exception as e:
                     print(f"{e}")
-            
             return "ok"
         
         #Salva o Log da ação

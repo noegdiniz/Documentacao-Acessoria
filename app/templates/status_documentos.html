@@ -53,6 +53,7 @@
     .approval-table .dataTables_length {
         display: none !important;
     }
+
     </style>
 
     <div id="box-docs">
@@ -72,32 +73,33 @@
                 <tbody>
                     {%for emp in docs_emp%}
                     {%for doc in emp[1]%}
+                    
                     <tr>
                         <td>
-                            <input type="text" id="versao" name="versao" value="{{doc.versao}}" class="key-input" disabled>
+                            <input type="text" name="versao" value="{{doc.versao}}" class="key-input" disabled>
                         </td>
                         <td>
-                            <input type="text" id="titulo" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
+                            <input type="text" name="titulo" value="{{doc.titulo}}" class="key-input" disabled>
                         </td>
                         <td>
-                            <input type="text" id="contrato" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
+                            <input type="text" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled>
                         </td>
                         <td>
-                            <input type="text" id="categoria" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
+                            <input type="text" name="categoria" value="{{doc.categoria_nome}}" class="key-input" disabled>
                         </td>
                         <td>
-                            <input type="text" id="data" name="data" value="{{doc.data}}" class="key-input" disabled>
+                            <input type="text" name="data" value="{{doc.data}}" class="key-input" disabled>
                         </td>
                         <td>
                             <div class="status-cell status-{{doc.status.lower()}}" id="status{{doc._id}}" data-id="{{doc._id}}">
                                 {%if doc.status == "CORRIGIDO" %}
-                                <input style="background-color: darkblue; color: white;cursor: default;" type="text" id="status" name="status" value="CORRIGIDO - AGUARDANDO ANALISE" class="key-input" readonly>
+                                <input style="background-color: darkblue; color: white;cursor: default;" type="text" name="status" value="CORRIGIDO - AGUARDANDO ANALISE" class="key-input" readonly>
                                 {% elif doc.status == "APROVADO" %}
-                                <input style="background-color: darkgreen; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                                <input style="background-color: darkgreen; color: white;cursor: default;" type="text" name="status" value="{{ doc.status }}" class="key-input" readonly>
                                 {% elif doc.status == "AGUARDANDO" %}
-                                <input style="background-color: darkgray; color: white; cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                                <input style="background-color: darkgray; color: white; cursor: default;" type="text" name="status" value="{{ doc.status }}" class="key-input" readonly>
                                 {% elif doc.status == "NAO APROVADO" %}
-                                <input style="background-color: darkred; color: white;cursor: default;" type="text" id="status" name="status" value="{{ doc.status }}" class="key-input" readonly>
+                                <input style="background-color: darkred; color: white;cursor: default;" type="text" name="status" value="{{ doc.status }}" class="key-input" readonly>
                                 {% endif %}
                             </div>
                         </td>
@@ -178,11 +180,12 @@
                                                 {%for anexo in doc.anexos%}
                                                     <div class="file-input-group">
                                                         <label>{{anexo.filename}}</label>
-                                                        <input type="file" name="anexo" required>
+                                                        <input type="file" name="anexo" accept=".pdf,.png,.jpg,.jpeg">
                                                         <input type="hidden" name="anexo_id" value="{{anexo._id}}">
                                                     </div>
                                                 {%endfor%}
                                             </div>
+
                                             <input type="hidden" name="id" value="{{doc._id}}">
                                             <button type="submit" class="button">Enviar Arquivos</button>
                                         </form>
@@ -325,7 +328,7 @@
                 $(document).on('submit', '.upload-form', function(e) {
                     e.preventDefault();
                     showLoading();
-
+                    
                     const formData = new FormData(this);
                     
                     fetch("/update_documento", {
@@ -350,11 +353,12 @@
                             } else {
                                 throw new Error(data.message || 'Erro desconhecido');
                             }
+
                         } catch (e) {
                             throw new Error('Erro ao processar resposta do servidor: ' + text);
                         }
                     })
-
+                    
                     .catch(error => {
                         console.error(error);
                         showCustomAlert("Erro ao enviar arquivos: " + error.message);

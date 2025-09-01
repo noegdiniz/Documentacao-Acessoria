@@ -12,5 +12,6 @@ SECRET_KEY = os.environ.get("SECRET_KEY",
 if not os.environ.get("SECRET_KEY"):
     print("WARNING: SECRET_KEY not set in environment. Using a randomly generated key. THIS IS INSECURE FOR PRODUCTION!")
 
+SQLALCHEMY_TRACK_MODIFICATIONS = False
 # Use DATABASE_URL environment variable or fallback to SQLite
-SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite'))
+SQLALCHEMY_DATABASE_URI = 'postgresql://sa:senha123@localhost:6543/docs' #os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite'))

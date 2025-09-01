@@ -31,6 +31,9 @@ env/
 # Migrations
 migrations/versions/
 migrations/
+migrations
+
+
 
 # Jupyter Notebook
 .ipynb_checkpoints

@@ -28,12 +28,18 @@ def compress_file(file):
         return compressed_data
 
 class DocsController:
+    """
+    Controller for document-related operations, including CRUD, approval workflow,
+    file compression, and Google Drive integration.
+    """
     @staticmethod
     def get(doc_id):
+        """Retrieve a document by its ID."""
         return Documento.query.get(doc_id)
 
     @staticmethod
     def get_all_by_user(user_id):
+        """Get all documents for a given user by user ID."""
         user = User.query.get(user_id)
         if user:
             return Documento.query.filter_by(perfil=user.perfil).all()
@@ -41,11 +47,13 @@ class DocsController:
     
     @staticmethod
     def get_history_docs(titulo):
+        """
+        Get the history of documents by title, including attachments and approvals.
+        Returns a dict grouped by company name.
+        """
         filtered_emps = defaultdict(list)
         docs = Documento.query.filter_by(titulo=titulo).order_by(Documento.versao.asc()).all()
-        
         cubos_map = {cubo.categoria_ids: cubo for cubo in CUBO.query.all()}
-
         for doc in docs:
             doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
             cubo = cubos_map.get(doc.categoria_id)
@@ -58,54 +66,51 @@ class DocsController:
     
     @staticmethod
     def is_all_uploaded():
+        """Check if all documents have been uploaded."""
         return Documento.query.filter_by(uploaded=False).count() == 0
     
     @staticmethod
     def get_all(emp=None):
+        """
+        Get all documents, optionally filtered by company.
+        Returns a dict grouped by company name, only including allowed categories for the user.
+        """
         filtered_emps = defaultdict(list)
         subquery = (
             db.session.query(
-            Documento.titulo,
-            db.func.max(Documento.versao).label("max_versao")
+                Documento.titulo,
+                db.func.max(Documento.versao).label("max_versao")
             )
             .group_by(Documento.titulo)
             .subquery()
         )
-
         docs = (
             db.session.query(Documento)
             .join(
-            subquery,
-            (Documento.titulo == subquery.c.titulo) &
-            (Documento.versao == subquery.c.max_versao)
+                subquery,
+                (Documento.titulo == subquery.c.titulo) &
+                (Documento.versao == subquery.c.max_versao)
             )
             .all()
         )
-        
         try:
             user_perfil_id = User.query.get(session["id"]).perfil_id
             cubos_for_user = CUBO.query.filter_by(perfil_id=user_perfil_id).all()
             allowed_categories = ''.join([c.categoria_ids for c in cubos_for_user])
         except Exception:
             allowed_categories = ''
-
+            db.session.rollback()
         cubos_map = {cubo.categoria_ids: cubo for cubo in CUBO.query.all()}
-        
         for doc in docs:
-            
             if (str(doc.categoria_id) in allowed_categories) or (not allowed_categories):
-                
                 if emp == doc.empresa_id or emp is None:
-                    
                     doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
                     cubo = cubos_map.get(doc.categoria_id)
                     if cubo:
                         doc.pasta = cubo.pasta_drive
                         doc.perfil_nome = cubo.perfil_nome
-                    
                     doc.aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
                     filtered_emps[doc.empresa_nome].append(doc)
-        
         return filtered_emps
         
     @staticmethod
@@ -139,7 +144,7 @@ class DocsController:
         
         cubos = CUBO.query.filter(CUBO.categoria_ids.contains(doc.categoria_id)).all()
         emails = set() # Use a set to avoid duplicate emails
-
+        
         for cubo in cubos:
             users = User.query.filter_by(perfil_id=cubo.perfil_id).all()
             emails.update([user.email for user in users])
@@ -163,6 +168,7 @@ class DocsController:
             Empresa: {doc.empresa_nome}\n
             Data: {doc.data}\n
             """
+            
             try:
                 msg = Message(subject=subject,
                             recipients=list(emails),
@@ -236,7 +242,7 @@ class DocsController:
             doc.status = "APROVADO"
         else:
             doc.status = "AGUARDANDO"
-
+        
         db.session.commit()
         
         LogController.create(session.get("nome", "N/A"),
@@ -245,7 +251,7 @@ class DocsController:
                              "ALTERAR",
                              f"DOCUMENTO: {doc.titulo} - STATUS: {aprovacao.status}")
         return "ok" if doc.status != "APROVADO" and doc.status != "NAO APROVADO" else "ok|all"
-
+    
     @staticmethod
     def corrige_documento(doc_id, files, form):
         doc = Documento.query.get(doc_id)
@@ -254,6 +260,12 @@ class DocsController:
 
         if doc.status == "CORRIGIDO":
             raise ValueError("O documento já está corrigido.")
+        
+        anexo_ids_to_update = form.getlist("anexo_id")
+        files_to_update = files.getlist("anexo")
+        
+        if not any(file and file.filename for file in files_to_update):
+            raise ValueError("Nenhum arquivo foi enviado para correção.")
         
         new_doc = Documento(
             titulo=doc.titulo,
@@ -265,6 +277,7 @@ class DocsController:
             categoria_id=doc.categoria_id,
             email=doc.email,
             status="CORRIGIDO",
+            competencia=doc.competencia,
             data=datetime.now().strftime("%d/%m/%Y %H:%M"),
             versao = float(doc.versao) + 0.1
         )
@@ -279,7 +292,7 @@ class DocsController:
                 perfil_nome=aprovacao.perfil_nome,
                 documento_id=new_doc._id,
                 data=datetime.now().strftime("%d/%m/%Y %H:%M"),
-                status="AGUARDANDO" if aprovacao.status == "NAO APROVADO" else aprovacao.status,
+                status="AGUARDANDO" if aprovacao.status == "NAO APROVADO" or aprovacao.status == "INATIVO" else aprovacao.status,
             )
             
             db.session.add(new_aprovacao)
@@ -290,9 +303,6 @@ class DocsController:
             anexo.corrigido = False
         
         db.session.commit()
-        
-        anexo_ids_to_update = form.getlist("anexo_id")
-        files_to_update = files.getlist("anexo")
 
         for anexo_id, file_obj in zip(anexo_ids_to_update, files_to_update):
             if file_obj and file_obj.filename:
@@ -314,7 +324,7 @@ class DocsController:
         query = f"'{parent_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
         search_url = f'https://www.googleapis.com/drive/v3/files?q={query}'
         response = requests.get(search_url, headers=headers)
-            
+        
         if response.status_code == 200:
             files = response.json().get('files', [])
             if files:
@@ -402,18 +412,18 @@ class DocsController:
         print(f"Found {len(docs)} documents to upload to Google Drive...")
         
         meses = {
-            "01": "Janeiro",
-            "02": "Fevereiro",
-            "03": "Março",
-            "04": "Abril",
-            "05": "Maio",
-            "06": "Junho",
-            "07": "Julho",
-            "08": "Agosto",
-            "09": "Setembro",
-            "10": "Outubro",
-            "11": "Novembro",
-            "12": "Dezembro"
+            "01": "1 - Janeiro",
+            "02": "2 - Fevereiro",
+            "03": "3 - Março",
+            "04": "4 - Abril",
+            "05": "5 - Maio",
+            "06": "6 - Junho",
+            "07": "7 - Julho",
+            "08": "8 - Agosto",
+            "09": "9 - Setembro",
+            "10": "10 - Outubro",
+            "11": "11 - Novembro",
+            "12": "12 - Dezembro"
         }
         
         for doc in docs:
@@ -422,8 +432,8 @@ class DocsController:
             print(User.query.filter_by(_id=session["id"]).first().perfil_id)
 
             cubo = CUBO.query.filter(
-                CUBO.categoria_ids.contains(doc.categoria_id),
-                CUBO.perfil_id == User.query.filter_by(_id=session["id"]).first().perfil_id
+                CUBO.categoria_ids.contains(str(doc.categoria_id)),
+                CUBO.perfil_id == str(User.query.filter_by(_id=session["id"]).first().perfil_id)
             ).first()
             
             if not cubo:
@@ -464,7 +474,7 @@ class DocsController:
                     query = f"'{categoria_folder_id}' in parents and name = '{file.filename}' and trashed = false"
                     search_url = f'https://www.googleapis.com/drive/v3/files?q={query}'
                     response = requests.get(search_url, headers=headers)
-
+                    
                     if response.status_code == 200:
                         files = response.json().get('files', [])
                         
@@ -532,17 +542,20 @@ class DocsController:
                             "UPLOAD DRIVE",
                             f"FILE: {doc.titulo} - DOC ID: {doc._id}"
                         )
-                        
+
                         doc.uploaded = True
 
                         # Gera o link do arquivo e salva no anexo
                         file_id = response.json()['id']
                         file.link = f"https://drive.google.com/file/d/{file_id}/view?usp=drive_link"
                         
+                        # Limpa o campo data do anexo
+                        file.data = None
+                        
                         db.session.commit()
                     else:
                         raise Exception(f"Error uploading file {file.filename}: {response.status_code} - {response.text}")
-
+                
                 except Exception as e:
                     raise Exception(f"Failed to upload {file.filename}: {str(e)}")
         
@@ -560,6 +573,7 @@ class DocsController:
             allowed_categories = {c.categoria_ids for c in cubos_for_user}
         except Exception:
             allowed_categories = set()
+            db.session.rollback()
         
         cubos_map = {cubo.categoria_ids: cubo for cubo in CUBO.query.all()}
         
@@ -576,3 +590,4 @@ class DocsController:
                     filtered_emps[doc.empresa_nome].append(doc)
         
         return filtered_emps
+    

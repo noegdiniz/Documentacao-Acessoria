@@ -34,72 +34,38 @@
         </div>
     </div>
     <script>
-        $("#cubo-page-data").click(() => {
-            let = url = "/cubo_menu"
+        // Mapeamento dos IDs dos links para suas URLs
+        const menuLinks = {
+            "#cubo-page-data": "/cubo_menu",
+            "#contratos-page": "/contrato_menu",
+            "#categorias-page": "/categorias_menu",
+            "#tipo-processo-page": "/tipo_processo_menu",
+            "#perfil-page": "/perfil_menu",
+            "#usuarios-page": "/users_menu"
+        };
 
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    $("#content-cubo").html(text)
-                })
-            })
-        })
+        // Função genérica para carregar conteúdo
+        function carregarConteudo(id, url) {
+            $(id).click(function(e) {
+                e.preventDefault();
+                fetch(url).then(data => {
+                    data.text().then(text => {
+                        $("#content-cubo").html(text);
+                    });
+                });
+            });
+        }
         
-        $("#contratos-page").click(() => {
-            let = url = "/contrato_menu"
-
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    $("#content-cubo").html(text)
-                })
-            })
-        })
+        // Aplicar a função para cada link do menu
+        Object.entries(menuLinks).forEach(([id, url]) => {
+            carregarConteudo(id, url);
+        });
         
-        $("#categorias-page").click(() => {
-            let = url = "/categorias_menu"
-            
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    $("#content-cubo").html(text)
-                })
-            })
-        })
-        
-        $("#tipo-processo-page").click(() => {
-            let = url = "/tipo_processo_menu"
-
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    $("#content-cubo").html(text)
-                })
-            })
-        })
-        
-        $("#perfil-page").click(() => {
-            let = url = "/perfil_menu"
-
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    $("#content-cubo").html(text)
-                })
-            })
-        })
-        
-        $("#usuarios-page").click(() => {
-            let = url = "/users_menu"
-
-            fetch(url).then(data => {
-                data.text().then(text => {
-                    $("#content-cubo").html(text)
-                })
-            })
-        })
-        
+        // Destaque visual do link ativo
         $('a').on('click', function(event) {
-            // Your custom code here
-            
+            console.log("Link clicked: " + $(this).text());
             $('a').css('background-color', '');
             $(this).css('background-color', '#053a72');
         });
-    
     </script>
 </div>

@@ -24,14 +24,13 @@
                 <td>
                     <input type="text" id="dt_fim{{contrato._id}}" value="{{contrato.dt_fim}}" class="key-input" disabled>
                 </td>
-                
                 <td class="actions-column">
                     {%if permissao.can_edit_contratos%}
                     <button class="button" id="alterar-{{contrato._id}}" name="alterar">
                         ALTERAR
                     </button>
                     {%endif%}
-
+                    
                     {%if permissao.can_delete_contratos%}
                     <button class="button" id="excluir-{{contrato._id}}" name="excluir">
                         EXCLUIR
@@ -39,7 +38,7 @@
                     {%endif%}
                 </td>
             </tr>
-
+            
             <script>
                 $("#alterar-{{contrato._id}}").click(function() {
                     $("#nome").val("{{contrato.nome}}");
@@ -114,6 +113,7 @@ $(document).ready(function() {
         } catch (e) {
             errorMessage = "Erro ao processar resposta do servidor";
         }
+
         showCustomAlert(`Erro: ${errorMessage}`);
         throw new Error(errorMessage);
     }
@@ -208,7 +208,7 @@ $(document).ready(function() {
                     await handleServerError(response);
                     return;
                 }
-
+                
                 const text = await response.text();
                 if (text.includes("ok")) {
                     showCustomAlert("Cadastro excluído com sucesso");
@@ -217,6 +217,7 @@ $(document).ready(function() {
                 } else {
                     showCustomAlert("Erro ao realizar exclusão: " + text);
                 }
+                
             } catch (error) {
                 console.error('Error in excluir handler:', error);
                 showCustomAlert("Erro ao tentar excluir o registro: " + error.message);
@@ -233,6 +234,7 @@ $(document).ready(function() {
 </script>
 
 <style>
+    
 /* Loading overlay styles */
 #loadingOverlay {
     display: none;

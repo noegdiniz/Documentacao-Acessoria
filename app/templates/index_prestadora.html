@@ -1,92 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentação - Prestadora</title>
-    
-    <!-- Importa a lib JQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <!-- Add DataTables resources -->
+    <!-- JQuery & DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.7/css/responsive.bootstrap4.min.css">
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
-    
     <link rel="stylesheet" href="../static/app.css">
     <script src="https://apis.google.com/js/api.js"></script>
-
+    <script src="../static/scripts.js"></script>
 </head>
+
 <body style="background: #959595;">
-    <div class="container main-container">
-        <div class="normal-container col-layout">
-            <div class="navbar row-layout user-data">
+    <main class="container main-container">
+        <section class="normal-container col-layout">
+            <nav class="navbar row-layout user-data" aria-label="Navegação principal">
                 <div>
                     <a href="#" id="upload-emp">Enviar Documentação</a>
                     <a href="#" id="status-emp">Status Documentação</a>
-                    <a href="#" id="cadastro-emp">Funcionarios</a>
+                    <a href="#" id="cadastro-emp">Funcionários</a>
                     <!-- <a href="#" id="casub-emp">Sub-contratadas</a> -->
                 </div>
                 
                 <div class="user-data">
                     {{prestadora.nome}}&nbsp;
-                    
                     <a href="/logout_prestadora">Sair</a>
                 </div>
-            </div>
-            
-            <div class="container-normal row-layout" id="content-emp" style="margin-left: 0; margin-right: 0;">
-                
-            </div>
-        </div>
-    </div>
-
-    <script src="../static/scripts.js"></script>
-
+            </nav>
+            <section class="container-normal row-layout flex-center" id="content-emp"></section>
+        </section>
+    </main>
     <script>
-        document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('input', function() {
+        // Uppercase all input fields
+        $(document).on('input', 'input', function() {
             this.value = this.value.toUpperCase();
-            });
+        });
+
+        // Event delegation for navigation
+        $(document).on('click', '#upload-emp', function(e) {
+            e.preventDefault();
+            fetch('/upload_file_view')
+                .then(res => res.text())
+                .then(html => $('#content-emp').html(html));
+        });
+
+        $(document).on('click', '#status-emp', function(e) {
+            e.preventDefault();
+            fetch('/status_files')
+                .then(res => res.text())
+                .then(html => $('#content-emp').html(html));
+        });
+
+        $(document).on('click', '#cadastro-emp', function(e) {
+            e.preventDefault();
+            fetch('/cadastro_funcionarios')
+                .then(res => res.text())
+                .then(html => $('#content-emp').html(html));
         });
         
-        $("#upload-emp").click(() => {
-            fetch("/upload_file_view").then((data) => {
-                data.text().then(text => {
-                        $("#content-emp").html(text)
-                    })
-                })
-            }
-        )
-        
-        $("#status-emp").click(() => {
-            fetch("/status_files").then((data) => {
-                data.text().then(text => {
-                        $("#content-emp").html(text)
-                    })
-                })
-            }
-        )
-        
-        $("#cadastro-emp").click(() => {
-            fetch("/cadastro_funcionarios").then((data) => {
-                data.text().then(text => {
-                        $("#content-emp").html(text)
-                    })
-                })
-            }
-        )
-
-        $("#casub-emp").click(() => {
-            fetch("/cadastro_subcontratados").then((data) => {
-                data.text().then(text => {
-                        $("#content-emp").html(text)
-                    })
-                })
-            }
-        )
-        
+        $(document).on('click', '#casub-emp', function(e) {
+            e.preventDefault();
+            fetch('/cadastro_subcontratados')
+                .then(res => res.text())
+                .then(html => $('#content-emp').html(html));
+        });
     </script>
 </body>
 </html>

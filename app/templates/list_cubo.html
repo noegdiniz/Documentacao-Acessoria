@@ -18,16 +18,18 @@
                 <td>
                     <input type="text" value="{{cubo.perfil_nome}}" class="key-input" disabled>
                 </td>
+
                 <td>
                     <input type="text" value="{{cubo.pasta_drive}}" class="key-input" disabled>
                 </td>
+
                 <td class="actions-column">
                     {%if permissao.can_edit_dados%}
                     <button class="button" id="alterar-{{cubo._id}}" name="alterar">
                         ALTERAR
                     </button>
                     {%endif%}
-
+                    
                     {%if permissao.can_delete_dados%}
                     <button class="button" id="excluir-{{cubo._id}}" name="excluir">
                         EXCLUIR
@@ -35,7 +37,7 @@
                     {%endif%}
                 </td>
             </tr>
-
+            
             <script>
                 $("#alterar-{{cubo._id}}").click(function() {
                     $("#categoria").val("{{cubo.categoria_ids}}".split(","));
@@ -61,6 +63,7 @@
                                 showCustomAlert("Erro ao realizar exclusão: " + text);
                             }
                         })
+                        
                         .then(function() {
                             let url = `/list_cubo/`;
 
@@ -73,6 +76,7 @@
                                 });
                         });
                 });
+
             </script>
             {%endfor%}
         </tbody>
@@ -109,6 +113,7 @@ $(document).ready(function() {
         } catch (e) {
             errorMessage = "Erro ao processar resposta do servidor";
         }
+
         showCustomAlert(`Erro: ${errorMessage}`);
         throw new Error(errorMessage);
     }
@@ -131,6 +136,7 @@ $(document).ready(function() {
             { width: "25%", targets: 2 }, // Pasta Drive
             { width: "10%", targets: 3 }, // Ações
             { 
+
                 targets: '_all',
                 searchable: true,
                 render: function(data, type, row) {
@@ -155,19 +161,19 @@ $(document).ready(function() {
             searchWrapper.find('input[type="search"]')
                 .attr('class', 'form-control')
                 .css({
+
                     'width': '100%',
                     'margin-left': '0',
                     'margin-bottom': '10px'
                 });
-            
-        }
-    });
+            }
+        });
 
     // Re-adjust column widths when window is resized
     $(window).resize(function() {
         table.columns.adjust();
     });
-
+    
     // Bind event handlers
     function bindEventHandlers() {
         {%for cubo in cubos%}
@@ -226,10 +232,12 @@ $(document).ready(function() {
     // Initial binding
     bindEventHandlers();
 });
+
 </script>
 
 <style>
 /* Loading overlay styles */
+
 #loadingOverlay {
     display: none;
     position: fixed;

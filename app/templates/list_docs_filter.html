@@ -102,6 +102,7 @@
                         {% endif %}
                     </div>
                 </td>
+
                 <td>
                     {%if doc.uploaded%}
                     <input type="text" id="upload{{doc._id}}" name="upload" value="COMPLETO" class="key-input" disabled>
@@ -197,7 +198,7 @@
                             </table>
                         </div>
                     </div>
-        
+                    
                     <!-- Anexos Modal -->
                     <div id="anexosModal{{doc._id}}" class="modal">
                         <div class="modal-content">
@@ -222,7 +223,7 @@
                     </div>
                 </td>
             </tr>
-
+            
             {%endfor%}
             {%endfor%}
         </tbody>
@@ -268,8 +269,10 @@ $(document).ready(function() {
                         }
                     }
                 },
+
                 title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR')
             },
+            
             {
                 extend: 'pdf',
                 className: 'btn btn-danger',
@@ -343,6 +346,7 @@ $(document).ready(function() {
                         language: {
                             url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json',
                         },
+
                         pageLength: 5,
                         ordering: true,
                         order: [[2, "desc"]],
@@ -352,6 +356,7 @@ $(document).ready(function() {
                         searching: false,
                         paging: false,
                         columnDefs: [
+
                             { orderable: false, targets: 4 },
                             { 
                                 targets: '_all',
@@ -365,6 +370,7 @@ $(document).ready(function() {
                                 }
                             }
                         ],
+
                         autoWidth: false,
                         columns: [
                             { width: "20%" },
@@ -373,7 +379,7 @@ $(document).ready(function() {
                             { width: "30%" },
                             { width: "15%" }
                         ],
-
+                        
                         drawCallback: function(settings) {
                             bindEventAprovalsHandlers();
                             // Adjust column widths after draw
@@ -387,7 +393,7 @@ $(document).ready(function() {
                 }
             });
         });
-
+        
         // History button handlers
         $("button[id^='historico']").each(function() {
             var docId = $(this).attr('id').replace('historico', '');
@@ -555,7 +561,7 @@ $(document).ready(function() {
             });
         });
     }
-
+    
     // Helper function to update approval UI
     function updateApprovalUI(aprovacaoId, status, color) {
         var statusHtml = '<input style="background-color: ' + color + '; color: white;cursor: default;" type="text" id="status" name="status" value="' + status + '" class="key-input" disabled>';

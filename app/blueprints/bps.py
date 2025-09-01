@@ -20,7 +20,7 @@ import requests
 import json
 import zlib
 
-from app.models.tables import Anexo, Contrato, Empresa, Subcont
+from app.models.tables import Anexo, Aprovacao, Contrato, Empresa, StatusFuncionario, Subcont
 
 from functools import wraps
 from datetime import datetime, timedelta
@@ -183,6 +183,7 @@ def create_user(_id, email, nome, icon):
                 nome=nome,
                 email=email
             )
+            
             session.permanent = True
             session["id"] = user._id
             session["nome"] = user.nome
@@ -196,6 +197,7 @@ def create_user(_id, email, nome, icon):
                               "CREATE",
                               "New user account created")
             return redirect(url_for("bp.home"))
+        
     except Exception as e:
         current_app.logger.error(f"User creation/login error: {str(e)}")
         session.clear()
@@ -274,7 +276,6 @@ def upload_file_action():
     form = request.form
     files = request.files.getlist("anexo")
     ALLOWED_EXTENSIONS = {".pdf", ".xlsx"}
-    
     
     for file in files:
         if file and file.filename:
@@ -361,6 +362,7 @@ def generate_key():
 @bp_app.route("/create_empresa/<nome>/<chave>/<cnpj>/<dep>/<status>/<_id>")
 def create_empresa(nome, chave, cnpj, dep, status, _id=None):
     cnpj = cnpj.replace("&", "/")
+    
     try:
         if _id:
             EmpresaController.update(nome, chave, cnpj, dep, status, _id)
@@ -692,24 +694,24 @@ def adm_documentos():
 @bp_app.route("/update_status/<_id>/<string:status>/", defaults={"obs": ""})
 @bp_app.route("/update_status/<_id>/<string:status>/<obs>")
 def update_status(_id, status, obs):
-    try:
         DocsController.update_status(_id, obs, status)
-        doc = DocsController.get(_id)
+        
+        print(f"Updating document {_id} to status {status} with obs: {obs}")
+        aprovacao = Aprovacao.query.get(_id)
+        
+        if aprovacao:
+            doc = DocsController.get(aprovacao.documento_id)
+        
         if doc.status == "APROVADO" or doc.status == "NAO APROVADO":
             return "ok|all"
         else:
             return "ok"
-    except Exception as e:
-        return f"erro:{e}"
 
 @bp_app.route("/upload_gdrive/")
 def upload_gdrive():
-    try:
         DocsController.upload_drive()
         
         return "ok"
-    except Exception as e:
-        return(f"erro:{e}")
 
 @bp_app.route("/update_integra")
 def update_integra():
@@ -853,7 +855,14 @@ def aprovar_integracao(_id):
         funcionario = IntegraController.get_funcionario(_id)
         if not funcionario:
             return "Funcionário não encontrado", 404
-        response = IntegraController.aprova(funcionario)
+        
+        status = StatusFuncionario.query.filter_by(funcionario_id=funcionario._id, tipo="INTEGRACAO").order_by(StatusFuncionario.versao.desc()).first()
+        
+        if status:
+            response = IntegraController.aprova(funcionario)
+        else:
+            return "Funcionário não possui integração pendente", 400
+        
         if response.startswith("ok"):
             LogController.create(
                 session.get("nome", "N/A"),
@@ -866,7 +875,7 @@ def aprovar_integracao(_id):
             return response
         else:
             return response, 400
-        
+    
     except Exception as e:
         return f"Error approving integration: {str(e)}", 500
 
@@ -881,6 +890,7 @@ def reprovar_integracao(_id):
         
         if not funcionario:
             return "Funcionário não encontrado", 404
+        
         response = IntegraController.reprova(funcionario)
         if response.startswith("ok"):
             LogController.create(

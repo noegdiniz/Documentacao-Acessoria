@@ -13,6 +13,12 @@ class IntegraController:
 
             perfil = session.get("perfil")
             
+            perfil = str(perfil)
+            
+            print(("RH" in perfil or "SEGURANCA" in perfil))
+            print(status.status_integracao == "AGUARDANDO")
+            print(bool(status))
+            
             if status and status.status_integracao == "AGUARDANDO" and ("RH" in perfil or "SEGURANCA" in perfil):
                 status.aprov_rh = "APROVADO" if "RH" in perfil else status.aprov_rh
                 status.aprov_seg = "APROVADO" if "SEGURANCA" in perfil else status.aprov_seg
@@ -27,7 +33,7 @@ class IntegraController:
         
         except Exception as e:
             return f"erro:{str(e)}"
-
+    
     @staticmethod
     def reprova(funcionario):
         
@@ -56,7 +62,7 @@ class IntegraController:
             empresa = Empresa.query.filter_by(chave=form["chave_empresa"]).first()
             if not empresa:
                 raise ValueError("Empresa não encontrada.")
-
+            
             new_subcontratado = Subcont(
                 nome=form["nome"],
                 cnpj=form["cnpj"],
@@ -222,7 +228,7 @@ class IntegraController:
         
         if existing_integration and existing_integration.status_integracao == "AGUARDANDO":
             return "Já existe uma integração agendada ou aguardando para este funcionário"
-
+        
         if form.get("data_integracao"):
             try:
                 date_obj = datetime.strptime(form["data_integracao"], "%d/%m/%Y").date()
@@ -239,7 +245,7 @@ class IntegraController:
         contrato = Contrato.query.get(form["contrato"])
         if not contrato:
             return "Contrato não encontrado."
-
+        
         status_integracao = StatusFuncionario(
             status_contratual="ATIVO",
             status_integracao="AGUARDANDO",
@@ -334,6 +340,7 @@ class IntegraController:
             
             db.session.commit()
             return "ok"
+        
         except Exception as e:
             db.session.rollback()
             return f"Erro ao atualizar integrações: {str(e)}"

@@ -82,8 +82,8 @@ $("#salvar").click(() => {
     let url = `/create_empresa/${encodeURIComponent(nome)}/${encodeURIComponent(chave)}/${encodeURIComponent(cnpj)}/${encodeURIComponent(dep)}/${encodeURIComponent(status)}/${$("#_id").val()}`;
 
     if ($("#_id").val() && status === "INATIVA") {
-        confirm = confirm("Você tem certeza que deseja inativar esta empresa? Todos os documentos serão movidos para a pasta INATIVA.");
-        if (!confirm) {
+        let userConfirm = confirm("Você tem certeza que deseja inativar esta empresa? Todos os documentos serão movidos para a pasta INATIVA.");
+        if (!userConfirm) {
             return;
         }
     }
@@ -93,38 +93,35 @@ $("#salvar").click(() => {
         headers: {
             'Content-Type': 'application/json',
         }
-        
-    }).then(response => {
+    })
+    .then(response => {
         if (!response.ok) {
             throw new Error('Erro ao realizar cadastro.');
         }
         return response.text();
-    }).then(text => {
+    })
+    .then(text => {
         if (text.includes("ok")) {
             showCustomAlert("Cadastro/Alteração efetuado com sucesso.");
             $("#form_dados").removeClass("ball");
         } else {
             showCustomAlert("Erro ao realizar cadastro: " + text);
         }
-    
-    }).catch(error => {
+    })
+    .catch(error => {
         console.error(error);
         showCustomAlert("Erro ao realizar cadastro: " + error.message);
-    
-    }).finally(() => {
-        fetch("/list_empresas").then(data => {
-            data.text().then(text => {
+    })
+    .finally(() => {
+        fetch("/list_empresas")
+            .then(data => data.text())
+            .then(text => {
                 setTimeout(() => { $("#emp-box").html(text); }, 100);
-                
                 // Reset fields after saving
-                $("#_id").val("");
-                $("#key").val("");
-                $("#nome").val("");
-                $("#cnpj").val("");
+                ["_id", "key", "nome", "cnpj"].forEach(id => $("#"+id).val(""));
                 $("#departamento").val("");
                 $("#status").val("");
             });
-        });
     });
 });
 

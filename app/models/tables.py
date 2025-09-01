@@ -57,9 +57,10 @@ class Anexo(db.Model):
 
     #ID DO DOCUMENTO ATRELADO AO ANEXO
     documento_id = db.Column(db.Integer, nullable=False)
-    data = db.Column(db.LargeBinary, nullable=False) #Arquivo do anexo
+    data = db.Column(db.LargeBinary) #Arquivo do anexo
+    
     link = db.Column(db.String, nullable=False, default="") #Link do anexo no drive
-
+    
     corrigido = db.Column(db.Boolean, nullable=False, default=False) #Se o anexo foi corrigido ou não
     tamanho = db.Column(db.String, nullable=False) #Tamanho do anexo em mb
     

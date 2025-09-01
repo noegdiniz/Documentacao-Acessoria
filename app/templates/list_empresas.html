@@ -42,7 +42,7 @@
                     {%endif%}
                 </td>
             </tr>
-
+                
             <script>
                 $("#alterar-{{empresa._id}}").click(function() {
                     $("#nome").val("{{empresa.nome}}");
@@ -50,14 +50,14 @@
                     $("#cnpj").val("{{empresa.cnpj}}");
                     $("#departamento").val("{{empresa.departamento}}");
                     $("#status").val("{{empresa.status}}");
-
+                    
                     //Adiciona sinal visual da alteração no menu
                     $("#form_dados").addClass("ball");
                     
                     //Muda o id da empresa para realizar a alteração no item certo
                     $("#_id").val("{{empresa._id}}");
                 });
-
+                
                 $("#excluir-{{empresa._id}}").click(function() {
                     let url = "/exclui_empresa/" + "{{empresa._id}}";
                     
@@ -257,8 +257,10 @@ $(document).ready(function() {
         });
         {%endfor%}
     }
-
+    
     // Initial binding
     bindEventHandlers();
 });
+
 </script>
+
