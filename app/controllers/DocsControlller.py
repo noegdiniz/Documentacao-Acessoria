@@ -1,3 +1,4 @@
+from hashlib import sha1
 from io import BytesIO
 import json
 from collections import defaultdict
@@ -6,6 +7,7 @@ from uuid import uuid4
 
 import requests
 from app.controllers.FilterController import FilterController
+from app.ext.filter import gerar_proxima_versao
 from app.models.tables import Anexo, Aprovacao, Documento, Empresa, Perfil, User, CUBO
 from app.controllers.LogController import LogController
 from app.ext.db import db
@@ -17,6 +19,7 @@ from datetime import datetime
 import zlib
 from flask import session, current_app
 from flask_mail import Message
+from sqlalchemy import cast, Numeric
 
 def compress_file(file):
     if file:
@@ -41,9 +44,9 @@ class DocsController:
     def get_all_by_user(user_id):
         """Get all documents for a given user by user ID."""
         user = User.query.get(user_id)
-        if user:
-            return Documento.query.filter_by(perfil=user.perfil).all()
-        return []
+        if not user:
+            return []
+        return Documento.query.filter_by(perfil=user.perfil).all()
     
     @staticmethod
     def get_history_docs(titulo):
@@ -52,7 +55,13 @@ class DocsController:
         Returns a dict grouped by company name.
         """
         filtered_emps = defaultdict(list)
-        docs = Documento.query.filter_by(titulo=titulo).order_by(Documento.versao.asc()).all()
+        
+        # --- CORREÇÃO APLICADA AQUI ---
+        # Ordena a versão numericamente em ordem ascendente
+        docs = Documento.query.filter_by(titulo=titulo).order_by(
+            cast(Documento.versao, Numeric).asc()
+        ).all()
+        
         cubos_map = {cubo.categoria_ids: cubo for cubo in CUBO.query.all()}
         for doc in docs:
             doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
@@ -62,6 +71,7 @@ class DocsController:
                 doc.perfil_nome = cubo.perfil_nome
             doc.aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
             filtered_emps[doc.empresa_nome].append(doc)
+            
         return filtered_emps
     
     @staticmethod
@@ -93,19 +103,22 @@ class DocsController:
             )
             .all()
         )
+        allowed_categories = set()
         try:
-            user_perfil_id = User.query.get(session["id"]).perfil_id
-            cubos_for_user = CUBO.query.filter_by(perfil_id=user_perfil_id).all()
-            allowed_categories = ''.join([c.categoria_ids for c in cubos_for_user])
+            user = User.query.get(session.get("id"))
+            if user:
+                cubos_for_user = CUBO.query.filter_by(perfil_id=user.perfil_id).all()
+                for c in cubos_for_user:
+                    allowed_categories.update(str(cid) for cid in c.categoria_ids.split(","))
         except Exception:
-            allowed_categories = ''
             db.session.rollback()
-        cubos_map = {cubo.categoria_ids: cubo for cubo in CUBO.query.all()}
+            
+        cubos_map = {str(cubo.categoria_ids): cubo for cubo in CUBO.query.all()}
         for doc in docs:
             if (str(doc.categoria_id) in allowed_categories) or (not allowed_categories):
                 if emp == doc.empresa_id or emp is None:
                     doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
-                    cubo = cubos_map.get(doc.categoria_id)
+                    cubo = cubos_map.get(str(doc.categoria_id))
                     if cubo:
                         doc.pasta = cubo.pasta_drive
                         doc.perfil_nome = cubo.perfil_nome
@@ -126,7 +139,7 @@ class DocsController:
         
         if not empresa:
             raise ValueError("Empresa não encontrada.")
-
+        
         doc = Documento(titulo=titulo_final,
                         contrato_id=form["contrato"],
                         empresa_id=form["empresa"],
@@ -154,7 +167,8 @@ class DocsController:
                 perfil_nome=Perfil.query.get(cubo.perfil_id).nome,
                 documento_id=doc._id,
                 data=datetime.now().strftime("%d/%m/%Y %H:%M"),
-                status="AGUARDANDO"
+                status="AGUARDANDO",
+                
             )
             
             db.session.add(new_aprovacao)
@@ -180,17 +194,41 @@ class DocsController:
         for file in files:
             if file and file.filename:
                 file.seek(0)
-                size_bytes = len(file.read())
-                file.seek(0)
-                size_mb = size_bytes / (1024 * 1024)
+
                 
                 anexo = Anexo(
                     filename=file.filename,
                     data=compress_file(file),
                     documento_id=doc._id,
                     corrigido=False,
-                    tamanho=f"{size_mb:.3f} MB"
+                    # Calcula o hash sha1 do arquivo
+                    hash = sha1(file.read()).hexdigest()
+                    
+                    
                 )
+                
+                db.session.add(anexo)
+        
+        #Cria placeholders para justificativas dos documentos nao enviados
+        # ('justificativas', '["3|TESTE1"]')
+        justificativas = form.get("justificativas", "[]").strip("[]").split(",")
+        
+        for j in justificativas:
+            
+            if j:
+                nome = j.split("|")[0]
+                justificativa = j.split("|")[-1]
+                
+                anexo = Anexo(
+                    filename=f"Nome: {nome} - {justificativa}",
+                    data=None,
+                    documento_id=doc._id,
+                    corrigido=False,
+                    hash=""
+                )
+                
+                print(f"Adding placeholder anexo for justificativa: {nome} - {justificativa}")
+                
                 db.session.add(anexo)
         
         db.session.commit()
@@ -203,7 +241,19 @@ class DocsController:
     @staticmethod
     def delete(doc_id):
         documento = DocsController.get(doc_id)
+        docmento_versions = Documento.query.filter_by(titulo=documento.titulo).all()
+        
+        for doc in docmento_versions:
+            anexos = Anexo.query.filter_by(documento_id=doc._id).all()
+            for anexo in anexos:
+                db.session.delete(anexo)
+            aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
+            for aprovacao in aprovacoes:
+                db.session.delete(aprovacao)
+            db.session.delete(doc)
+            
         if not documento:
+            db.session.rollback()
             raise ValueError("Documento não encontrado.")
 
         Aprovacao.query.filter_by(documento_id=documento._id).delete()
@@ -279,9 +329,9 @@ class DocsController:
             status="CORRIGIDO",
             competencia=doc.competencia,
             data=datetime.now().strftime("%d/%m/%Y %H:%M"),
-            versao = float(doc.versao) + 0.1
+            versao = gerar_proxima_versao(doc.versao)
         )
-
+        
         db.session.add(new_doc)
         db.session.flush()
         
@@ -314,42 +364,154 @@ class DocsController:
                     anexo.data = compress_file(file_obj)
                     anexo.documento_id = new_doc._id
                     anexo.corrigido = True
-                    anexo.tamanho = f"{len(anexo.data) / (1024 * 1024):.3f} MB" # type: ignore 
+                    anexo.hash = sha1(file_obj.read()).hexdigest()
                     
         db.session.commit()
     
-    # Create folder structure in Google Drive
     @staticmethod
-    def create_folder_if_not_exists(parent_id, folder_name, headers):
+    def create_folder_if_not_exists(parent_id, folder_name, headers, is_cat=False):
         query = f"'{parent_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
         search_url = f'https://www.googleapis.com/drive/v3/files?q={query}'
         response = requests.get(search_url, headers=headers)
         
         if response.status_code == 200:
+            
             files = response.json().get('files', [])
             if files:
+                # Folder already exists, return its ID
                 return files[0]['id']
             else:
-                # Create folder if it doesn't exist
+                # Folder doesn't exist, create it
                 metadata = {
                     'name': folder_name,
                     'mimeType': 'application/vnd.google-apps.folder',
                     'parents': [parent_id]
                 }
-
+                
                 create_response = requests.post(
                     'https://www.googleapis.com/drive/v3/files',
                     headers=headers,
                     json=metadata
                 )
+                
+                # Check if the folder creation was successful
+                if not create_response.ok:
+                    raise Exception(f"Erro ao criar a pasta '{folder_name}': {create_response.status_code} - {create_response.text}")
+
+                # Folder created successfully, get its ID
+                folder_id = create_response.json().get('id')
+                
+                # If it's not a category that needs special permissions, we're done.
+                if not is_cat:
+                    return folder_id
+
+                # --- It IS a category, so proceed with setting permissions ---
+
+                # --- Passo 1: Coletar todos os e-mails únicos ---
+                unique_emails = set()
+                cubos = CUBO.query.filter(CUBO.categoria_nomes.contains(folder_name)).all()
+
+                print("CUBOS encontrados para a categoria:", cubos)
+                
+                for cubo in cubos:
+                    emails_do_perfil = [user.email for user in User.query.filter_by(perfil_id=cubo.perfil_id).all()]
+                    unique_emails.update(emails_do_perfil)
                     
-                if create_response.status_code == 200:
-                    return create_response.json()['id']
-                else:
-                    raise Exception(f"Error creating folder {folder_name}: {create_response.status_code} - {create_response.text}")
+                if not unique_emails:
+                    current_app.logger.info(f"Nenhum usuário encontrado para dar permissão na pasta '{folder_name}'.")
+                    return folder_id
+
+                # --- Passo 2: Coletar o ID de todas as pastas mãe ---
+                # The folder_id is already available from the creation response.
+                if not folder_id:
+                    raise Exception("Não foi possível obter o ID da pasta recém-criada.")
+                
+                all_folder_ids = [folder_id]
+                current_parent_id = parent_id
+
+                while current_parent_id:
+                    parent_response = requests.get(
+                        f'https://www.googleapis.com/drive/v3/files/{current_parent_id}?fields=parents',
+                        headers=headers
+                    )
+                    if parent_response.status_code == 200:
+                        parent_data = parent_response.json().get('parents', [])
+                        if parent_data:
+                            current_parent_id = parent_data[0]
+                            all_folder_ids.append(current_parent_id)
+                        else:
+                            break
+                    else:
+                        current_app.logger.error(f"Erro ao buscar pasta mãe de {current_parent_id}: {parent_response.text}")
+                        break
+                
+                # --- Passo 3: Adicionar as permissões para todos os e-mails em todas as pastas ---
+                for target_folder_id in all_folder_ids:
+                    for email in unique_emails:
+                        permission_metadata = {
+                            'type': 'user',
+                            'role': 'writer',
+                            'emailAddress': email
+                        }
+                        
+                        perm_response = requests.post(
+                            f'https://www.googleapis.com/drive/v3/files/{target_folder_id}/permissions',
+                            headers=headers,
+                            json=permission_metadata,
+                            params={'sendNotificationEmail': False}
+                        )
+                        
+                        if perm_response.ok:
+                            current_app.logger.info(f"Permissão adicionada para {email} na pasta ID {target_folder_id}.")
+                        else:
+                            current_app.logger.error(
+                                f"Erro ao adicionar permissão para {email} na pasta ID {target_folder_id}: "
+                                f"{perm_response.status_code} - {perm_response.text}"
+                            )
+                
+                # --- Passo 4: Remover as permissões que nao estao em unique_emails ---
+                params = {
+                    'fields': 'permissions(id,type,emailAddress,role)'
+                }
+                
+                perms_response = requests.get(
+                    f'https://www.googleapis.com/drive/v3/files/{folder_id}/permissions',
+                    headers=headers,
+                    params=params  # Adicione os parâmetros à requisição
+                )
+                
+                if perms_response.status_code == 200:
+                    
+                    current_perms = perms_response.json().get('permissions', [])
+                    
+                    print("\n\n")
+                    print(current_perms)
+                    print("\n\n")
+                    print("Unique emails that should have access:", unique_emails)
+                    print("\n\n")
+                                        
+                    for perm in current_perms:
+                        # Check for type, if emailAddress exists, and if it's in the unique list
+                        if perm.get('type') == 'user' and perm.get('emailAddress') and perm.get('emailAddress') not in unique_emails:
+                            del_response = requests.delete(
+                                f'https://www.googleapis.com/drive/v3/files/{folder_id}/permissions/{perm["id"]}',
+                                headers=headers
+                            )
+                            
+                            if del_response.status_code in [204, 200]:
+                                # Use .get() here as well for safety, though it should exist if the 'if' condition passed
+                                email = perm.get('emailAddress', 'DELETED_USER')
+                                current_app.logger.info(f"Permissão removida para {email} na pasta ID {folder_id}.")
+                            else:
+                                email = perm.get('emailAddress', 'DELETED_USER')
+                                current_app.logger.error(
+                                    f"Erro ao remover permissão para {email} na pasta ID {folder_id}: "
+                                    f"{del_response.status_code} - {del_response.text}"
+                                )
+                return folder_id
         else:
             raise Exception(f"Error searching for folder {folder_name}: {response.status_code} - {response.text}")
-
+    
     # Move a pasta da empresa para inativas se a empresa estiver inativa, estrutura de pastas:
     # Pasta drive -> ATIVAS -> Empresa -> Ano -> Contrato -> Mes -> Categoria
     @staticmethod
@@ -365,7 +527,6 @@ class DocsController:
         if response.status_code == 200:
             files = response.json().get('files', [])
             print(f"Found {len(files)} folders for empresa {empresa_nome} in ATIVAS.")
-            print(files)
             
             if files:
                 folder_id = files[0]['id']
@@ -402,6 +563,10 @@ class DocsController:
         if 'google_tokens' not in session:
             return "User not authenticated with Google Drive", 401
         
+        if User.query.filter_by(_id=session["id"]).first().perfil != "ADMIN":
+            print(f"User {session['id']} is not ADMIN, cannot upload documents.")
+            return "User not authorized to upload documents", 403
+
         access_token = session['google_tokens']['access_token']
         headers = {
             'Authorization': f'Bearer {access_token}',
@@ -428,9 +593,8 @@ class DocsController:
         
         for doc in docs:
             # Get the drive folder ID
-            
             print(User.query.filter_by(_id=session["id"]).first().perfil_id)
-
+            
             cubo = CUBO.query.filter(
                 CUBO.categoria_ids.contains(str(doc.categoria_id)),
                 CUBO.perfil_id == str(User.query.filter_by(_id=session["id"]).first().perfil_id)
@@ -455,10 +619,11 @@ class DocsController:
                 mes_folder_id = DocsController.create_folder_if_not_exists(contrato_folder_id, meses[doc.competencia.split("-")[0]], headers=headers)
                 
                 #Pega a lista de documentos da categoria
-                categoria_folder_id = DocsController.create_folder_if_not_exists(mes_folder_id, doc.categoria_nome, headers=headers)
+                categoria_folder_id = DocsController.create_folder_if_not_exists(mes_folder_id, doc.categoria_nome, headers=headers, is_cat=True)
 
             print(f"Uploading document {doc.titulo} to Google Drive...")
 
+            # Pega os anexos do documento
             files = Anexo.query.filter_by(documento_id=doc._id).all()
 
             print(f"Found {len(files)} files to upload for document {doc.titulo}...")
@@ -468,13 +633,12 @@ class DocsController:
                 try:
                     print(f"Uploading file {file.filename} to Google Drive...")
                     print(f"File name: {file.filename}")
-                    print(f"File size: {len(file.data)} bytes")
                     
                     # Check if the file is already existing in the folder, if so, delete it
                     query = f"'{categoria_folder_id}' in parents and name = '{file.filename}' and trashed = false"
                     search_url = f'https://www.googleapis.com/drive/v3/files?q={query}'
                     response = requests.get(search_url, headers=headers)
-                    
+
                     if response.status_code == 200:
                         files = response.json().get('files', [])
                         
@@ -491,7 +655,7 @@ class DocsController:
                             print(f"No existing file found for {file.filename}, proceeding with upload.")
                     else:
                         raise Exception(f"Error searching for existing file {file.filename}: {response.status_code} - {response.text}")
-
+                    
                     # Prepare file metadata
                     metadata = {
                         'name': file.filename,
@@ -566,28 +730,27 @@ class DocsController:
     def filter(emp, content):
         filtered_emps = defaultdict(list)
         docs = FilterController.filter(content, Documento)
+        allowed_categories = set()
         
         try:
-            user_perfil_id = User.query.get(session["id"]).perfil_id
-            cubos_for_user = CUBO.query.filter_by(perfil_id=user_perfil_id).all()
-            allowed_categories = {c.categoria_ids for c in cubos_for_user}
+            user = User.query.get(session.get("id"))
+            if user:
+                cubos_for_user = CUBO.query.filter_by(perfil_id=user.perfil_id).all()
+                for c in cubos_for_user:
+                    allowed_categories.update(str(cid) for cid in c.categoria_ids.split(","))
         except Exception:
-            allowed_categories = set()
             db.session.rollback()
         
-        cubos_map = {cubo.categoria_ids: cubo for cubo in CUBO.query.all()}
-        
+        cubos_map = {str(cubo.categoria_ids): cubo for cubo in CUBO.query.all()}
         for doc in docs:
-            if (doc.categoria_id in allowed_categories) or (not allowed_categories):
+            if (str(doc.categoria_id) in allowed_categories) or (not allowed_categories):
                 if emp == doc.empresa_id or emp is None:
                     doc.anexos = Anexo.query.filter_by(documento_id=doc._id).all()
-                    cubo = cubos_map.get(doc.categoria_id)
-                    
+                    cubo = cubos_map.get(str(doc.categoria_id))
                     if cubo:
                         doc.pasta = cubo.pasta_drive
                         doc.perfil_nome = cubo.perfil_nome
                     doc.aprovacoes = Aprovacao.query.filter_by(documento_id=doc._id).all()
                     filtered_emps[doc.empresa_nome].append(doc)
-        
         return filtered_emps
     

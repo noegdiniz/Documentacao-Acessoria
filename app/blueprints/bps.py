@@ -1,4 +1,8 @@
+from app.models.tables import AnexosFuncionario    
 from functools import wraps
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
 import os
 from flask import Blueprint, redirect, render_template, request, session, url_for, send_file, abort
 from app.auth.auth import auth, get_google_provider_cfg, client, GOOGLE_CLIENT_SECRET, GOOGLE_CLIENT_ID
@@ -12,6 +16,8 @@ from app.controllers.ContratoController import ContratoController
 from app.controllers.PerfilController import PerfilController
 from app.controllers.LogController import LogController
 from app.controllers.IntegraController import IntegraController
+
+from app.ext.db import db
 
 from io import BytesIO
 import urllib
@@ -27,8 +33,10 @@ from datetime import datetime, timedelta
 from flask import abort, redirect, url_for, session, request, current_app
 from werkzeug.utils import secure_filename
 import secrets
+from flask import jsonify
 
 bp_app = Blueprint("bp", __name__)
+
 
 def init_session_security(app):
     """Configure secure session settings"""
@@ -277,6 +285,8 @@ def upload_file_action():
     files = request.files.getlist("anexo")
     ALLOWED_EXTENSIONS = {".pdf", ".xlsx"}
     
+    print(form)
+    
     for file in files:
         if file and file.filename:
             file_ext = os.path.splitext(secure_filename(file.filename))[1].lower()
@@ -288,10 +298,12 @@ def upload_file_action():
     categoria_nome = CategoriaController.get(form["categoria"].split("|")[0]).nome
     contrato_nome = ContratoController.get(form["contrato"]).nome
     form = dict(form)
+    
     form["empresa"] = empresa_id
     form["categoria_nome"] = categoria_nome
     form["contrato_nome"] = contrato_nome
     DocsController.create(form, files)
+    
     return "OK"
 
 @bp_app.route("/status_files/")
@@ -410,6 +422,9 @@ def list_docs_history(empresa_id, content):
     docs = docs.items()
     perfil_id = UserController.get(session["id"]).perfil_id
     permissao = PerfilController.get(perfil_id)
+    
+    print(docs)
+    
     return render_template("list_docs_filter.html", docs_emp=docs, permissao=permissao, hist=hist)
 
 @bp_app.route("/filter_docs_prestadora/<int:empresa_id>/", defaults={"content": None})
@@ -432,6 +447,7 @@ def list_docs_filter(empresa_id):
     hist = False
     docs = DocsController.get_all(empresa_id)
     docs = docs.items()
+    
     perfil_id = UserController.get(session["id"]).perfil_id
     permissao = PerfilController.get(perfil_id)
     return render_template("list_docs_filter.html", docs_emp=docs, permissao=permissao, hist=hist)
@@ -450,10 +466,14 @@ def update_documento():
     DocsController.corrige_documento(form["id"], files, form=form)
     return "ok"
 
-@bp_app.route("/exclui_documento/<id>")
-def delete_documento(id):
+@bp_app.route("/exclui_documentos/")
+def delete_documento():
     try:
-        DocsController.delete(id)
+        ids = request.args.get("ids", "")
+        ids = ids.split(",") if ids else []
+        for id in ids:
+            DocsController.delete(id)
+        
         return "ok"
     except Exception as e:
         return f"erro {e}"
@@ -776,7 +796,7 @@ def delete_subcontratados(_id):
 @bp_app.route("/cadastro_funcionarios")
 def cadastro_funcionarios():
     empresa = Empresa.query.filter_by(chave=session["chave_empresa"]).first()
-    empresas_sub = Subcont.query.filter_by(empresa_id=empresa._id)
+    empresas_sub = Empresa.query.filter_by(_id=empresa._id).all()
     return render_template("menu_funcionarios.html", empresas=empresas_sub, empresa=empresa)
 
 @bp_app.route("/adm_funcionarios")
@@ -796,13 +816,27 @@ def create_funcionario():
         rt = IntegraController.create_funcionario(form)
     return rt if rt else "ok"
 
-@bp_app.route("/delete_funcionario/<_id>")
-def delete_funcionario(_id):
+@bp_app.route('/delete_funcionarios', methods=['POST'])
+def delete_funcionarios():
     try:
-        resp = IntegraController.delete_funcionario(_id)
-        return resp
+        ids = request.get_json().get('ids', [])
+        if not ids:
+            return 'Nenhum ID recebido', 400
+        from app.controllers.IntegraController import IntegraController
+        deleted = 0
+        for _id in ids:
+            try:
+                IntegraController.delete_funcionario(_id)
+                deleted += 1
+            except Exception as e:
+                print(f'Erro ao excluir funcionário {_id}: {e}')
+        if deleted:
+            return 'ok'
+        else:
+            return 'Nenhum funcionário excluído', 400
     except Exception as e:
-        return f"{e}"
+        print(f'Erro no endpoint delete_funcionarios: {e}')
+        return 'Erro ao excluir funcionários', 500
 
 @bp_app.route("/list_funcionarios/")
 def list_funcionarios():
@@ -810,26 +844,21 @@ def list_funcionarios():
         funcionarios = IntegraController.get_all_funcionario()
         permissao = PerfilController.get(UserController.get(session["id"]).perfil_id)
     else:
-        funcionarios = IntegraController.get_all_funcionario()
+        empresa_id = EmpresaController.get(chave=session["chave_empresa"])._id
+        funcionarios = IntegraController.get_all_funcionario(empresa_id)
         permissao = False
     return render_template("list_funcionarios.html", funcionarios=funcionarios, permissao=permissao)
 
 @bp_app.route("/menu_funcionario/<id>")
-def menu_funcionario(id):
-        if "chave_empresa" in session:
-            empresa = Empresa.query.filter_by(chave=session["chave_empresa"]).first()
-            if not empresa:
-                return "Invalid company key", 400
-            empresa_nome = empresa.nome
-        else:
-            empresa_nome = ""
-        
+def menu_funcionario(id):        
         funcionario = IntegraController.get_funcionario(id)
         if not funcionario:
             return "Funcionário não encontrado", 404
         
         funcionarios = IntegraController.get_all_funcionario()
-        contratos = Contrato.query.filter_by(empresa_nome=empresa_nome).all()
+        
+        empresa_id = StatusFuncionario.query.filter_by(funcionario_id=funcionario._id).order_by(StatusFuncionario.versao.desc()).first().empresa_id
+        contratos = Contrato.query.filter_by(empresa_id=empresa_id).all()
         LogController.create(
             session.get("nome", "N/A"),
             session.get("perfil", "N/A"),
@@ -837,6 +866,8 @@ def menu_funcionario(id):
             "VIEW",
             f"Viewed menu for funcionário: {funcionario.nome}"
         )
+        
+        print(funcionario._id)
         
         return render_template(
             "modal_funcionario.html",
@@ -850,7 +881,7 @@ def aprovar_integracao(_id):
     try:
         if "id" not in session.keys():
             return "Unauthorized", 401
-        if "RH" not in session.get("perfil", "") and "SEGURANCA" not in session.get("perfil", ""):
+        if "SEGURANCA" not in session.get("perfil", ""):
             return "Insufficient permissions", 403
         funcionario = IntegraController.get_funcionario(_id)
         if not funcionario:
@@ -879,34 +910,6 @@ def aprovar_integracao(_id):
     except Exception as e:
         return f"Error approving integration: {str(e)}", 500
 
-@bp_app.route("/reprovar_integracao/<_id>")
-def reprovar_integracao(_id):
-    try:
-        if "id" not in session.keys():
-            return "Unauthorized", 401
-        if "RH" not in session.get("perfil", "") and "SEGURANCA" not in session.get("perfil", ""):
-            return "Insufficient permissions", 403
-        funcionario = IntegraController.get_funcionario(_id)
-        
-        if not funcionario:
-            return "Funcionário não encontrado", 404
-        
-        response = IntegraController.reprova(funcionario)
-        if response.startswith("ok"):
-            LogController.create(
-                session.get("nome", "N/A"),
-                session.get("perfil", "N/A"),
-                "FUNCIONARIOS",
-                "REJECT",
-                f"Rejected integration for funcionário: {funcionario.nome}"
-            )
-            
-            return response
-        else:
-            return response, 400
-    except Exception as e:
-        return f"Error rejecting integration: {str(e)}", 500
-
 @bp_app.route("/download/<anexo_id>")
 def download(anexo_id):
     anexo = Anexo.query.filter_by(_id=anexo_id).first()
@@ -923,5 +926,246 @@ def download(anexo_id):
 def adm_relatorios():
     return render_template("adm_relatorios.html")
 
+
+# PDF export route for integrations (regular users only)
+@bp_app.route("/export_integracoes_pdf", methods=["GET"])
+def export_integracoes_pdf():
+    # Permission: only regular users (not PRESTADORA)
+    if "perfil" not in session or session["perfil"] == "PRESTADORA":
+        return "Acesso negado", 403
+
+    # Get filters from query params
+    data_inicio = request.args.get("data_inicio")
+    data_fim = request.args.get("data_fim")
+    empresa_id = request.args.get("empresa_id")
+    unidade_integracao = request.args.get("unidade_integracao")
+
+    # Validate dates
+    try:
+        dt_inicio = datetime.strptime(data_inicio, "%Y-%m-%d") if data_inicio else None
+        dt_fim = datetime.strptime(data_fim, "%Y-%m-%d") if data_fim else None
+    except Exception:
+        return "Formato de data inválido", 400
+
+    # Query integrations
+    integracoes = IntegraController.get_integracoes_pdf(dt_inicio, dt_fim, empresa_id, unidade_integracao)
+    empresa_nome = EmpresaController.get(_id=empresa_id).nome if empresa_id else "Todas"
+
+    # Generate PDF
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(30, height - 40, f"Relatório de Integrações")
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(30, height - 65, f"Empresa: {empresa_nome}")
+    if dt_inicio and dt_fim:
+        pdf.drawString(30, height - 85, f"Período: {dt_inicio.strftime('%d/%m/%Y')} a {dt_fim.strftime('%d/%m/%Y')}")
+    pdf.line(30, height - 95, width - 30, height - 95)
+
+    # Table header
+    y = height - 120
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawString(30, y, "Nome")
+    pdf.drawString(130, y, "Empresa")
+    pdf.drawString(230, y, "Função")
+    pdf.drawString(330, y, "Setor")
+    pdf.drawString(430, y, "Data Integração")
+    pdf.drawString(530, y, "Contrato")
+    
+    y -= 15
+    pdf.setFont("Helvetica", 10)
+
+    # Table rows
+    for integra in integracoes:
+        pdf.drawString(30, y, str(integra.get("nome", "")))
+        pdf.drawString(130, y, str(integra.get("empresa_nome", "")))
+        pdf.drawString(230, y, str(integra.get("funcao", "")))
+        pdf.drawString(330, y, str(integra.get("setor", "")))
+        pdf.drawString(430, y, str(integra.get("data_integracao", "")))
+        pdf.drawString(530, y, str(integra.get("contrato", "")))
+        y -= 15
+        if y < 100:
+            pdf.showPage()
+            y = height - 40
+
+    # Signature fields
+    y -= 40
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(30, y, "Assinaturas dos Departamentos:")
+    y -= 30
+    pdf.setFont("Helvetica", 11)
+    for dept in ["TI", "RH", "SEGURANÇA", "MEIO AMBIENTE", "RSC"]:
+        pdf.drawString(30, y, f"{dept}: _______________________________")
+        y -= 25
+
+    pdf.save()
+    buffer.seek(0)
+    name = f"relatorio_integracoes_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    return send_file(buffer, download_name=name, as_attachment=True)
+
+# Excel export route for employee list (regular users only)
+@bp_app.route("/export_funcionarios_excel", methods=["GET"])
+def export_funcionarios_excel():
+    if "perfil" not in session or session["perfil"] == "PRESTADORA":
+        return "Acesso negado", 403
+
+    from openpyxl import Workbook
+    from openpyxl.utils import get_column_letter
+    from io import BytesIO
+
+    data_inicio = request.args.get("data_inicio")
+    data_fim = request.args.get("data_fim")
+    empresa_id = request.args.get("empresa_id")
+    unidade_integracao = request.args.get("unidade_integracao")
+
+    try:
+        dt_inicio = datetime.strptime(data_inicio, "%Y-%m-%d") if data_inicio else None
+        dt_fim = datetime.strptime(data_fim, "%Y-%m-%d") if data_fim else None
+    except Exception:
+        return "Formato de data inválido", 400
+
+    # Query employees by filters
+    funcionarios = IntegraController.get_funcionarios_excel(dt_inicio, dt_fim, empresa_id, unidade_integracao)
+    if not funcionarios:
+        return "Nenhum funcionário encontrado para os filtros selecionados.", 404
+    
+    empresa_nome = EmpresaController.get(_id=empresa_id).nome if empresa_id else "Todas"
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Funcionários"
+
+    # Header
+    headers = ["Nome", "Função", "Cargo", "Setor", "Status", "Status Integração", "Empresa", "Data Integração", "Contrato", "CNPJ"]
+    ws.append(headers)
+
+    # Rows
+    for f in funcionarios:
+        ws.append([
+            f.get("nome", ""),
+            f.get("funcao", ""),
+            f.get("cargo", ""),
+            f.get("setor", ""),
+            f.get("status", ""),
+            f.get("status_integracao", ""),
+            f.get("empresa_nome", ""),
+            f.get("data_integracao", ""),
+            f.get("contrato", ""),
+            f.get("empresa_cnpj", "")
+        ])
+
+    # Adjust column widths
+    for col in ws.columns:
+        max_length = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[col_letter].width = max_length + 2
+
+    # Save to buffer
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    filename = f"funcionarios_{empresa_nome}.xlsx"
+    return send_file(buffer, download_name=filename, as_attachment=True)
+
+# Endpoint para upload dos documentos obrigatórios do funcionário
+@bp_app.route("/upload_documentos_funcionario", methods=["POST"])
+def upload_documentos_funcionario():
+    files = request.files
+    funcionario_id = request.form.get("status_funcionario_id")
+    
+    print(funcionario_id)
+
+    # Se quiser associar ao último status, pode buscar pelo funcionário
+    # status_funcionario_id = ...
+    required_docs = [
+        ("ficha_registro", "Cópia de ficha de registro de empregado"),
+        ("registro_esocial", "Registro de e-social"),
+        ("aso", "Cópia do ASO"),
+        ("os", "O.S"),
+        ("apr", "A.P.R"),
+        ("ficha_epi", "Ficha de EPI")
+    ]
+    
+    anexos = []
+    for field, label in required_docs:
+        file = files.get(field)
+        if not file:
+            return f"Documento obrigatório não enviado: {label}", 400
+        data = file.read()
+        file_extension = os.path.splitext(secure_filename(file.filename))[1].lower()
+        
+        anexo = AnexosFuncionario(
+            filename=f"{field}.{file_extension.lstrip('.')}",
+            funcionario_id= funcionario_id if funcionario_id else 0,
+            data=data,
+            link="",
+            corrigido=False,
+            hash="" # Pode gerar hash do arquivo se necessário
+        )
+        
+        anexos.append(anexo)
+    try:
+        for anexo in anexos:
+            db.session.add(anexo)
+            db.session.flush()  # Gera o ID do anexo
+            
+            anexo.link = url_for("bp.download_doc_funcionario", anexo_id=anexo._id)
+            db.session.commit()
+                    
+        return "ok"
+    except Exception as e:
+        db.session.rollback()
+        return f"Erro ao salvar documentos: {str(e)}", 500
+
+# Endpoint para retornar lista de documentos obrigatórios do funcionário e status/link
+@bp_app.route("/api/documentos_funcionario/<funcionario_id>", methods=["GET"])
+def api_documentos_funcionario(funcionario_id):
+    # Lista de documentos obrigatórios
+    required_docs = [
+        ("ficha_registro", "Cópia de ficha de registro de empregado"),
+        ("registro_esocial", "Registro de e-social"),
+        ("aso", "Cópia do ASO"),
+        ("os", "O.S"),
+        ("apr", "A.P.R"),
+        ("ficha_epi", "Ficha de EPI")
+    ]
+    
+    # Buscar anexos já enviados para o funcionário
+    anexos = AnexosFuncionario.query.filter_by(funcionario_id=funcionario_id).all()
+    documentos = []
+    for chave, nome in required_docs:
+        doc = {
+            "chave": chave,
+            "nome": nome,
+            "url": None
+        }
+        
+        # Verifica se já existe o documento enviado
+        for anexo in anexos:
+            if chave in anexo.filename:
+                doc["url"] = anexo.link
+                break
+        documentos.append(doc)
+    
+    return jsonify({"documentos": documentos})
+
+@bp_app.route("/download_doc_funcionario/<anexo_id>")
+def download_doc_funcionario(anexo_id):
+    anexo = AnexosFuncionario.query.filter_by(_id=anexo_id).first()
+    if anexo is None:
+        abort(404, description="Documento não encontrado")
+    
+    temp_file = BytesIO(anexo.data)
+    return send_file(temp_file, download_name=anexo.filename, as_attachment=True)
+
+# Register blueprint
 def configure(app):
     app.register_blueprint(bp_app)

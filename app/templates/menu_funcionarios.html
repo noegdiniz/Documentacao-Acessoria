@@ -9,18 +9,10 @@
                         <input type="text" id="cargo" name="cargo" placeholder="Cargo">
                         <input type="text" id="setor" name="setor" placeholder="Setor">
                         
-                        <select name="status" id="status" required>
-                            <option value="ativo">
-                                ativo
-                            </option>
-                            <option value="inativo">
-                                inativo
-                            </option>
-                        </select>
+                        <input type="text" id="status" name="status" value="ativo" disabled>
                         
                         <select name="empresa_id" id="empresa_id" required placeholder="Empresa">
-                            <option value="">Empresa</option>
-                            <option value="{{empresa._id}}">{{empresa.nome}}</option>
+                            <option value="{{empresa._id}}" selected>{{empresa.nome}}</option>
 
                             {%for empresa in empresas_sub%}
                                 <option value="{{empresa._id}}">{{empresa.nome}}</option>
@@ -31,7 +23,7 @@
                         <input type="hidden" id="_id" name="_id">
                     </div>
                 </form>
-
+                
                 <div class="row-layout">
                     <button class="button" id="salvar" name="salvar">
                         salvar
@@ -42,13 +34,14 @@
     </div>
 
     <div class="key-box empresas-box">
-
         <div id="funcionarios-list-content">
         </div>
     </div>
+
 </div>
 
 <script>
+
 //Carrega a lista de funcionários
 
 fetch("/list_funcionarios").then(data => {
@@ -56,7 +49,6 @@ fetch("/list_funcionarios").then(data => {
         setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
     })
 })    // Filter functionality removed
-
 
 $("#salvar").click(() => {
     let nome = $("#nome").val();
@@ -71,14 +63,12 @@ $("#salvar").click(() => {
     } else {
         let formData = $("#form_dados").serialize();
         formData["_id"] = $("#_id").val();
-        
         $.ajax({
             type: "POST",
             url: "create_funcionario",
             data: formData,
             success: function(response) {
                 let url = `/list_funcionarios/`
-                
                 fetch(url).then(data => {
                     data.text().then(text => {
                         setTimeout(() => {
@@ -86,17 +76,13 @@ $("#salvar").click(() => {
                         }, 100)
                     })
                 })
-                
                 if (response.includes("ok")) {
-                    showCustomAlert("Cadastrado com sucesso!")
+                    showCustomAlert("Cadastrado com sucesso!");
+                    openDocumentosModal(); // Abre o modal obrigatório após cadastro
                 } else {
                     showCustomAlert("Erro ao cadastrar funcionário: " + response.text())
                 }
-                
-                //Remove marcador de alteração 
                 $("#form_dados").removeClass("ball");
-
-                //Clear form
                 $("#nome").val("");
                 $("#funcao").val("");
                 $("#cargo").val("");
@@ -104,8 +90,6 @@ $("#salvar").click(() => {
                 $("#empresa_id").val("");
                 $("#_id").val("");
             },
-
-            //Caso ocorra erro na requisição
             error: function(error) {
                 showCustomAlert("Erro ao cadastrar funcionário: " + error)
             }

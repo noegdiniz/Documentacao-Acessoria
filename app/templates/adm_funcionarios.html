@@ -1,4 +1,5 @@
 <div class="col-layout container empresas-box-docs">
+    {% if session["perfil"] == "PRESTADORA" %}
     <div class="row-layout">
         <div class="flex-center key-box">
             <div class="key-box row-layout">
@@ -25,7 +26,6 @@
                         <input type="hidden" id="_id" name="_id">
                     </div>
                 </form>
-                
                 <div class="row-layout">
                     <button class="button" id="salvar" name="salvar">
                         salvar
@@ -34,10 +34,45 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <div class="key-box empresas-box">
 
         <div id="funcionarios-list-content">
+        </div>
+        <!-- Export Modal -->
+        <div id="exportModal" class="modal" style="display:none;">
+            <div class="modal-content" style="max-width:500px;">
+                <div class="close-btn-container" style="text-align:right;">
+                    <span class="close-btn" id="closeExportModal" style="cursor:pointer;font-size:28px;">&times;</span>
+                </div>
+                <h3>Exportar Relatórios</h3>
+                <form id="export-form" style="display:flex;flex-direction:column;gap:10px;">
+                    <label for="modal_data_inicio">Data início:</label>
+                    <input type="date" id="modal_data_inicio" name="modal_data_inicio">
+                    <label for="modal_data_fim">Data fim:</label>
+                    <input type="date" id="modal_data_fim" name="modal_data_fim">
+                    <label for="modal_empresa_id">Empresa:</label>
+                    <select id="modal_empresa_id" name="modal_empresa_id">
+                        <option value="">Todas</option>
+                        {% for empresa in empresas %}
+                            <option value="{{empresa._id}}">{{empresa.nome}}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="modal_unidade_integracao">Unidade de Integração:</label>
+                    <select id="modal_unidade_integracao" name="modal_unidade_integracao">
+                        <option value="">Todas</option>
+                        <option value="Santana">Santana</option>
+                        <option value="Porto Grande">Porto Grande</option>
+                        <option value="Tartarugalzinho">Tartarugalzinho</option>
+                        <option value="KM78">KM78</option>
+                    </select>
+                    <div style="display:flex;gap:10px;margin-top:10px;">
+                        <button type="button" class="button" id="modal-export-pdf">Exportar PDF Integrações</button>
+                        <button type="button" class="button" id="modal-export-excel">Exportar Excel Funcionários</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -49,6 +84,49 @@ fetch("/list_funcionarios").then(data => {
         setTimeout(() => {$("#funcionarios-list-content").html(text)}, 100);
     })
 })
+
+// Export Modal logic
+$(document).on("click", "#open-export-modal", function() {
+    $("#exportModal").css("display", "flex");
+});
+
+$(document).on("click", "#closeExportModal", function() {
+    $("#exportModal").hide();
+});
+
+$(window).on("click", function(event) {
+    if ($(event.target).is("#exportModal")) {
+        $("#exportModal").hide();
+    }
+});
+
+// Export PDF from modal
+$(document).on("click", "#modal-export-pdf", function() {
+    const data_inicio = $("#modal_data_inicio").val();
+    const data_fim = $("#modal_data_fim").val();
+    const empresa_id = $("#modal_empresa_id").val();
+    const unidade_integracao = $("#modal_unidade_integracao").val();
+    let url = `/export_integracoes_pdf?`;
+    if (data_inicio) url += `data_inicio=${data_inicio}&`;
+    if (data_fim) url += `data_fim=${data_fim}&`;
+    if (empresa_id) url += `empresa_id=${empresa_id}&`;
+    if (unidade_integracao) url += `unidade_integracao=${unidade_integracao}`;
+    window.open(url, "_blank");
+});
+
+// Export Excel from modal
+$(document).on("click", "#modal-export-excel", function() {
+    const data_inicio = $("#modal_data_inicio").val();
+    const data_fim = $("#modal_data_fim").val();
+    const empresa_id = $("#modal_empresa_id").val();
+    const unidade_integracao = $("#modal_unidade_integracao").val();
+    let url = `/export_funcionarios_excel?`;
+    if (data_inicio) url += `data_inicio=${data_inicio}&`;
+    if (data_fim) url += `data_fim=${data_fim}&`;
+    if (empresa_id) url += `empresa_id=${empresa_id}&`;
+    if (unidade_integracao) url += `unidade_integracao=${unidade_integracao}`;
+    window.open(url, "_blank");
+});
 
 $("#content").on("keypress", (e) => {
     if(e.which == 13) {

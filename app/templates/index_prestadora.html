@@ -55,7 +55,7 @@
                 .then(res => res.text())
                 .then(html => $('#content-emp').html(html));
         });
-
+        
         $(document).on('click', '#cadastro-emp', function(e) {
             e.preventDefault();
             fetch('/cadastro_funcionarios')

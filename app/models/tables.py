@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.ext.db import db
 from sqlalchemy import event
 from sqlalchemy.types import Date, DateTime
@@ -20,7 +21,7 @@ class Funcionario(db.Model):
 class StatusFuncionario(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     status_contratual = db.Column(db.String) #Status contratual do funcionario (ativo, inativo, desligado, etc...)
-    status_integracao = db.Column(db.String) #Status de integração do funcionario (PENDENTE, AGUARDANDO, AGENDADO, REALIZADO, EXPIRADO)
+    status_integracao = db.Column(db.String) #Status de integração do funcionario (AGUARDANDO, AGENDADO, REALIZADO, EXPIRADO)
     
     funcionario_id = db.Column(db.Integer) #ID do funcionario atrelado ao status
     funcionario_nome = db.Column(db.String) #Nome do funcionario atrelado ao status
@@ -44,11 +45,23 @@ class StatusFuncionario(db.Model):
 
     versao = db.Column(db.String, default="1.0") #Versao do status do funcionario
     
-    aprov_rh = db.Column(db.String, default="AGUARDANDO") #Aprovação do RH
-    aprov_seg = db.Column(db.String, default="AGUARDANDO") #Aprovação do SEG
-    
     data = db.Column(Date) #Data do status do funcionario
     tipo = db.Column(db.String, default="status") # Tipo de status status/integração
+
+class AnexosFuncionario(db.Model):
+    _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    filename = db.Column(db.String, nullable=False)
+
+    #ID DO FUNCIONARIO ATRELADO AO ANEXO
+    funcionario_id = db.Column(db.Integer, nullable=False)
+    data = db.Column(db.LargeBinary) #Arquivo do anexo
+    
+    link = db.Column(db.String, nullable=False, default="") #Link do anexo no drive
+    
+    corrigido = db.Column(db.Boolean, nullable=False, default=False) #Se o anexo foi corrigido ou não
+    hash = db.Column(db.String, nullable=False) #Hash do arquivo
+
+    upload_date = db.Column(DateTime, default=datetime.now()) #Data do upload do anexo
     
 # Anexo do documento
 class Anexo(db.Model):
@@ -62,7 +75,7 @@ class Anexo(db.Model):
     link = db.Column(db.String, nullable=False, default="") #Link do anexo no drive
     
     corrigido = db.Column(db.Boolean, nullable=False, default=False) #Se o anexo foi corrigido ou não
-    tamanho = db.Column(db.String, nullable=False) #Tamanho do anexo em mb
+    hash = db.Column(db.String, nullable=False) #Hash do arquivo
     
 # Empresa subcontratada
 class Subcont(db.Model):
@@ -243,6 +256,4 @@ class Log(db.Model):
     action = db.Column(db.String, nullable=False)
     info = db.Column(db.String, nullable=False)
     date = db.Column(DateTime, nullable=False)
-
-
-
+    

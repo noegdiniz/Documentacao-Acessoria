@@ -41,44 +41,7 @@
                     {%endif%}
                 </td>
             </tr>
-
-            <script>
-                $("#alterar-{{categoria._id}}").click(function() {
-                    $("#nome").val("{{categoria.nome}}");
-
-                    //Adiciona sinal visual da alteração no menu
-                    $("#form_dados").addClass("ball");
-
-                    //Muda o id do categoria para realizar a alteração no item certo
-                    $("#_id").val("{{categoria._id}}");
-                });
-
-                $("#excluir-{{categoria._id}}").click(function() {
-                    let url = "/delete_categoria/" + "{{categoria._id}}";
-                    
-                    fetch(url)
-                        .then(function(response) { return response.text(); })
-                        .then(function(text) {
-                            if (text.includes("ok")) {
-                                showCustomAlert("Cadastro excluido com sucesso.");                
-                            } else {
-                                showCustomAlert("Erro ao realizar exclusão: " + text);
-                            }
-                        })
-                        .then(function() {
-                            let val = $("#content").val();
-                            let url = `/list_categorias/${val}`;
-
-                            fetch(url)
-                                .then(function(response) { return response.text(); })
-                                .then(function(text) {
-                                    setTimeout(function() {
-                                        $("#categoria-list-content").html(text);
-                                    }, 100);
-                                });
-                        });
-                });
-            </script>
+            
             {%endfor%}
         </tbody>
     </table>
@@ -216,6 +179,7 @@ $(document).ready(function() {
                 hideLoading();
             }
         });
+        
         {%endfor%}
     }
 

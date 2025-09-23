@@ -1,7 +1,18 @@
 <div class="container-fluid">
+    <div style="margin-bottom:10px;">
+            {%if permissao.can_delete_funcionarios%}                
+            <button class="button btn btn-danger" id="excluir-selecionados">Excluir Selecionados</button>
+            {%endif%}
+
+            {%if permissao %}
+                <button type="button" class="button" id="open-export-modal">Exportar Relatórios</button>
+            {%endif%}
+    </div>
+
     <table id="funcionariosTable" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
         <thead>
             <tr>
+                <th><input type="checkbox" id="selectAll"></th>
                 <th>Nome</th>
                 <th>Função</th>
                 <th>Cargo</th>
@@ -14,6 +25,7 @@
         <tbody>
             {% for funcionario in funcionarios %}
             <tr>
+                <td><input type="checkbox" class="select-funcionario" value="{{funcionario._id}}"></td>
                 <td>
                     <input type="text" id="nome-{{funcionario._id}}" value="{{funcionario.nome}}" class="key-input" disabled>
                 </td>
@@ -33,37 +45,48 @@
                     <input type="text" id="empresa_nome-{{funcionario._id}}" value="{{funcionario.status_funcionario[-1].empresa_nome}}" class="key-input" disabled>
                 </td>
                 <td class="text-nowrap">
-                    <button class="button btn btn-info" id="menu-{{funcionario._id}}" name="menu">
-                        Menu
-                    </button>
-                    
+                    <button class="button btn btn-info" id="menu-{{funcionario._id}}" name="menu">Menu</button>
+                    <button class="button btn btn-warning open-documentos-modal" data-funcionario="{{funcionario._id}}">Documentação</button>
                     {%if permissao%}
                         {%if permissao.can_edit_funcionarios%}
-                        <button class="button btn btn-primary" id="alterar-{{funcionario._id}}" name="alterar">
-                            Alterar
-                        </button>
-                        {%endif%}
-                        
-                        {%if permissao.can_delete_funcionarios%}
-                        <button class="button btn btn-danger" id="excluir-{{funcionario._id}}" name="excluir">
-                            Excluir
-                        </button>
+                        <button class="button btn btn-primary" id="alterar-{{funcionario._id}}" name="alterar">Alterar</button>
                         {%endif%}
                     {%endif%}
+
+                    <!-- Modal -->
+                    <div id="menuModal{{funcionario._id}}" class="modal">
+                        <div class="modal-content">
+                            <div class="close-btn-container">
+                                <span class="close-btn" id="closeModal{{funcionario._id}}">&times;</span>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Modal content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal de Documentação Obrigatória para cada funcionário -->
+                    <div id="documentosModal{{funcionario._id}}" class="modal" style="display:none;">
+                        <div class="modal-content" style="max-width:500px;">
+                            <div class="close-btn-container" style="text-align:right;">
+                                <span class="close-btn" id="closeDocumentosModal{{funcionario._id}}" style="cursor:pointer;font-size:28px;">&times;</span>
+                            </div>
+                            <h3>Envio de Documentação Obrigatória</h3>
+                            <div class="documentos-list" id="documentos-list-{{funcionario._id}}">
+                                <span>Carregando documentos...</span>
+                            </div>
+                            
+                            <form class="documentos-form" data-funcionario="{{funcionario._id}}" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:10px;">
+                                <!-- Campos de upload serão inseridos dinamicamente -->
+                                 {% if not permissao %}
+                                    <input type="hidden" name="status_funcionario_id" value="{{funcionario._id}}">
+                                    <button type="submit" class="button btn btn-success">Enviar Documentos</button>
+                                {%endif%}
+                                </form>
+                        </div>
+                    </div>
                 </td>
             </tr>
-
-            <!-- Modal -->
-            <div id="menuModal{{funcionario._id}}" class="modal">
-                <div class="modal-content">
-                    <div class="close-btn-container">
-                        <span class="close-btn" id="closeModal{{funcionario._id}}">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Modal content will be loaded here -->
-                    </div>
-                </div>
-            </div>
             {% endfor %}
         </tbody>
     </table>
@@ -115,6 +138,7 @@ $(document).ready(function() {
         dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
         columnDefs: [
             { orderable: false, targets: 6 }, // Disable sorting on actions column
+            {width: "100px", targets: 0}, // Checkbox column width
             { width: "20%", targets: 0 }, // Nome
             { width: "15%", targets: 1 }, // Função
             { width: "15%", targets: 2 }, // Cargo
@@ -190,12 +214,91 @@ $(document).ready(function() {
         .appendTo('head');
     
     // Bind event handlers
+    // Abrir modal de documentos obrigatórios para cada funcionário
+    $(document).on('click', '.open-documentos-modal', function() {
+        var funcionarioId = $(this).data('funcionario');
+        var $modal = $('#documentosModal' + funcionarioId);
+        $modal.css('display', 'flex');
+        var $list = $('#documentos-list-' + funcionarioId);
+        $list.html('<span>Carregando documentos...</span>');
+        // Buscar lista dinâmica do backend
+        $.getJSON('/api/documentos_funcionario/' + funcionarioId, function(data) {
+            var html = '';
+            var formFields = '';
+
+            data = Object.values(data);
+
+            if (data.length > 0) {
+                data[0].forEach(function(doc) {
+
+                    if (doc.url) {
+                        html += '<div style="margin-bottom:10px;">';
+                        html += '<label>' + doc.nome + ':</label> ';
+                        html += '<a href="' + doc.url + '" target="_blank" class="btn btn-sm btn-outline-primary">Visualizar</a>';
+
+                    html += '</div>';
+                    }
+
+                    // Campo de upload se não existe
+                    else if (!doc.url) {
+                        formFields += '<label>' + doc.nome + ':</label>';
+                        
+                        // Se for o usuario nao prestadora:
+                        {%if permissao %}
+                            formFields += '<span style="color:grey;">(Nâo enviado)</span>';
+                        {%else%}    
+                            formFields += '<input type="file" name="' + doc.chave + '" required>';
+                        {%endif%}
+                    }
+                });
+
+            } else {
+                html = '<span>Nenhum documento obrigatório encontrado.</span>';
+            }
+            $list.html(html);
+            // Atualiza campos do form
+            var $form = $modal.find('.documentos-form');
+            $form.find('span').remove();
+            $form.find('input[type="file"]').remove();
+            $form.find('label').remove();
+            $form.prepend(formFields);
+        });
+    });
+
+    // Fechar modal de documentos obrigatórios
+    $(document).on('click', '[id^=closeDocumentosModal]', function() {
+        $(this).closest('.modal').hide();
+    });
+
+    // Submissão do formulário de documentos obrigatórios
+    $(document).on('submit', '.documentos-form', function(e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+        var funcionarioId = $(this).data('funcionario');
+        $.ajax({
+            type: "POST",
+            url: "/upload_documentos_funcionario",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                showCustomAlert("Documentos enviados com sucesso!");
+                $('#documentosModal' + funcionarioId).hide();
+            },
+            error: function(error) {
+                showCustomAlert("Erro ao enviar documentos: " + error);
+            }
+        });
+    });
     function bindEventHandlers() {
         {%for funcionario in funcionarios%}
         // Menu button handler
         $("#menu-{{funcionario._id}}").off('click').on('click', async function() {
             try {
                 showLoading();
+                // Destroy tab-status and tab-history
+                $("#tab-status, #tab-history").remove();
+
                 const url = "/menu_funcionario/{{funcionario._id}}";
                 const response = await fetch(url);
                 
@@ -215,61 +318,177 @@ $(document).ready(function() {
             }
         });
 
-        // Alter button handler
-        $("#alterar-{{funcionario._id}}").off('click').on('click', function() {
-            try {
-                $("#nome").val("{{funcionario.nome}}");
-                $("#funcao").val("{{funcionario.status_funcionario[-1].funcao}}");
-                $("#cargo").val("{{funcionario.status_funcionario[-1].cargo}}");
-                $("#setor").val("{{funcionario.status_funcionario[-1].setor}}");
-                $("#status").val("{{funcionario.status_funcionario[-1].status_contratual}}");
-                $("#empresa_id").val("{{funcionario.status_funcionario[-1].empresa_id}}");
-
-                //Adiciona sinal visual da alteração no menu
-                $("#form_dados").addClass("ball");
-                
-                //Muda o id do funcionário para realizar a alteração no item certo
-                $("#_id").val("{{funcionario._id}}");
-            } catch (error) {
-                console.error('Error in alterar handler:', error);
-                showCustomAlert("Erro ao preparar alteração: " + error.message);
+        // Inline edit logic
+        $("#alterar-{{funcionario._id}}" ).off('click').on('click', function() {
+            const row = $(this).closest('tr');
+            row.find('input').prop('disabled', false).addClass('editing');
+            // Add status and empresa selects inline
+            if (!row.find('.inline-status').length) {
+                const statusVal = "{{funcionario.status_funcionario[-1].status_contratual}}";
+                const empresaId = "{{funcionario.status_funcionario[-1].empresa_id}}";
+                const statusSelect = `<select class='inline-status'><option value='ativo' ${statusVal=='ativo'?'selected':''}>ativo</option><option value='inativo' ${statusVal=='inativo'?'selected':''}>inativo</option></select>`;
+                const empresaSelect = `<select class='inline-empresa'>` +
+                    `<option value='{{funcionario.status_funcionario[-1].empresa_id}}'>{{funcionario.status_funcionario[-1].empresa_nome}}</option>` +
+                    `</select>`;
+                row.find('td:eq(5)').html(statusSelect);
+                row.find('td:eq(6)').html(empresaSelect);
             }
+            // Replace only Alterar button with Save
+            $("#alterar-{{funcionario._id}}").replaceWith(`<button class='button btn btn-success save-inline' data-id='{{funcionario._id}}'>Salvar</button>`);
+
+        });
+
+        // Save inline edit (update only DataTable row)
+        $(document).off('click', '.save-inline').on('click', '.save-inline', function(e) {
+            e.stopImmediatePropagation();
+            const row = $(this).closest('tr');
+            const id = $(this).data('id');
+            const nome = row.find(`#nome-${id}`).val();
+            const funcao = row.find(`#funcao-${id}`).val();
+            const cargo = row.find(`#cargo-${id}`).val();
+            const setor = row.find(`#setor-${id}`).val();
+            const status = row.find('.inline-status').val();
+            const empresa_id = row.find('.inline-empresa').val();
+            const tipo = 'status';
+            const data = {
+                _id: id,
+                nome,
+                funcao,
+                cargo,
+                setor,
+                status,
+                empresa_id,
+                tipo
+            };
+            $(this).prop('disabled', true);
+            $.ajax({
+                type: "POST",
+                url: "create_funcionario",
+                data: data,
+                success: function(response) {
+                    if (response.includes("ok")) {
+                        showCustomAlert("Alteração salva com sucesso!");
+                        // Refresh entire table
+                        fetch("/list_funcionarios/").then(data => {
+                            data.text().then(text => {
+                                setTimeout(() => {
+                                    $("#funcionarios-list-content").html(text);
+                                }, 100);
+                            })
+                        });
+                    } else {
+                        showCustomAlert("Erro ao salvar alteração: " + response);
+                        $(this).prop('disabled', false);
+                    }
+                }.bind(this),
+                error: function(error) {
+                    showCustomAlert("Erro ao salvar alteração: " + error);
+                    $(this).prop('disabled', false);
+                }.bind(this)
+            });
         });
 
         // Delete button handler
-        $("#excluir-{{funcionario._id}}").off('click').on('click', async function() {
+        // Excluir selecionados
+        $(document).off('click', '#excluir-selecionados').on('click', '#excluir-selecionados', async function() {
+            var selecionados = [];
+            $('.select-funcionario:checked').each(function() {
+                selecionados.push($(this).val());
+            });
+            if (selecionados.length === 0) {
+                showCustomAlert('Selecione ao menos um funcionário para excluir.');
+                return;
+            }
+            if (!confirm('Tem certeza que deseja excluir os funcionários selecionados?')) {
+                return;
+            }
+            showLoading();
             try {
-                if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
-                    return;
-                }
-
-                showLoading();
-                const url = "/delete_funcionario/{{funcionario._id}}";
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    await handleServerError(response);
-                    return;
-                }
-                
-                const text = await response.text();
-                console.log(text);
-
-                if (text.includes("ok")) {
-                    showCustomAlert("Cadastro excluído com sucesso");
-                    table.row($(this).closest('tr')).remove().draw(false);
+                const response = await $.ajax({
+                    type: 'POST',
+                    url: '/delete_funcionarios',
+                    data: JSON.stringify({ ids: selecionados }),
+                    contentType: 'application/json',
+                });
+                if (response.includes('ok')) {
+                    showCustomAlert('Funcionários excluídos com sucesso!');
+                    // Recarregar apenas a tabela via AJAX
+                    fetch('/list_funcionarios/').then(data => {
+                        data.text().then(text => {
+                            setTimeout(() => {
+                                // Substitui apenas o conteúdo da tabela
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(text, 'text/html');
+                                const newTable = doc.querySelector('#funcionariosTable');
+                                if (newTable) {
+                                    $('#funcionariosTable').replaceWith($(newTable));
+                                    // Re-inicializa DataTable e eventos
+                                    if ($.fn.DataTable.isDataTable('#funcionariosTable')) {
+                                        $('#funcionariosTable').DataTable().destroy();
+                                    }
+                                    $('#funcionariosTable').DataTable({
+                                        language: {
+                                            searchPlaceholder: "Buscar em todas as colunas...",
+                                            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
+                                        },
+                                        pageLength: 10,
+                                        ordering: true,
+                                        responsive: true,
+                                        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
+                                        columnDefs: [
+                                            { orderable: false, targets: 6 },
+                                            {width: "100px", targets: 0},
+                                            { width: "20%", targets: 0 },
+                                            { width: "15%", targets: 1 },
+                                            { width: "15%", targets: 2 },
+                                            { width: "15%", targets: 3 },
+                                            { width: "10%", targets: 4 },
+                                            { width: "15%", targets: 5 },
+                                            { width: "10%", targets: 6 },
+                                            {
+                                                targets: '_all',
+                                                searchable: true,
+                                                render: function(data, type, row) {
+                                                    if (type === 'display') return data;
+                                                    return $(data).val() || data;
+                                                }
+                                            }
+                                        ],
+                                        autoWidth: false,
+                                        initComplete: function() {
+                                            var searchWrapper = $('.dataTables_filter');
+                                            searchWrapper.find('input[type="search"]')
+                                                .attr('class', 'form-control')
+                                                .css({
+                                                    'width': '100%',
+                                                    'margin-left': '0'
+                                                });
+                                        },
+                                        drawCallback: function(settings) {
+                                            bindEventHandlers();
+                                            $('.key-input').css('width', '100%');
+                                        }
+                                    });
+                                    bindEventHandlers();
+                                }
+                            }, 100);
+                        });
+                    });
                 } else {
-                    showCustomAlert("Erro ao realizar exclusão: " + text);
+                    showCustomAlert('Erro ao excluir: ' + response);
                 }
-                
             } catch (error) {
-                console.error('Error in excluir handler:', error);
-                showCustomAlert("Erro ao tentar excluir o registro: " + error.message);
+                showCustomAlert('Erro ao tentar excluir: ' + (error.responseText || error.message));
             } finally {
                 hideLoading();
             }
         });
 
+        // Select all checkbox
+        $(document).off('change', '#selectAll').on('change', '#selectAll', function() {
+            $('.select-funcionario').prop('checked', $(this).prop('checked'));
+        });
+        
         // Modal close handlers
         $("#closeModal{{funcionario._id}}").off('click').on('click', function() {
             $("#menuModal{{funcionario._id}}").hide();
@@ -317,7 +536,6 @@ $(document).ready(function() {
     position: sticky;
     top: 0;
     background: #fefefe;
-    padding: 10px;
     z-index: 1;
 }
 

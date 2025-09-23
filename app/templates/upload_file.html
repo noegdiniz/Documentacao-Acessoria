@@ -53,13 +53,9 @@
                         <span>
                             COMPETÊNCIA
                         </span>
-                        
                         <input type="text" id="competencia" name="competencia" required placeholder="Competência (MM-AAAA)" maxlength="7">
 
-                        <span>
-                            JUSTIFICATIVA
-                        </span>
-                        <input type="text" id="justificativa" name="justificativa" required placeholder="Justificativa" disabled>
+                        <!-- Campo justificativa global removido. Justificativas agora são por arquivo, geradas dinamicamente -->
                         
                     </form>
                     
@@ -108,26 +104,36 @@
 
                             this.value = value;
                         });
-
+                        
         $("#titulo").click(() => {
             $("#titulo").css("background-color", "white");
         })
         
         $("#categoria").change(() => {
             let value = $("#categoria").val();
-
-            let docs_necessarios = value.split("|")[1].split(",");
+            let docs_necessarios = value.split("|")[1].split("&");
             let html = "";
+            docs_necessarios.forEach((doc, idx) => {
+                html += `<span>${doc}:</span>
+                    <input type="file" id="anexo${idx}" name="anexo" accept=".pdf,.xlsx">
+                    <input type="text" id="justificativa_anexo${idx}" name="justificativa_anexo-${doc}" placeholder="Justificativa para ausência de arquivo" style="display:none; margin-bottom:10px;" maxlength="200">`;
+            });
+            $("#anexos").html(html);
             
-            docs_necessarios.forEach(doc => {
-                html += `<span>
-                            ${doc}:
-                            </span>
-                            <input type="file" id="anexo" onchange="this.style.borderColor='green'; this.style.color='green';" name="anexo" accept=".pdf,.xlsx" required>
-                        `;
-                })
-            
-            $("#anexos").html(html)
+            // Add change event for each file input to show/hide justificativa
+            docs_necessarios.forEach((doc, idx) => {
+                $(document).on('change', `#anexo${idx}`, function() {
+                    if (this.files && this.files.length > 0) {
+                        $(`#justificativa_anexo${idx}`).hide();
+                        $(this).css('border-color', 'green');
+                        $(this).css('color', 'green');
+                    } else {
+                        $(`#justificativa_anexo${idx}`).show();
+                        $(this).css('border-color', 'red');
+                        $(this).css('color', 'red');
+                    }
+                });
+            });
         })
         
         $("#justificativa").click(() => {
@@ -137,7 +143,6 @@
         $("#make-upload").click(() => {
             const submitButton = $("#make-upload");
             submitButton.prop('disabled', true);
-            
             submitButton.css('cursor', 'not-allowed');
             submitButton.text('Enviando...');
 
@@ -147,40 +152,48 @@
             let categoria = $("#categoria").val();
             let email = $("#email").val();
             let competencia = $("#competencia").val();
-            
+
             let arquivos = [];
-            
-            $('#anexos input[type="file"]').each(function () {
-                // Verifica se o input possui arquivos selecionados
+            let missingFile = false;
+            let missingJustificativa = false;
+
+            $('#anexos input[type="file"]').each(function (idx) {
                 if (this.files && this.files.length > 0 ) {
-                    // Adiciona os arquivos ao array
                     for (let i = 0; i < this.files.length; i++) {
                         arquivos.push(this.files[i]);
                     }
-                
+                    $(`#justificativa_anexo${idx}`).hide();
                 } else {
-                    if (!$("#justificativa").val()) {
-                        // Deixa a borda vermelha e o texto vermelho
-                        $(this).css('border-color', 'red');
-                        $(this).css('color', 'red');
-                        
-                        //Habilita justificativa
-                        $("#justificativa").attr( "disabled", false );
-                        $("#justificativa").css("background-color", "red");
-                        return;
+                    missingFile = true;
+                    $(this).css('border-color', 'red');
+                    $(this).css('color', 'red');
+                    $(`#justificativa_anexo${idx}`).show();
+                    if (!$(`#justificativa_anexo${idx}`).val()) {
+                        missingJustificativa = true;
+                        $(`#justificativa_anexo${idx}`).css("background-color", "red");
+                    } else {
+                        $(`#justificativa_anexo${idx}`).css("background-color", "white");
                     }
                 }
             });
-            
-            if (!titulo || !contrato || !categoria || arquivos.length === 0 || !email || !competencia) {
-                showCustomAlert("Por favor, preencha todos os campos." + " Campo: " + (!titulo ? "Título" : !contrato ? "Contrato" : !categoria ? "Categoria" : !email ? "Email" : !competencia ? "Competência" : "Anexo"));
-                
+
+            // Só permite enviar se todos os arquivos ausentes tiverem justificativa
+            if (missingFile && missingJustificativa) {
+                showCustomAlert("Se faltar pelo menos um arquivo, preencha a justificativa correspondente.");
                 submitButton.prop('disabled', false);
                 submitButton.css('cursor', 'pointer');
                 submitButton.text('Enviar Documento');
                 return;
             }
-            
+
+            if (!titulo || !contrato || !categoria || arquivos.length === 0 || !email || !competencia) {
+                showCustomAlert("Por favor, preencha todos os campos." + " Campo: " + (!titulo ? "Título" : !contrato ? "Contrato" : !categoria ? "Categoria" : !email ? "Email" : !competencia ? "Competência" : "Anexo"));
+                submitButton.prop('disabled', false);
+                submitButton.css('cursor', 'pointer');
+                submitButton.text('Enviar Documento');
+                return;
+            }
+
             // If validation passes, proceed with form submission
             let formData = new FormData();
             formData.append("titulo", titulo);
@@ -188,10 +201,23 @@
             formData.append("categoria", categoria);
             formData.append("email", email);
             formData.append("competencia", competencia);
-            
+
             Array.from(arquivos).forEach(file => {
                 formData.append("anexo", file);
             });
+
+            // Monta lista de justificativas no formato "docname|justificativa"
+            let justificativas = [];
+            $('#anexos input[type="file"]').each(function (idx) {
+                if (!(this.files && this.files.length > 0)) {
+                    // Pega o nome do documento
+                    let docname = $(this).prev('span').text().replace(':','').trim();
+                    let justificativa = $(`#justificativa_anexo${idx}`).val();
+                    justificativas.push(`${docname}|${justificativa}`);
+                }
+            });
+            
+            formData.append('justificativas', JSON.stringify(justificativas));
             
             // Submit the form using AJAX
             $.ajax({
@@ -200,26 +226,20 @@
                 data: formData,
                 processData: false, // Prevent jQuery from processing the data
                 contentType: false, // Prevent jQuery from setting the content type
-                  success: function(response) {
+                success: function(response) {
                     showCustomAlert("Documentação enviada com sucesso.");
-                    
                     // Clear the form fields
                     $("#form-upload")[0].reset();
                     $("#anexos").empty();
-                    $("#justificativa").attr("disabled", true);
-                    $("#justificativa").css("background-color", "white");
                     $("#titulo").css("background-color", "white");
                     $("#categoria").val("");
                     $("#contrato").val("");
                     $("#email").val("");
-                    $("#justificativa").val("");
                     $("#competencia").val("");
-
                     $("#make-upload").prop('disabled', false);
                     $("#make-upload").text('Enviar Documento');
                     $("#make-upload").css('cursor', 'pointer');
                 },
-                
                 error: function(error) {
                     showCustomAlert("Erro ao enviar documentação.");
                     $("#make-upload").prop('disabled', false);

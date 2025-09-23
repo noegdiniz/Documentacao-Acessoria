@@ -142,19 +142,18 @@
                     const uploadRes = await fetch("/upload_gdrive/");
                     const uploadText = await uploadRes.text();
                     if (uploadText.includes("ok")) {
-                        showCustomAlert("Upload realizado com sucesso.");
                         console.log("Upload realizado com sucesso.");
                     } else {
-                        showCustomAlert("Erro ao realizar upload: " + uploadText);
+                        console.error("Erro ao realizar upload: " + uploadText);
                     }
 
                     const integraRes = await fetch("/update_integra");
                     const integraText = await integraRes.text();
                     if (integraText.includes("ok")) {
                         // showCustomAlert("Integrações atualizadas com sucesso.");
-                        // console.log("Integrações atualizadas com sucesso.");
+                        console.log("Integrações atualizadas com sucesso.");
                     } else {
-                        showCustomAlert("Erro ao Atualizar integrações: " + integraText);
+                        console.error("Erro ao Atualizar integrações: " + integraText);
                     }
                 } catch (error) {
                     showCustomAlert("Erro inesperado: " + error.message);

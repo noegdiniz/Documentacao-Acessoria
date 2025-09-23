@@ -1,3 +1,7 @@
+window.onload = function() {
+    // modifique a escala para 80%
+    document.body.style.zoom = "90%";
+}
 
     // Function to create and show custom alert with animation
     function showCustomAlert(message) {

@@ -18,7 +18,7 @@
                         <input type="text" id="docs_precisos_input" name="docs_precisos_input" id="docs_precisos_input" placeholder="digite o nome do documento necessário e precione enter">
                         <input type="hidden" id="docs_precisos" name="docs_precisos">
 
-                        <div id="tags" style="display: flex;">
+                        <div id="tags" style="display: flex;gap:5px;flex-wrap:wrap;border:1px solid #ccc;padding:5px;border-radius:5px;min-height:40px;align-items:center;max-height: 40px;overflow-y: auto;">
                                                                                    
                         </div>
 
@@ -29,7 +29,7 @@
                 <div class="row-layout">
                     <button class="button" id="salvar" name="salvar">
                         salvar
-    
+                        
                     </button>
                 </div>
                 {%endif%}
@@ -66,6 +66,7 @@
             if (tag.trim() !== "") {
                    $("#tags").append(`<div class="tag-item" onclick="removeTag(${i})">${tag}</div>`);
             }
+
             i += 1;
         });
     }
@@ -87,15 +88,14 @@
             })
         }
     })
-
-
+    
     // Filter functionality removed
 
     $("#salvar").click(() => {
     let nome = $("#nome").val();
     let tipo_processo = $("#tipo_processo").val();
     
-    $("#docs_precisos").val(tags.join(','));
+    $("#docs_precisos").val(tags.join('&'));
     
     if(!nome || !tipo_processo || !tags.length) {
         showCustomAlert("Favor preecher todos os campos!")
@@ -126,8 +126,8 @@
                 error: function(error) {
                     showCustomAlert("Erro ao criar contrato: " + error)
                 }
-            });  
-    }
+            });
+        }
     })
 
 </script>

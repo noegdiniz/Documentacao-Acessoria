@@ -64,9 +64,23 @@
 </style>
 
 <div class="container-fluid">
+    <!-- Modal de histórico -->
+    <div id="historicoModal" class="modal">
+        <div class="modal-content">
+            <div class="close-btn-container">
+                <span class="close-btn" id="closeHistoricoModal">&times;</span>
+            </div>
+            <h2>Histórico do Documento</h2>
+            <div id="historicoContent"></div>
+        </div>
+    </div>
+    <div style="margin-bottom:10px;">
+        <button id="deleteSelectedDocs" class="button btn-danger">Deletar Selecionados</button>
+    </div>
     <table id="docsTable" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
         <thead>
             <tr>
+                <th><input type="checkbox" id="selectAllDocs"></th>
                 <th>Versão</th>
                 <th>Título</th>
                 <th>Contrato</th>
@@ -82,6 +96,7 @@
             {%for emp in docs_emp%}
             {%for doc in emp[1]%}
             <tr>
+                <td><input type="checkbox" class="selectDoc" value="{{doc._id}}"></td>
                 <td><input type="text" id="versao{{doc._id}}" name="versao" value="{{doc.versao}}" class="key-input" disabled></td>
                 <td><input type="text" id="titulo{{doc._id}}" name="titulo" value="{{doc.titulo}}" class="key-input" disabled></td>
                 <td><input type="text" id="contrato{{doc._id}}" name="contrato" value="{{doc.contrato_nome}}" class="key-input" disabled></td>
@@ -107,7 +122,7 @@
                     {%if doc.uploaded%}
                     <input type="text" id="upload{{doc._id}}" name="upload" value="COMPLETO" class="key-input" disabled>
                     {%else%}
-                    <input type="text" id="upload{{doc._id}}" name="upload" value="PENDENTE" class="key-input" disabled style="background-color: red;color: white;">
+                    <input type="text" id="upload{{doc._id}}" name="upload" value="AGUARDANDO" class="key-input" disabled style="background-color: red;color: white;">
                     {%endif%}
                 </td>
                 <td class="text-nowrap">
@@ -117,11 +132,7 @@
                     </button>
                     {%endif%}
 
-                    {%if permissao.can_delete_docs%}
-                    <button id="delete{{doc._id}}" name="delete{{doc._id}}" class="button">
-                        DELETAR
-                    </button>
-                    {%endif%}
+                    <!-- Botão deletar individual removido -->
                     <button id="viewAnexos{{doc._id}}" class="button">ANEXOS</button>
                     
                     <!-- Approval Modal -->
@@ -148,6 +159,7 @@
                                             <input type="text" id="perfil{{aprovacao._id}}" name="perfil" 
                                                 value="{{aprovacao.perfil_nome}}" class="key-input" disabled>
                                         </td>
+
                                         <td>
                                             <div id="status-apr{{aprovacao._id}}" class="status-btn">
                                                 {%if aprovacao.status == "AGUARDANDO" or aprovacao.status == "INATIVO"%}
@@ -165,6 +177,7 @@
                                                 {% endif %}
                                             </div>
                                         </td>
+                                        
                                         <td>
                                             <input type="text" id="data{{aprovacao._id}}" name="data" 
                                                 value="{{aprovacao.data}}" class="key-input" disabled>
@@ -180,7 +193,7 @@
                                         </td>
                                         <td>
                                             {% if aprovacao.status == "AGUARDANDO" %}
-                                                {% if session["perfil"] in aprovacao.perfil_nome%}
+                                                {% if session["perfil"] == aprovacao.perfil_nome%}
                                                 <div id="buttons-aprovacao{{aprovacao._id}}" class="action-buttons">
                                                     <button id="aprovar{{aprovacao._id}}" name="aprovar" class="button">
                                                         APROVAR
@@ -209,11 +222,16 @@
                             {% for anexo in doc.anexos %}
                             <div class="key-box row-layout">
                                 {% if anexo.link %}
-                                <a href="{{anexo.link}}" target="_blank">TAMANHO: {{anexo.tamanho}} - {{anexo.filename}}</a>
+                                <a href="{{anexo.link}}" target="_blank">hash: {{anexo.hash}} - {{anexo.filename}}</a>
                                 {% else %}
-                                <a href="/download/{{anexo._id}}" target="_blank">TAMANHO: {{anexo.tamanho}} - {{anexo.filename}}</a>
+                                    {% if anexo.hash %}
+                                        <a href="/download/{{anexo._id}}" target="_blank">hash: {{anexo.hash}} - {{anexo.filename}}</a>
+                                    {% else %}
+                                        <span>Documento faltante: {{anexo.filename}}</span>
+                                    {% endif %}
+                                    
                                 {% endif %}
-        
+                                
                                 {%if anexo.corrigido%}
                                 <span> - CORRIGIDO</span>
                                 {%endif%}
@@ -292,6 +310,7 @@ $(document).ready(function() {
                         }
                     }
                 },
+                
                 title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR'),
                 customize: function(doc) {
                     doc.defaultStyle.fontSize = 8;
@@ -300,9 +319,10 @@ $(document).ready(function() {
                 }
             }
         ],
+        
         columnDefs: [
             { orderable: false, targets: 8 }, // Disable sorting on action buttons column
-            { 
+            {
                 targets: '_all',
                 searchable: true,
                 render: function(data, type, row) {
@@ -314,6 +334,7 @@ $(document).ready(function() {
                 }
             }
         ],
+        
         drawCallback: function(settings) {
             bindEventHandlers();
             // Adjust column widths after draw
@@ -335,246 +356,252 @@ $(document).ready(function() {
 
     // Bind event handlers
     function bindEventHandlers() {
-        // Status click handlers
-        $(".status-btn input[id^='status']").each(function() {
-            var docId = $(this).attr('id').replace('status', '');
-            $(this).off('click').on('click', function() {
-                $("#approvalModal" + docId).css('display', 'flex');
-                // Initialize DataTable for this modal if not already initialized
-                if (!$.fn.DataTable.isDataTable('#approvalsTable' + docId)) {
-                    $('#approvalsTable' + docId).DataTable({
-                        language: {
-                            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json',
-                        },
-
-                        pageLength: 5,
-                        ordering: true,
-                        order: [[2, "desc"]],
-                        responsive: true,
-                        dom: 'rt',
-                        info: false,
-                        searching: false,
-                        paging: false,
-                        columnDefs: [
-
-                            { orderable: false, targets: 4 },
-                            { 
-                                targets: '_all',
-                                searchable: false,
-                                render: function(data, type, row) {
-                                    if (type === 'display') {
-                                        return data;
-                                    }
-                                    // Extract text from input fields for searching
-                                    return $(data).val() || data;
-                                }
-                            }
-                        ],
-
-                        autoWidth: false,
-                        columns: [
-                            { width: "20%" },
-                            { width: "15%" },
-                            { width: "20%" },
-                            { width: "30%" },
-                            { width: "15%" }
-                        ],
-                        
-                        drawCallback: function(settings) {
-                            bindEventAprovalsHandlers();
-                            // Adjust column widths after draw
-                            this.api().columns.adjust();
-                        },
-
-                        initComplete: function() {
-                            var modalId = docId;
-                        }
-                    });
-                }
-            });
+        // Selecionar todos
+        $('#selectAllDocs').off('change').on('change', function() {
+            $('.selectDoc').prop('checked', this.checked);
         });
-        
-        // History button handlers
-        $("button[id^='historico']").each(function() {
-            var docId = $(this).attr('id').replace('historico', '');
-            $(this).off('click').on('click', function() {
-                var url = "/filter_docs/" + docId + "/hist," + $("#titulo" + docId).val();
-                
-                fetch(url)
-                    .then(function(response) { return response.text(); })
-                    .then(function(text) {
-                        $("#box-docs").html(text);
-                        $("#upload").val('HISTORICO - ' + $("#titulo" + docId).val());
-                    });
-            });
-        });
-        
-        // Delete button handlers
-        $("button[id^='delete']").each(function() {
-            var docId = $(this).attr('id').replace('delete', '');
-            $(this).off('click').on('click', function() {
-                if (!confirm('Tem certeza que deseja excluir este documento?')) {
-                    return;
-                }
-                
-                var url = "/exclui_documento/" + docId;
-                
-                fetch(url)
-                    .then(function(response) { return response.text(); })
-                    .then(function(text) {
-                        if (text.includes("ok")) {
-                            showCustomAlert("Cadastro excluido com sucesso.");
-                            
-                            var content = encodeURIComponent($("#content").val());
-                            var sel = $("#selected").val();
-                            
-                            if (sel) {
-                                var refreshUrl = content ? 
-                                    "/filter_docs/" + sel + "/" + content : 
-                                    "/filter_docs/" + sel;
-                                
-                                fetch(refreshUrl)
-                                    .then(function(response) { return response.text(); })
-                                    .then(function(text) {
-                                        setTimeout(function() {
-                                            $("#box-docs").html(text);
-                                        }, 100);
-                                    });
-                            }
-                        } else {
-                            showCustomAlert("Erro ao realizar exclusão: " + text);
-                        }
-                    });
-            });
-        });
-        
-        // View Anexos button handlers
-        $("button[id^='viewAnexos']").each(function() {
-            var docId = $(this).attr('id').replace('viewAnexos', '');
-            $(this).off('click').on('click', function() {
-                $("#anexosModal" + docId).css('display', 'flex');
-            });
-        });
-        
-        function bindEventAprovalsHandlers() {
 
-            // Approval handlers
-            $("button[id^='aprovar']").each(function() {
-                var aprovacaoId = $(this).attr('id').replace('aprovar', '');
-                $(this).off('click').on('click', function() {
-                    const button = $(this);
-                    const buttonContainer = button.closest('.action-buttons');
-                    
-                    // Disable both buttons during the operation
-                    buttonContainer.find('button').prop('disabled', true);
-                    button.text('Processando...');
-    
-                    var obs = $("#obs" + aprovacaoId).val() || "Aprovado";
-                    var url = "/update_status/" + aprovacaoId + "/APROVADO/" + obs;
-    
-                    fetch(url)
-                        .then(function(response) {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.text();
-                        })
-                        .then(function(text) {
-                            if (text.includes("ok")) {
-                                showCustomAlert("Operação realizada com sucesso.");
-                                updateApprovalUI(aprovacaoId, 'APROVADO', 'darkgreen');
-                            } else {
-                                throw new Error(text);
-                            }
-                        })
-                        .catch(function(error) {
-                            showCustomAlert("Erro ao realizar aprovação: " + error.message);
-                            // Re-enable buttons on error
-                            buttonContainer.find('button').prop('disabled', false);
-                            button.text('APROVAR');
+        // Botão deletar selecionados
+        $('#deleteSelectedDocs').off('click').on('click', function() {
+            const selected = $('.selectDoc:checked').map(function(){ return $(this).val(); }).get();
+            if (selected.length === 0) {
+                showCustomAlert('Selecione ao menos um documento para deletar.');
+                return;
+            }
+            if (!confirm('Tem certeza que deseja excluir os documentos selecionados?')) return;
+            // Requisição para deletar múltiplos documentos
+            fetch(`/exclui_documentos?ids=${selected.join(',')}`)
+                .then(r => r.text())
+                .then(text => {
+                    if (text.includes('ok')) {
+                        // Remove as linhas da DataTable sem reload
+                        selected.forEach(function(id) {
+                            const row = $(".selectDoc[value='"+id+"']").closest('tr');
+                            table.row(row).remove().draw(false);
                         });
-                });
-            });
-    
-            $("button[id^='reprovar']").each(function() {
-                var aprovacaoId = $(this).attr('id').replace('reprovar', '');
-    
-                $(this).off('click').on('click', function() {
-                    const button = $(this);
-                    const buttonContainer = button.closest('.action-buttons');
-                    
-                    var obs = $("#obs" + aprovacaoId).val();
-                    
-                    if (!obs) {
-                        showCustomAlert("Preencha o campo de observação.");
-                        $("#obs" + aprovacaoId).css('background-color', 'red');
-                        return;
+                        showCustomAlert(`${selected.length} documento(s) excluído(s) com sucesso.`);
+                    } else {
+                        showCustomAlert('Erro ao excluir: ' + text);
                     }
-    
-                    // Disable both buttons during the operation
-                    buttonContainer.find('button').prop('disabled', true);
-                    button.text('Processando...');
-    
-                    var url = "/update_status/" + aprovacaoId + "/NAO APROVADO/" + obs;
-    
-                    fetch(url)
-                        .then(function(response) {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.text();
-                        })
-                        .then(function(text) {
-                            if (text.includes("ok")) {
-                                showCustomAlert("Operação realizada com sucesso.");
-                                updateApprovalUI(aprovacaoId, 'NAO APROVADO', 'darkred');
-                            } else {
-                                throw new Error(text);
-                            }
-                        })
-                        .catch(function(error) {
-                            showCustomAlert("Erro ao realizar reprovação: " + error.message);
-                            // Re-enable buttons on error
-                            buttonContainer.find('button').prop('disabled', false);
-                            button.text('NÃO APROVAR');
-                        });
                 });
-            });
-        }
-        
-
-        // Modal close handlers
-        $(".close-btn").off('click').on('click', function() {
-            $(this).closest('.modal').hide();
         });
+        // Status click handler (delegated)
+        $('#docsTable tbody').on('click', ".status-btn input[id^='status']", function() {
+            const docId = $(this).attr('id').replace('status', '');
+            const modal = $("#approvalModal" + docId);
+            modal.css('display', 'flex');
+            // Only initialize once using modal data flag
+            if (!modal.data('initialized')) {
+                $('#approvalsTable' + docId).DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json' },
+                    pageLength: 5,
+                    ordering: true,
+                    order: [[2, "desc"]],
+                    responsive: true,
+                    dom: 'rt',
+                    info: false,
+                    searching: false,
+                    paging: false,
+                    columnDefs: [
+                        { orderable: false, targets: 4 },
+                        { targets: '_all', searchable: false, render: (data, type, row) => type === 'display' ? data : $(data).val() || data }
+                    ],
+                    autoWidth: false,
+                    columns: [
+                        { width: "20%" },
+                        { width: "15%" },
+                        { width: "20%" },
+                        { width: "30%" },
+                        { width: "15%" }
+                    ]
+                });
+                modal.data('initialized', true);
+            }
+        });
+        
+        // History button handler: abre modal e mostra histórico ordenado
+        $('#docsTable tbody').on('click', 'button', function(e) {
+            const btn = $(this);
+            const idMatch = btn.attr('id').match(/([a-zA-Z]+)(\w+)/);
+            if (!idMatch) return;
+            const [_, action, docId] = idMatch;
 
-        $(window).off('click').on('click', function(event) {
-            if ($(event.target).hasClass('modal')) {
-                $(event.target).hide();
+            if (action === 'historico') {
+                // Busca histórico via AJAX
+                fetch(`/filter_docs/${docId}/hist,${$("#titulo" + docId).val()}`)
+                    .then(r => r.json())
+                    .then(histList => {
+                        let html = '';
+                        if (!Array.isArray(histList) || histList.length === 0) {
+                            html = '<table class="table"><thead><tr><th>Versão</th><th>Título</th><th>Data</th><th>Status</th></tr></thead><tbody>';
+                            html += '<tr><td colspan="4">Nenhum histórico encontrado.</td></tr>';
+                            html += '</tbody></table>';
+                        } else {
+                            histList.sort((a, b) => (b.versao > a.versao ? 1 : -1));
+                            html = '<table class="table"><thead><tr><th>Versão</th><th>Título</th><th>Data</th><th>Status</th></tr></thead><tbody>';
+                            let hasRow = false;
+                            histList.forEach(hist => {
+                                if(hist && hist.versao && hist.titulo && hist.data && hist.status) {
+                                    html += `<tr><td>${hist.versao}</td><td>${hist.titulo}</td><td>${hist.data}</td><td>${hist.status}</td></tr>`;
+                                    hasRow = true;
+                                }
+                            });
+                            if (!hasRow) {
+                                html += '<tr><td colspan="4">Nenhum histórico encontrado.</td></tr>';
+                            }
+                            html += '</tbody></table>';
+                        }
+                        $('#historicoContent').html(html || '<div>Nenhum histórico encontrado.</div>');
+                        $('#historicoModal').css('display', 'flex');
+                    });
+            }
+
+            // Não permite deletar históricos
+            else if (action === 'viewAnexos') {
+                $("#anexosModal" + docId).css('display', 'flex');
             }
         });
 
-        // Observation field handlers
-        $("input[id^='obs']").each(function() {
-            $(this).off('click').on('click', function() {
-                $(this).css('background-color', 'white');
-            });
+        // Status click handler (delegated)
+        $('#docsTable tbody').on('click', ".status-btn input[id^='status']", function() {
+            const docId = $(this).attr('id').replace('status', '');
+            const modal = $("#approvalModal" + docId);
+            modal.css('display', 'flex');
+            // Only initialize once
+            if (!modal.data('initialized')) {
+                $('#approvalsTable' + docId).DataTable({
+                    language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json' },
+                    pageLength: 5,
+                    ordering: true,
+                    order: [[2, "desc"]],
+                    responsive: true,
+                    dom: 'rt',
+                    info: false,
+                    searching: false,
+                    paging: false,
+                    columnDefs: [
+                        { orderable: false, targets: 4 },
+                        { targets: '_all', searchable: false, render: (data, type, row) => type === 'display' ? data : $(data).val() || data }
+                    ],
+                    autoWidth: false,
+                    columns: [
+                        { width: "20%" },
+                        { width: "15%" },
+                        { width: "20%" },
+                        { width: "30%" },
+                        { width: "15%" }
+                    ]
+                });
+                modal.data('initialized', true);
+            }
         });
-    }
-    
-    // Helper function to update approval UI
-    function updateApprovalUI(aprovacaoId, status, color) {
-        var statusHtml = '<input style="background-color: ' + color + '; color: white;cursor: default;" type="text" id="status" name="status" value="' + status + '" class="key-input" disabled>';
-        $("#status-apr" + aprovacaoId).find('input').css('background-color', color).val(status);
-        $("#obs" + aprovacaoId).prop('disabled', true);
-        $("#buttons-aprovacao" + aprovacaoId).hide();
-        // Refresh the main table's status cell
-        var docId = $("#status-apr" + aprovacaoId).closest('.modal').attr('id').replace('approvalModal', '');
-        $("#status" + docId).find('input').css('background-color', color).val(status);
-    }
-    
-    // Initial binding
-    bindEventHandlers();
-});
 
-</script>
+        // Approval modal actions (delegated)
+        $(document).on('click', "button[id^='aprovar'],button[id^='reprovar']", function() {
+            const btn = $(this);
+            const aprovacaoId = btn.attr('id').replace(/(aprovar|reprovar)/, '');
+            const isAprovar = btn.attr('id').startsWith('aprovar');
+            const buttonContainer = btn.closest('.action-buttons');
+            buttonContainer.find('button').prop('disabled', true);
+            btn.text('Processando...');
+            let obs = $("#obs" + aprovacaoId).val();
+            if (!isAprovar && !obs) {
+                showCustomAlert("Preencha o campo de observação.");
+                $("#obs" + aprovacaoId).css('background-color', 'red');
+                buttonContainer.find('button').prop('disabled', false);
+                btn.text('NÃO APROVAR');
+                return;
+            }
+
+            if (isAprovar && !obs) obs = "Aprovado";
+            const status = isAprovar ? "APROVADO" : "NAO APROVADO";
+            fetch(`/update_status/${aprovacaoId}/${status}/${obs}`)
+                .then(r => {
+                    if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                    return r.text();
+                })
+
+                .then(text => {
+                    if (text.includes("ok")) {
+                        showCustomAlert("Operação realizada com sucesso.");
+                        updateApprovalUI(aprovacaoId, status, isAprovar ? 'darkgreen' : 'darkred');
+                    } else {
+                        throw new Error(text);
+                    }
+                })
+                .catch(error => {
+                    showCustomAlert("Erro ao realizar aprovação: " + error.message);
+                    buttonContainer.find('button').prop('disabled', false);
+                    btn.text(isAprovar ? 'APROVAR' : 'NÃO APROVAR');
+                });
+        });
+        
+        // Modal close (delegated)
+        $(document).on('click', '.close-btn', function() {
+        $('#closeHistoricoModal').on('click', function() {
+            $('#historicoModal').hide();
+        });
+            $(this).closest('.modal').hide();
+        });
+        $(window).on('click', function(event) {
+            if ($(event.target).hasClass('modal')) $(event.target).hide();
+        });
+
+        // Observation field feedback
+        $(document).on('click', "input[id^='obs']", function() {
+            $(this).css('background-color', 'white');
+        });
+
+        buttons: [
+            {
+                extend: 'excel',
+                className: 'btn btn-success',
+                text: '<i class="fa fa-file-excel"></i> Excel',
+                exportOptions: {
+                    columns: [1,2,3,4,5,6,7,8],
+                    rows: function(idx, data, node) {
+                        return $(node).find('.selectDoc').prop('checked');
+                    },
+                    format: {
+                        body: function (data, row, column, node) {
+                            if ($(data).is("input")) {
+                                return $(data).val();
+                            } else {
+                                return $(data).children('input').val();
+                            }
+                            return data;
+                        }
+                    }
+                },
+                title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR')
+            },
+            {
+                extend: 'pdf',
+                className: 'btn btn-danger',
+                text: '<i class="fa fa-file-pdf"></i> PDF',
+                exportOptions: {
+                    columns: [1,2,3,4,5,6,7,8],
+                    rows: function(idx, data, node) {
+                        return $(node).find('.selectDoc').prop('checked');
+                    },
+                    format: {
+                        body: function (data, row, column, node) {
+                            if ($(data).is("input")) {
+                                return $(data).val();
+                            } else {
+                                return $(data).children('input').val();
+                            }
+                            return data;
+                        }
+                    }
+                },
+                title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR'),
+                customize: function(doc) {
+                    doc.defaultStyle.fontSize = 8;
+                    doc.styles.tableHeader.fontSize = 9;
+                    doc.content[1].table.widths = ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'];
+                }
+            }
+        ]
+    }
+})
