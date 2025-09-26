@@ -1,5 +1,4 @@
 <style>
-
 .modal {
     display: none;
     position: fixed;
@@ -92,6 +91,7 @@
                 <th>Ações</th>
             </tr>
         </thead>
+
         <tbody>
             {%for emp in docs_emp%}
             {%for doc in emp[1]%}
@@ -122,7 +122,7 @@
                     {%if doc.uploaded%}
                     <input type="text" id="upload{{doc._id}}" name="upload" value="COMPLETO" class="key-input" disabled>
                     {%else%}
-                    <input type="text" id="upload{{doc._id}}" name="upload" value="AGUARDANDO" class="key-input" disabled style="background-color: red;color: white;">
+                    <input type="text" id="upload{{doc._id}}" name="upload" value="PENDENTE" class="key-input" disabled style="background-color: red;color: white;">
                     {%endif%}
                 </td>
                 <td class="text-nowrap">
@@ -182,6 +182,7 @@
                                             <input type="text" id="data{{aprovacao._id}}" name="data" 
                                                 value="{{aprovacao.data}}" class="key-input" disabled>
                                         </td>
+
                                         <td>
                                             {% if session["perfil"] in aprovacao.perfil_nome and aprovacao.status == "AGUARDANDO"%}
                                             <input type="text" id="obs{{aprovacao._id}}" name="obs" 
@@ -198,6 +199,7 @@
                                                     <button id="aprovar{{aprovacao._id}}" name="aprovar" class="button">
                                                         APROVAR
                                                     </button>
+                                                    
                                                     <button id="reprovar{{aprovacao._id}}" name="reprovar" class="button">
                                                         NÃO APROVAR
                                                     </button>
@@ -255,18 +257,8 @@ $(document).ready(function() {
     var table = $('#docsTable').DataTable({
         language: {
             url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json',
-            searchPlaceholder: "Buscar documentos...",
-            buttons: {
-                colvis: 'Colunas',
-                excel: 'Exportar Excel',
-                pdf: 'Exportar PDF'
-            }
+            searchPlaceholder: "Buscar documentos..."
         },
-        pageLength: 10,
-        ordering: true,
-        order: [[4, "desc"]], // Order by date column descending
-        responsive: true,
-        dom: '<"top"<"row"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
         buttons: [
             {
                 extend: 'excel',
@@ -274,43 +266,42 @@ $(document).ready(function() {
                 text: '<i class="fa fa-file-excel"></i> Excel',
                 exportOptions: {
                     columns: [0,1,2,3,4,5,6],
+                    rows: function(idx, data, node) {
+                        return $(node).find('.selectDoc').prop('checked');
+                    },
                     format: {
                         body: function (data, row, column, node) {
-                            // Extract value from input fields
                             if ($(data).is("input")) {
                                 return $(data).val();
                             } else {
                                 return $(data).children('input').val();
                             }
-                            
                             return data;
                         }
                     }
                 },
-
                 title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR')
             },
-            
             {
                 extend: 'pdf',
                 className: 'btn btn-danger',
                 text: '<i class="fa fa-file-pdf"></i> PDF',
                 exportOptions: {
                     columns: [0,1,2,3,4,5,6],
+                    rows: function(idx, data, node) {
+                        return $(node).find('.selectDoc').prop('checked');
+                    },
                     format: {
                         body: function (data, row, column, node) {
-                            // Extract value from input fields
                             if ($(data).is("input")) {
                                 return $(data).val();
                             } else {
                                 return $(data).children('input').val();
                             }
-                            
                             return data;
                         }
                     }
                 },
-                
                 title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR'),
                 customize: function(doc) {
                     doc.defaultStyle.fontSize = 8;
@@ -427,32 +418,12 @@ $(document).ready(function() {
             const [_, action, docId] = idMatch;
 
             if (action === 'historico') {
-                // Busca histórico via AJAX
+                // Busca histórico via AJAX e injeta no box-docs
                 fetch(`/filter_docs/${docId}/hist,${$("#titulo" + docId).val()}`)
-                    .then(r => r.json())
-                    .then(histList => {
-                        let html = '';
-                        if (!Array.isArray(histList) || histList.length === 0) {
-                            html = '<table class="table"><thead><tr><th>Versão</th><th>Título</th><th>Data</th><th>Status</th></tr></thead><tbody>';
-                            html += '<tr><td colspan="4">Nenhum histórico encontrado.</td></tr>';
-                            html += '</tbody></table>';
-                        } else {
-                            histList.sort((a, b) => (b.versao > a.versao ? 1 : -1));
-                            html = '<table class="table"><thead><tr><th>Versão</th><th>Título</th><th>Data</th><th>Status</th></tr></thead><tbody>';
-                            let hasRow = false;
-                            histList.forEach(hist => {
-                                if(hist && hist.versao && hist.titulo && hist.data && hist.status) {
-                                    html += `<tr><td>${hist.versao}</td><td>${hist.titulo}</td><td>${hist.data}</td><td>${hist.status}</td></tr>`;
-                                    hasRow = true;
-                                }
-                            });
-                            if (!hasRow) {
-                                html += '<tr><td colspan="4">Nenhum histórico encontrado.</td></tr>';
-                            }
-                            html += '</tbody></table>';
-                        }
-                        $('#historicoContent').html(html || '<div>Nenhum histórico encontrado.</div>');
-                        $('#historicoModal').css('display', 'flex');
+                    .then(r => r.text())
+                    .then(text => {
+                        $("#box-docs").html(text);
+                        $("#upload").val('HISTORICO - ' + $("#titulo" + docId).val());
                     });
             }
 
@@ -595,6 +566,7 @@ $(document).ready(function() {
                         }
                     }
                 },
+                
                 title: 'Documentos_Export_' + new Date().toLocaleDateString('pt-BR'),
                 customize: function(doc) {
                     doc.defaultStyle.fontSize = 8;

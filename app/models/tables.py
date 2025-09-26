@@ -240,14 +240,14 @@ class Perfil(db.Model):
     can_create_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
     can_edit_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
     can_delete_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
-    can_update_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
     can_view_tipo_processo = db.Column(db.Boolean, nullable=False, default=False)
     
     # Permissoes de Funcionarios
     can_edit_funcionarios = db.Column(db.Boolean, nullable=False, default=False)
     can_delete_funcionarios = db.Column(db.Boolean, nullable=False, default=False)
-    
+    can_view_funcionarios = db.Column(db.Boolean, nullable=False, default=False)
 
+# Log de ações do sistema
 class Log(db.Model):
     _id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     menu = db.Column(db.String, nullable=False)

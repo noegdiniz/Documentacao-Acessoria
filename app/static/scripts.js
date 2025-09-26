@@ -1,6 +1,6 @@
 window.onload = function() {
     // modifique a escala para 80%
-    document.body.style.zoom = "90%";
+    document.body.style.zoom = "85%";
 }
 
     // Function to create and show custom alert with animation
@@ -36,7 +36,7 @@ window.onload = function() {
                 align-items: center;
                 animation: fadeIn 0.5s ease; /* Fade-in animation */
             }
-
+            
             .custom-alert-content {
                 background-color:#fff;
                 border-radius: 10px;

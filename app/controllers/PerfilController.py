@@ -41,7 +41,7 @@ class PerfilController:
         if perfil.can_view_dados != (form.get("view-dados") == '1'):
             perfil.can_view_dados = form.get("view-dados") == '1'
             modified_permissions.append(f"view-dados: {perfil.can_view_dados}")
-
+        
         # Update and track changes for contratos
         if perfil.can_create_contratos != (form.get("criar-contrato") == '1'):
             perfil.can_create_contratos = form.get("criar-contrato") == '1'
@@ -149,15 +149,23 @@ class PerfilController:
             perfil.can_delete_tipo_processo = form.get("delete-tipo-processo") == '1'
             modified_permissions.append(f"delete-tipo-processo: {perfil.can_delete_tipo_processo}")
 
-        if perfil.can_update_tipo_processo != (form.get("update-tipo-processo") == '1'):
-            perfil.can_update_tipo_processo = form.get("update-tipo-processo") == '1'
-            modified_permissions.append(f"update-tipo-processo: {perfil.can_update_tipo_processo}")
-        
         if perfil.can_view_tipo_processo != (form.get("view-tipo-processo") == '1'):
             perfil.can_view_tipo_processo = form.get("view-tipo-processo") == '1'
             modified_permissions.append(f"view-tipo-processo: {perfil.can_view_tipo_processo}")
         
+        # Updadte and track changes for funcionarios
+        if perfil.can_edit_funcionarios != (form.get("edit-funcionarios") == '1'):
+            perfil.can_edit_funcionarios = form.get("edit-funcionarios") == '1'
+            modified_permissions.append(f"edit-funcionarios: {perfil.can_edit_funcionarios}")
+        
+        if perfil.can_delete_funcionarios != (form.get("delete-funcionarios") == '1'):
+            perfil.can_delete_funcionarios = form.get("delete-funcionarios") == '1'
+            modified_permissions.append(f"delete-funcionarios: {perfil.can_delete_funcionarios}")
 
+        if perfil.can_view_funcionarios != (form.get("view-funcionarios") == '1'):
+            perfil.can_view_funcionarios = form.get("view-funcionarios") == '1'
+            modified_permissions.append(f"view-funcionarios: {perfil.can_view_funcionarios}")
+        
         # Save the log with only modified permissions
         if modified_permissions:
             db.session.commit()

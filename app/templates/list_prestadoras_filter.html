@@ -4,7 +4,7 @@
         <!-- Nome da empresa -->
         {{doc_emp[0]}}
     </button>
-
+        
     <script>
         $("#empresa-{{doc_emp[1][0].empresa_id}}").click(() => {
             $("#selected").val("{{doc_emp[1][0].empresa_id}}");
@@ -16,7 +16,7 @@
                     $("#box-docs").html(text);
                 });
             });
-        });                            
+        });
     </script>
 
 {%endfor%}

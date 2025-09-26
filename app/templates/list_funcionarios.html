@@ -1,7 +1,7 @@
 <div class="container-fluid">
     <div style="margin-bottom:10px;">
             {%if permissao.can_delete_funcionarios%}                
-            <button class="button btn btn-danger" id="excluir-selecionados">Excluir Selecionados</button>
+                <button class="button btn btn-danger" id="excluir-selecionados">Excluir Selecionados</button>
             {%endif%}
 
             {%if permissao %}
@@ -52,7 +52,7 @@
                         <button class="button btn btn-primary" id="alterar-{{funcionario._id}}" name="alterar">Alterar</button>
                         {%endif%}
                     {%endif%}
-
+                    
                     <!-- Modal -->
                     <div id="menuModal{{funcionario._id}}" class="modal">
                         <div class="modal-content">
@@ -75,7 +75,7 @@
                             <div class="documentos-list" id="documentos-list-{{funcionario._id}}">
                                 <span>Carregando documentos...</span>
                             </div>
-                            
+
                             <form class="documentos-form" data-funcionario="{{funcionario._id}}" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:10px;">
                                 <!-- Campos de upload serão inseridos dinamicamente -->
                                  {% if not permissao %}
@@ -326,7 +326,7 @@ $(document).ready(function() {
             if (!row.find('.inline-status').length) {
                 const statusVal = "{{funcionario.status_funcionario[-1].status_contratual}}";
                 const empresaId = "{{funcionario.status_funcionario[-1].empresa_id}}";
-                const statusSelect = `<select class='inline-status'><option value='ativo' ${statusVal=='ativo'?'selected':''}>ativo</option><option value='inativo' ${statusVal=='inativo'?'selected':''}>inativo</option></select>`;
+                const statusSelect = `<select class='inline-status'><option value='ativo' ${statusVal=='ativo'?'selected':''}>ativo</option><option value='INATIVO' ${statusVal=='INATIVO'?'selected':''}>INATIVO</option></select>`;
                 const empresaSelect = `<select class='inline-empresa'>` +
                     `<option value='{{funcionario.status_funcionario[-1].empresa_id}}'>{{funcionario.status_funcionario[-1].empresa_nome}}</option>` +
                     `</select>`;
@@ -506,68 +506,3 @@ $(document).ready(function() {
     bindEventHandlers();
 });
 </script>
-
-<style>
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1050;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: #fefefe;
-    padding: 20px;
-    border-radius: 5px;
-    max-width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-}
-
-.close-btn-container {
-    text-align: right;
-    position: sticky;
-    top: 0;
-    background: #fefefe;
-    z-index: 1;
-}
-
-.close-btn {
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-btn:hover {
-    color: #000;
-}
-
-/* Responsive adjustments */
-@media screen and (max-width: 768px) {
-    .modal-content {
-        width: 95%;
-        margin: 10px;
-        padding: 15px;
-    }
-
-    .action-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .button {
-        width: 100%;
-        margin: 2px 0;
-    }
-}
-
-</style>

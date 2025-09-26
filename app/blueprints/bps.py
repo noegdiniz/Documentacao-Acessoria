@@ -37,7 +37,6 @@ from flask import jsonify
 
 bp_app = Blueprint("bp", __name__)
 
-
 def init_session_security(app):
     """Configure secure session settings"""
     app.config.update(
@@ -142,6 +141,7 @@ def get_user_info():
         "refresh_token": client.refresh_token,
         "expires_in": client.expires_in
     }
+    
     userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
     uri, headers, body = client.add_token(userinfo_endpoint)
     userinfo_response = requests.get(uri, headers=headers, data=body)
@@ -161,7 +161,8 @@ def get_user_info():
 @bp_app.route("/create_user/<_id>/<email>/<nome>/<icon>", methods=["GET"])
 def create_user(_id, email, nome, icon):
     try:
-        if user := UserController.get(_id):
+        user = UserController.get(_id)
+        if user:
             session.permanent = True
             session["id"] = user._id
             session["nome"] = user.nome
@@ -324,7 +325,6 @@ def auth_prestadora():
         if not empresa:
             print(empresa)
             return "Erro: Empresa não encontrada ou chave inválida"
-        
         
         session.permanent = True
         session["chave_empresa"] = chave
@@ -951,10 +951,11 @@ def export_integracoes_pdf():
     integracoes = IntegraController.get_integracoes_pdf(dt_inicio, dt_fim, empresa_id, unidade_integracao)
     empresa_nome = EmpresaController.get(_id=empresa_id).nome if empresa_id else "Todas"
 
-    # Generate PDF
+    # Gerar PDF horizontal (landscape)
+    from reportlab.lib.pagesizes import landscape
     buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
+    pdf = canvas.Canvas(buffer, pagesize=landscape(A4))
+    width, height = landscape(A4)
 
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(30, height - 40, f"Relatório de Integrações")
@@ -962,35 +963,41 @@ def export_integracoes_pdf():
     pdf.drawString(30, height - 65, f"Empresa: {empresa_nome}")
     if dt_inicio and dt_fim:
         pdf.drawString(30, height - 85, f"Período: {dt_inicio.strftime('%d/%m/%Y')} a {dt_fim.strftime('%d/%m/%Y')}")
+    
     pdf.line(30, height - 95, width - 30, height - 95)
 
-    # Table header
+    # Cabeçalho da tabela
     y = height - 120
     pdf.setFont("Helvetica-Bold", 10)
     pdf.drawString(30, y, "Nome")
-    pdf.drawString(130, y, "Empresa")
-    pdf.drawString(230, y, "Função")
-    pdf.drawString(330, y, "Setor")
-    pdf.drawString(430, y, "Data Integração")
-    pdf.drawString(530, y, "Contrato")
-    
-    y -= 15
+    pdf.drawString(180, y, "Empresa")
+    pdf.drawString(330, y, "Função")
+    pdf.drawString(480, y, "Setor")
+    pdf.drawString(630, y, "Data Integração")
+
+    y -= 18
     pdf.setFont("Helvetica", 10)
 
-    # Table rows
+    # Linhas da tabela
     for integra in integracoes:
+        empresa_nome = integra.get("empresa_nome", "")
+        # Se empresa_nome estiver vazio, tenta buscar pelo empresa_id
+        print(empresa_nome)
+        
         pdf.drawString(30, y, str(integra.get("nome", "")))
-        pdf.drawString(130, y, str(integra.get("empresa_nome", "")))
-        pdf.drawString(230, y, str(integra.get("funcao", "")))
-        pdf.drawString(330, y, str(integra.get("setor", "")))
-        pdf.drawString(430, y, str(integra.get("data_integracao", "")))
-        pdf.drawString(530, y, str(integra.get("contrato", "")))
-        y -= 15
+        pdf.drawString(180, y, str(empresa_nome))
+        pdf.drawString(330, y, str(integra.get("funcao", "")))
+        pdf.drawString(480, y, str(integra.get("setor", "")))
+        # Data de integração isolada, espaçamento maior
+        pdf.setFont("Helvetica-Bold", 10)
+        pdf.drawString(630, y, str(integra.get("data_integracao", "")))
+        pdf.setFont("Helvetica", 10)
+        y -= 22
         if y < 100:
             pdf.showPage()
             y = height - 40
 
-    # Signature fields
+    # Campos de assinatura
     y -= 40
     pdf.setFont("Helvetica-Bold", 12)
     pdf.drawString(30, y, "Assinaturas dos Departamentos:")
@@ -1080,8 +1087,6 @@ def export_funcionarios_excel():
 def upload_documentos_funcionario():
     files = request.files
     funcionario_id = request.form.get("status_funcionario_id")
-    
-    print(funcionario_id)
 
     # Se quiser associar ao último status, pode buscar pelo funcionário
     # status_funcionario_id = ...
@@ -1099,6 +1104,7 @@ def upload_documentos_funcionario():
         file = files.get(field)
         if not file:
             return f"Documento obrigatório não enviado: {label}", 400
+        
         data = file.read()
         file_extension = os.path.splitext(secure_filename(file.filename))[1].lower()
         

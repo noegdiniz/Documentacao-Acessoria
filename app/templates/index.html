@@ -40,7 +40,9 @@
                     <a href="#" id="prestadoras-page">Prestadoras</a>
                     {%endif%}
                     
-                    <a href="#" id="funcionarios-page">Funcionarios</a>
+                    {%if permissao.can_view_funcionarios%}
+                        <a href="#" id="funcionarios-page">Funcionarios</a>
+                    {%endif%}
 
                     <a href="#" id="cubo-page">Dados</a>
 
@@ -70,69 +72,41 @@
         document.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', function() {
             this.value = this.value.toUpperCase();
-        });
+            });
         });
 
+        // Mapeamento dos IDs dos links para suas URLs
+        var menuLinks = {
+            "#docs-page": "/adm_documentos",
+            "#prestadoras-page": "/adm_empresas",
+            "#funcionarios-page": "/adm_funcionarios",
+            "#cubo-page": "/adm_cubo",
+            "#logs-page": "/adm_logs"
+            // "#relatorios-page": "/adm_relatorios" // descomentado se necessário
+        };
+
+        // Função genérica para carregar conteúdo
+        function carregarConteudo(id, url) {
+            $(id).click(function(e) {
+                e.preventDefault();
+                fetch(url).then(data => {
+                    data.text().then(text => {
+                        $("#content-adm").html(text);
+                    });
+                });
+            });
+        }
+
+        // Aplicar a função para cada link do menu
+        Object.entries(menuLinks).forEach(([id, url]) => {
+            carregarConteudo(id, url);
+        });
+
+        // Destaque visual do link ativo
         $('a').on('click', function(event) {
-            // Your custom code here
             $('a').css('background-color', '');
-            
             $(this).css('background-color', '#053a72');
-
         });
-
-        $("#docs-page").click(() => {
-            fetch("/adm_documentos").then((data) => {
-                data.text().then((text) => {
-                    $("#content-adm").html(text)
-                })
-                })
-            }
-        )
-
-        $("#cubo-page").click(() => {
-            fetch("/adm_cubo").then((data) => {
-                data.text().then((text) => {
-                    $("#content-adm").html(text)
-                })
-                })
-            }
-        )
-
-        $("#logs-page").click(() => {
-            fetch("/adm_logs").then((data) => {
-                data.text().then((text) => {
-                    $("#content-adm").html(text)
-                })
-                })
-            }
-        )
-        
-        $("#prestadoras-page").click(() => {
-            fetch("/adm_empresas").then((data) => {
-                data.text().then((text) => {
-                    $("#content-adm").html(text)
-                })
-                })
-            }
-        )
-
-        $("#funcionarios-page").click(() => {
-            fetch("/adm_funcionarios").then(data => {
-                data.text().then(text => {
-                    $("#content-adm").html(text)
-                })
-            })
-        })
-
-        // $("#relatorios-page").click(() => {
-        //     fetch("/adm_relatorios").then(data => {
-        //         data.text().then(text => {
-        //             $("#content-adm").html(text)
-        //         })
-        //     })
-        // })
-        
     </script>
 
     <script>

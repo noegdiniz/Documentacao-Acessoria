@@ -11,37 +11,32 @@
         </thead>
         <tbody>
             {%for empresa in empresas%}
-            <tr>
-                <td>
-                    <input type="text" name="nome" value="{{empresa.nome}}" placeholder="Nome da empresa..." class="key-input" disabled>
-                </td>
-                <td>
-                    <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" class="key-input" disabled>
-                </td>
-                <td>
-                    <input type="text" name="cnpj" value="{{empresa.cnpj}}" placeholder="CNPJ - 14 char" class="key-input" disabled>
-                </td>
-                <td>
-                    <input type="text" name="depto" value="{{empresa.departamento}}" placeholder="Departamento" class="key-input" disabled>
-                </td>
-                <td>
-                    <input type="text" name="status" value="{{empresa.status}}" placeholder="Status" class="key-input" disabled>
-                </td>
-                
-                <td class="actions-column">
-                    {%if permissao.can_edit_empresas%}
-                    <button class="button" id="alterar-{{empresa._id}}" name="alterar">
-                        ALTERAR
-                    </button>
-                    {%endif%}
-                    
-                    {%if permissao.can_delete_empresas%}
-                    <button class="button" id="excluir-{{empresa._id}}" name="excluir">
-                        EXCLUIR
-                    </button>
-                    {%endif%}
-                </td>
-            </tr>
+                <tr>
+                    <td>
+                        <input type="text" name="nome" value="{{empresa.nome}}" placeholder="Nome da empresa..." class="key-input" disabled>
+                    </td>
+                    <td>
+                        <input type="text" name="key" value="{{empresa.chave}}" placeholder="Chave - 6 char" class="key-input" disabled>
+                    </td>
+                    <td>
+                        <input type="text" name="cnpj" value="{{empresa.cnpj}}" placeholder="CNPJ - 14 char" class="key-input" disabled>
+                    </td>
+                    <td>
+                        <input type="text" name="depto" value="{{empresa.departamento}}" placeholder="Departamento" class="key-input" disabled>
+                    </td>
+                    <td class="actions-column">
+                        {%if permissao.can_edit_empresas%}
+                        <button class="button" id="alterar-{{empresa._id}}" name="alterar">
+                            ALTERAR
+                        </button>
+                        {%endif%}
+                        {%if permissao.can_delete_empresas%}
+                        <button class="button" id="excluir-{{empresa._id}}" name="excluir">
+                            EXCLUIR
+                        </button>
+                        {%endif%}
+                    </td>
+                </tr>
                 
             <script>
                 $("#alterar-{{empresa._id}}").click(function() {
@@ -70,6 +65,7 @@
                                 showCustomAlert("Erro ao realizar exclusão: " + text);
                             }
                         })
+
                         .then(function() {
                             fetch("/list_empresas")
                                 .then(function(response) { return response.text(); })
@@ -123,86 +119,57 @@ $(document).ready(function() {
 
     // Initialize DataTable
     var table = $('#empresasTable').DataTable({
-        language: {
-            searchPlaceholder: "Buscar em todas as colunas...",
-            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
-        },
-        pageLength: 10,
-        ordering: true,
-        order: [[0, "asc"]], // Order by company name ascending
-        responsive: true,
-        dom: '<"top"<"row"<"col-sm-12 col-md-6"><"col-sm-12 col-md-6"f>>>rt<"bottom"lip><"clear">',
-        columnDefs: [
-            { orderable: false, targets: 4 }, // Disable sorting on actions column
-            { width: "40%", targets: 0 }, // Nome da Empresa
-            { width: "20%", targets: 1 }, // Chave
-            { width: "20%", targets: 2 }, // CNPJ
-            { width: "20%", targets: 4 },  // Ações
-            {
-                targets: '_all',
-                searchable: true,
-                render: function(data, type, row) {
-                    if (type === 'display') return data;
-                    // Extract value from input elements for searching
-                    return $(data).val() || data;
+            language: {
+                search: "Buscar:",
+                searchPlaceholder: "Buscar em todas as colunas...",
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json'
+            },
+
+            pageLength: 10,
+            ordering: true,
+            order: [[0, "asc"]], // Order by company name ascending
+            responsive: true,
+            dom: '<"top"f>rt<"bottom"lip><"clear">', // Campo de busca sempre visível no topo
+            columnDefs: [
+                { orderable: false, targets: 4 }, // Disable sorting on actions column
+                { width: "40%", targets: 0 }, // Nome da Empresa
+                { width: "20%", targets: 1 }, // Chave
+                { width: "20%", targets: 2 }, // CNPJ
+                { width: "20%", targets: 4 },  // Ações
+                {
+                    targets: '_all',
+                    searchable: true,
+                    render: function(data, type, row) {
+                        if (type === 'display') return data;
+                        // Extract value from input elements for searching
+                        return $(data).val() || data;
+                    }
                 }
-            }
-        ],
-        
-        autoWidth: false,
-        initComplete: function() {
-            var searchWrapper = $('.dataTables_filter');
-            searchWrapper.find('input[type="search"]')
-                .attr('class', 'form-control')
-                .css({
-                    'width': '100%',
-                    'margin-left': '0'
+            ],
+            
+            autoWidth: false,
+            initComplete: function() {
+                // Estiliza campo de busca
+                var searchWrapper = $('.dataTables_filter');
+                searchWrapper.find('input[type="search"]')
+                    .attr('class', 'form-control')
+                    .css({
+                        'width': '100%',
+                        'margin-left': '0',
+                        'display': 'inline-block'
+                    });
+                searchWrapper.css({
+                    'float': 'right',
+                    'margin-bottom': '10px'
                 });
-        },
-        drawCallback: function(settings) {
-            bindEventHandlers();
-            $('.key-input').css('width', '100%');
-        }
-    });
+            },
+            drawCallback: function(settings) {
+                bindEventHandlers();
+                $('.key-input').css('width', '100%');
+            }
+        });
 
     // Add search styling
-    $('<style>')
-        .prop('type', 'text/css')
-        .html(`
-            .dataTables_filter {
-                margin-bottom: 20px;
-                width: 100%;
-            }
-            .dataTables_filter label {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .dataTables_filter input[type="search"] {
-                flex: 1;
-                padding: 8px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                transition: border-color 0.3s;
-            }
-            .dataTables_filter input[type="search"]:focus {
-                border-color: #80bdff;
-                outline: 0;
-                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-            }
-            @media (max-width: 767px) {
-                .dataTables_filter label {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
-                .dataTables_filter input[type="search"] {
-                    margin-bottom: 10px;
-                }
-            }
-        `)
-        .appendTo('head');
-
     // Bind event handlers
     function bindEventHandlers() {
         {%for empresa in empresas%}
@@ -224,13 +191,13 @@ $(document).ready(function() {
                 showCustomAlert("Erro ao tentar alterar o registro: " + error.message);
             }
         });
-
+        
         $("#excluir-{{empresa._id}}").off('click').on('click', async function() {
             try {
                 if (!confirm('Tem certeza que deseja excluir esta empresa?')) {
                     return;
                 }
-
+                
                 showLoading();
                 const url = "/exclui_empresa/{{empresa._id}}";
                 
@@ -239,7 +206,7 @@ $(document).ready(function() {
                     await handleServerError(response);
                     return;
                 }
-
+                
                 const text = await response.text();
                 if (text.includes("ok")) {
                     showCustomAlert("Cadastro excluído com sucesso.");
@@ -263,4 +230,3 @@ $(document).ready(function() {
 });
 
 </script>
-

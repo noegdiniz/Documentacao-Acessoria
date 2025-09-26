@@ -70,7 +70,7 @@ class IntegraController:
                 "funcao": status.funcao,
                 "setor": status.setor,
                 "data_integracao": status.data_integracao.strftime('%d/%m/%Y') if status.data_integracao else "",
-                "contrato": status.contrato_nome
+                "empresa_nome": status.empresa_nome,
             })
             
         return integracoes
@@ -281,6 +281,11 @@ class IntegraController:
         if current_status.status_integracao in ["AGENDADO", "REALIZADO"]:
             return "Erro: Já existe uma integração agendada ou realizada para este funcionário."
         
+        # Não é posssivel agendar integração para funcionário com status contratual INATIVO
+        print(f"Current status contratual: {current_status.status_contratual}")
+        if current_status.status_contratual == "INATIVO":
+            return "Erro: Não é possível agendar integração para funcionário com status contratual INATIVO."
+        
         if form.get("data_integracao"):
             try:
                 date_obj = datetime.strptime(form["data_integracao"], "%d/%m/%Y").date()
@@ -364,7 +369,6 @@ class IntegraController:
     
     @staticmethod
     def get_all_funcionario(empresa_id=None):
-        print(f"Empresa ID recebida: {empresa_id}")
         
         if empresa_id:
             funcionario_list = Funcionario.query.join(StatusFuncionario, Funcionario._id == StatusFuncionario.funcionario_id)
@@ -420,7 +424,8 @@ class IntegraController:
                     status.status_integracao = "EXPIRADO"
             
                 # Atualiza status para "CANCELADO" se a empresa estiver inativa
-                if empresa := Empresa.query.get(status.empresa_id):
+                empresa = Empresa.query.get(status.empresa_id)
+                if empresa:
                     if empresa.status == "INATIVA" and status.status_integracao in ["AGUARDANDO", "AGENDADO"]:
                         status.status_integracao = "CANCELADO"
                         status.status_contratual = "INATIVO"

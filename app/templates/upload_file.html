@@ -176,7 +176,7 @@
                     }
                 }
             });
-
+            
             // Só permite enviar se todos os arquivos ausentes tiverem justificativa
             if (missingFile && missingJustificativa) {
                 showCustomAlert("Se faltar pelo menos um arquivo, preencha a justificativa correspondente.");
@@ -186,6 +186,7 @@
                 return;
             }
 
+            // Check required fields
             if (!titulo || !contrato || !categoria || arquivos.length === 0 || !email || !competencia) {
                 showCustomAlert("Por favor, preencha todos os campos." + " Campo: " + (!titulo ? "Título" : !contrato ? "Contrato" : !categoria ? "Categoria" : !email ? "Email" : !competencia ? "Competência" : "Anexo"));
                 submitButton.prop('disabled', false);
@@ -216,7 +217,7 @@
                     justificativas.push(`${docname}|${justificativa}`);
                 }
             });
-            
+
             formData.append('justificativas', JSON.stringify(justificativas));
             
             // Submit the form using AJAX
@@ -240,6 +241,7 @@
                     $("#make-upload").text('Enviar Documento');
                     $("#make-upload").css('cursor', 'pointer');
                 },
+                
                 error: function(error) {
                     showCustomAlert("Erro ao enviar documentação.");
                     $("#make-upload").prop('disabled', false);
@@ -250,16 +252,4 @@
         });
         
     </script>
-    <style>
-        .file-tag {
-            display: inline-block;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 5px 10px;
-            margin: 5px;
-            font-size: 12px;
-        }
-        
-    </style>
 </div>
